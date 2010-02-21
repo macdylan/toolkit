@@ -1,0 +1,4 @@
+start do_mirror_moe_imouto.bat
+start do_mirror_nekobooru.bat
+start do_mirror_danbooru.bat
+start do_mirror_konachan.bat
