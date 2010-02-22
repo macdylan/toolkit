@@ -65,6 +65,9 @@ if os.path.exists(dir_name) == False:
 
 for line in collection_f.readlines():
  # try:
+    line = line.strip()
+    if line == "":
+      continue
     splt = line.split()
     img_set = splt[0]
     id = int(splt[1])
