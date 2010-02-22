@@ -20,10 +20,13 @@ def update_md5table(arg, dirname, fnames):
     if os.path.isfile(fpath) == False or fpath.endswith(".txt") == False:
       continue
     f = open(fpath, "r")
-    info = json.loads(f.read())
-    md5 = info[u"md5"]
-    id = os.path.splitext(os.path.split(fpath)[1])[0]
-    md5_table[md5] = "%s %s" % (img_set, id)
+    try:
+      info = json.loads(f.read())
+      md5 = info[u"md5"]
+      id = os.path.splitext(os.path.split(fpath)[1])[0]
+      md5_table[md5] = "%s %s" % (img_set, id)
+    except:
+      print "[exception] unable to read json in %s" % fpath
     f.close()
 
 for source in search_sources:

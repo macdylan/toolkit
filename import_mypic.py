@@ -320,6 +320,8 @@ def import_file(fpath, default_tags = None):
       result_set = table[fsize]
       for result in result_set:
         img_path = image_name_to_path(result, type)
+        if img_path == None:
+          continue
         img_md5 = md5_on_file(img_path)
         if img_md5 == md5_str:
           print "found to be %s" % result
