@@ -39,10 +39,11 @@ for entry in os.listdir("../collections"):
         sample_file_path = "../" + img_set + "/sample/" + bucket_name + "/" + str(id) + "." + ext
         if os.path.exists(sample_file_path):
           link_name = dir_name + "/" + img_set + " " + str(id) + "." + ext
-          cmd = 'mklink "%s" "%s" /H' % (link_name, sample_file_path)
-          print cmd
-          os.system(cmd)
-          id_found = True
+          if os.path.exists(link_name) == False:
+            cmd = 'mklink "%s" "%s" /H' % (link_name, sample_file_path)
+            print cmd
+            os.system(cmd)
+            id_found = True
           
       if id_found == False:
         print '"%s %d" not found' % (img_set, id)
