@@ -1,6 +1,11 @@
 import hashlib
 import os
 
+print """
+A note on de-duplication:
+After several runs of this program, the duplicated files will be merged using hardlinks. But this program cannot detect hardlinks, so it still falsely report many duplicated files, which is OK.
+"""
+
 def md5_on_file(fpath):
   m = hashlib.md5()
   pic_f = open(fpath, "rb")
@@ -38,17 +43,17 @@ for source in search_sources:
     if os.path.exists(source + "/" + type):
       os.path.walk(source + "/" + type, md5_walker, None)
 
-duplicate_file = open("duplicate_precise.txt", "a")
+duplicate_file = open("duplicate_precise.txt", "w")
 save_bytes = 0
 for k in md5_table.keys():
   if len(md5_table[k]) > 1:
-    print "duplicate:"
+    #print "duplicate:"
     duplicate_file.write("duplicate:\n")
     a_file = None
     for f in md5_table[k]:
       if a_file == None:
         a_file = f
-      print f
+      #print f
       duplicate_file.write(f + "\n")
     duplicate_file.write("\n\n")
     save_bytes += (len(md5_table[k]) - 1) * os.lstat(a_file).st_size
@@ -64,8 +69,6 @@ def pretty_size(s):
     return "%0.2f GB" % (s / 1024. / 1024. / 1024.)
 
 print "you can save %s if you merge the duplicated files" % pretty_size(save_bytes)
-choice = raw_input("merge?[y/N] ")
-if choice == "y":
-  print "TODO merge"
+print "duplicated file info are saved into 'duplicate_precise.txt'"
 
 duplicate_file.close()
