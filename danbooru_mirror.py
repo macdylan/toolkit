@@ -64,7 +64,7 @@ def download_danbooru_image(basefolder, bucket_name, id, url, type, size = 0, md
     
   except:
     traceback.print_exc()
-    time.sleep(10)
+    time.sleep(1)
   
 
 def mirror_danbooru(basefolder, site, start_page):
@@ -80,17 +80,25 @@ def mirror_danbooru(basefolder, site, start_page):
         page_all_lines = page.readlines()
         page_all_text = "\n".join(page_all_lines)
       except HTTPError, e:
-        print "Server response code: " + str(e.code)
+        print "server response code: " + str(e.code)
         
+      info_list = []
       try:
-        info_list = json.loads(page_all_text)
+        info_list.extend(json.loads(page_all_text))
       except:
         # json decode failure, the site is probably down for maintenance... (danbooru.donmai.us, usually)
         # on this condition, we wait for a very long time
-        print "Site down for maintenance, wait for half hour, on %s" % time.asctime()
-        time.sleep(60 * 30) # wait half an hour
+        print "site down for maintenance, wait for 2 minutes, on %s" % time.asctime()
+        print "when resumed, will restart from page 1"
+        time.sleep(120) # wait 2 minutes
+        current_page = 1
         continue
       
+      if len(info_list) == 0:
+        print "no more images"
+        print "restart downloading from page 1"
+        current_page = 1
+        continue
       
       for info in info_list:
         try:
@@ -129,11 +137,11 @@ def mirror_danbooru(basefolder, site, start_page):
           
         except:
           traceback.print_exc()
-          time.sleep(10)
+          time.sleep(1)
       
     except:
       traceback.print_exc()
-      time.sleep(10)
+      time.sleep(1)
 
 
 def prepare_folder(path):
@@ -162,7 +170,7 @@ def do_mirror(basedir, site, start_page):
 if __name__ == "__main__":
   print "this is danbooru_mirror!"
   print "usage: danbooru_mirror <folder> <site> [start_page=1]"
-  if (len(sys.argv) > 3):
+  if len(sys.argv) > 3:
     do_mirror(sys.argv[1], sys.argv[2], int(sys.argv[3]))
-  else:
+  elif len(sys.argv) == 3:
     do_mirror(sys.argv[1], sys.argv[2], 1)

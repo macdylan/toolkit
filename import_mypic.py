@@ -128,6 +128,13 @@ def import_by_image_name(fpath, image_name):
     print "image exists"
     log_file.write(fpath + "\n" + "by image name, already exists\n" + image_name + " (image name)" + "\n\n\n")
     write_collection(image_name + "\n")
+    
+    # still copy file
+    ext_with_dot = os.path.splitext(fpath)[1]
+    src = fpath
+    dst = image_name_to_path_not_checked(image_name, "sample", ext_with_dot)
+    print "[copy] %s ==> %s" % (src, dst)
+    shutil.copyfile(src, dst)
   else:
     # image not exist
     print 'image not exist, quality not known, copy to "sample" folder'
