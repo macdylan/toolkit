@@ -22,7 +22,38 @@ import hashlib
 import shutil
 from select import *
 
+black_list = set()
+
+def load_black_list(img_set_name):
+  blk = set()
+  f = open("black_list.txt")
+  for l in f.readlines():
+    l = l.strip()
+    if len(l) == 0:
+      continue
+    sp1 = l.split()
+    if sp1[0] != img_set_name:
+      continue
+    if "-" in sp1[1]:
+      sp2 = sp1[1].split("-")
+      begin = int(sp2[0])
+      end = int(sp2[1])
+      for i in range(begin, end + 1):
+        blk.add(i)
+    else:
+      v = int(sp1[1])
+      blk.add(v)
+  f.close()
+  return blk
+
 def download_danbooru_image(basefolder, bucket_name, id, url, type, size = 0, md5 = None):
+  
+  # check if in black list
+  int_id = int(id)
+  if int_id in black_list:
+    print "[black list] %d skipped" % id
+    return
+    
   try:
     url = "http://" + urllib2.quote(url[7:])
     pic_ext = url[url.rfind("."):]
@@ -151,16 +182,22 @@ def prepare_folder(path):
 
 
 def do_mirror(basedir, site, start_page):
+  global black_list
+  
   timeout = 30  # 30 secs
   socket.setdefaulttimeout(timeout)
   if site.find("danbooru") != -1:
     site = "http://danbooru.donmai.us"
+    black_list = load_black_list("danbooru")
   elif site.find("konachan") != -1:
     site = "http://konachan.com"
+    black_list = load_black_list("konachan")
   elif site.find("imouto") != -1:
     site = "http://moe.imouto.org"
+    black_list = load_black_list("moe_imouto")
   elif site.find("nekobooru") != -1:
     site = "http://nekobooru.net"
+    black_list = load_black_list("nekobooru")
   else:
     print "site not supported: " + site
     return
