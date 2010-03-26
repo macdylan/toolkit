@@ -15,7 +15,8 @@ def conv_image(src, dst):
   dst_folder = os.path.split(dst)[0]
   prepare_folder(dst_folder)
   print src, "==>", dst
-  my_exec("convert -resize 480x480 \"%s\" \"%s\"" % (src, dst))
+  if os.path.exists(dst) == False:
+    my_exec("convert -resize 480x480 \"%s\" \"%s\"" % (src, dst))
 
 prepare_folder("..\\for_psp")
 img_set = raw_input("image set name: ")
