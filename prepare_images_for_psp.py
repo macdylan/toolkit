@@ -46,5 +46,9 @@ for dir in dirs:
       if not (start_id <= main_id and main_id <= end_id):
         continue
       src_path = sample_dir + "\\" + dir + "\\" + file
+      rank_path = "..\\" + img_set + "\\rank\\" + dir + "\\" + main_fn + ".txt"
+      if os.path.exists(rank_path):
+        print "[skip, already ranked] %s %d" % (img_set, main_id)
+        continue
       dst_path = "..\\for_psp\\" + img_set + "\\" + dir_body + "\\" + img_set + "_" + str(main_id) + fn_splt[1]
       conv_image(src_path, dst_path)
