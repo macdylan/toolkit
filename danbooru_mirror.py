@@ -133,6 +133,9 @@ def mirror_danbooru(basefolder, site, start_page):
       
       for info in info_list:
         try:
+          if int(info[u"id"]) in black_list:
+            print "[black list] %d skipped" % int(info[u"id"])
+            continue
           bucket_size = 100
           bucket_id = info[u"id"] / bucket_size
           bucket_name = "%d-%d" % (bucket_id * bucket_size, bucket_id * bucket_size + bucket_size - 1)
