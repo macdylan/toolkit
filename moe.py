@@ -118,14 +118,31 @@ def db_get_tag_by_name(tag_name):
   ret = c.fetchone()
   return ret
 
-def db_add_album():
-  pass
+def db_add_album(album_name):
+  c = DB_CONN.cursor()
+  c.execute("select * from albums where name = '%s'" % album_name)
+  if c.fetchone() == None:
+    c.execute("insert into albums(name) values('%s')" % album_name)
 
 def db_get_album_images():
   pass
 
-def db_add_album_images():
-  pass
+def db_add_album_image(album_name, image_set, id_in_set):
+  c = DB_CONN.cursor()
+  c.execute("select id from albums where name = '%s'" % album_name)
+  ret = c.fetchone()
+  if ret == None:
+    return False
+  album_id = ret[0]
+  c.execute("select id from images where set_name = '%s' and id_in_set = %d" % (image_set, id_in_set))
+  ret = c.fetchone()
+  if ret == None:
+    return False
+  image_id = ret[0]
+  c.execute("select * from albums_has_images where album_id = %d and image_id = %d" % (album_id, image_id))
+  if c.fetchone() == None:
+    c.execute("insert into albums_has_images(album_id, image_id) values(%d, %d)" % (album_id, image_id))
+  return True
 
 def db_del_album_images():
   pass
@@ -262,7 +279,22 @@ def moe_info():
         print "changed active image set to '%s'" % image_set
 
 def moe_import_album():
-  pass
+  print "input an empty line to quit"
+  while True:
+    input = raw_input("album file: ")
+    if input == "":
+      break
+    album_name = os.path.splitext(os.path.split(input)[1])[0]
+    f = open(input)
+    db_add_album(album_name)
+    for line in f.readlines():
+      line = line.strip()
+      splt = line.split()
+      image_set = splt[0]
+      id_in_set = int(splt[1])
+      db_add_album_image(album_name, image_set, id_in_set)
+    f.close()
+    db_commit()
 
 def moe_import_black_list():
   fpath = raw_input("black list file path: ")
@@ -296,14 +328,13 @@ def moe_import_rating():
         continue
       fpath = dir + os.path.sep + file
       image_id = int(os.path.splitext(file)[0])
-      print image_id
       f = open(fpath)
       rating_text = f.read()
       f.close()
       rating_value = None
       if rating_text == "delete":
         rating_value = 0
-      elif rating_text == "so-so":
+      elif rating_text == "soso":
         rating_value = 1
       elif rating_text == "good":
         rating_value = 2
@@ -338,6 +369,8 @@ if __name__ == "__main__":
     moe_help()
   elif sys.argv[1] == "import":
     moe_import()
+  elif sys.argv[1] == "import-album":
+    moe_import_album()
   elif sys.argv[1] == "import-black-list":
     moe_import_black_list()
   elif sys.argv[1] == "import-rating":
