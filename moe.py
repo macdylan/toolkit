@@ -5,7 +5,7 @@
 
 # Database models:
 #
-# images(id, set_name, id_in_set, md5, rating, ext)
+# images(id, set_name, id_in_set, md5, rating, ext, file_size)
 # tags(id, name)
 # images_has_tags(image_id, tag_id)
 # albums(id, name)
@@ -22,7 +22,7 @@ from select import *
 DB_CONN = sqlite3.connect(SQLITE3_DB)
 
 # Create tables if necessary.
-DB_CONN.execute("create table if not exists images(id integer primary key, set_name text, id_in_set int, md5 text, rating int, ext text)")
+DB_CONN.execute("create table if not exists images(id integer primary key, set_name text, id_in_set int, md5 text, rating int, ext text, file_size int)")
 DB_CONN.execute("create table if not exists tags(id integer primary key, name text unique)")
 DB_CONN.execute("create table if not exists images_has_tags(image_id int, tag_id int)")
 DB_CONN.execute("create table if not exists albums(id integer primary key, name text unique)")
@@ -31,7 +31,7 @@ DB_CONN.execute("create table if not exists black_list(set_name text, start_id i
 DB_CONN.execute("create table if not exists settings(key text, value text)")
 
 # Create indexes if necessary.
-DB_CONN.execute("create index if not exists images_index on images(id, set_name, id_in_set, md5, rating)")
+DB_CONN.execute("create index if not exists images_index on images(id, set_name, id_in_set, md5, rating, ext, file_size)")
 DB_CONN.execute("create index if not exists tags_index on tags(id, name)")
 DB_CONN.execute("create index if not exists images_has_tags_index on images_has_tags(image_id, tag_id)")
 DB_CONN.execute("create index if not exists albums_has_imags_index on albums_has_images(album_id, image_id)")
@@ -85,7 +85,8 @@ def db_add_image(fpath, image_set, id_in_set):
   c = DB_CONN.cursor()
   c.execute("select * from images where set_name = '%s' and id_in_set = %d" % (image_set, id_in_set))
   if c.fetchone() == None:
-    c.execute("insert into images(set_name, id_in_set, md5, ext) values('%s', %d, '%s', '%s')" % (image_set, id_in_set, md5, file_ext))
+    file_size = os.stat(dest_file).st_size
+    c.execute("insert into images(set_name, id_in_set, md5, ext, file_size) values('%s', %d, '%s', '%s', %d)" % (image_set, id_in_set, md5, file_ext, file_size))
   return True
 
 def db_get_image_by_md5(md5):
@@ -419,11 +420,16 @@ def moe_import():
         continue
       id_in_set = int(os.path.splitext(file)[0])
       info_fpath = info_folder + dir[len(image_folder):] + os.path.sep + str(id_in_set) + ".txt"
-      info_file = open(info_fpath)
-      json_ret = json.loads(info_file.read())
-      info_file.close()
-      if db_add_image(fpath, image_set, id_in_set) == True:
-        db_set_image_tags(image_set, id_in_set, json_ret[u"tags"].split())
+      try:
+        if db_add_image(fpath, image_set, id_in_set) == True:
+          if os.path.exists(info_fpath):
+            info_file = open(info_fpath)
+            json_ret = json.loads(info_file.read())
+            info_file.close()
+            db_set_image_tags(image_set, id_in_set, json_ret[u"tags"].split())
+      except:
+        traceback.print_exc()
+        time.sleep(1)
     db_commit()
     
   os.path.walk(image_folder, import_walker, info_folder)
@@ -576,8 +582,48 @@ def moe_cleanup():
   ret_all = c.fetchall()
   for ret in ret_all:
     db_del_image(ret[0], ret[1])
-  
   # TODO delete empty folder, compact black list, delete thumbs.db, delete tags with 0 images, vacuum the db
+
+def moe_find_ophan():
+  images_root = db_get_setting("images_root")
+  if len(sys.argv) == 3:
+    image_set = sys.argv[2]
+  else:
+    image_set = raw_input("image set: ")
+  
+  ophan_list = []
+  def find_ophan_walker(ophan_list, dir, files):
+    print "working in dir: %s" % dir
+    for file in files:
+      if util_is_image(file) == False:
+        continue
+      id_in_set = int(os.path.splitext(os.path.split(file)[1])[0])
+      if db_get_image_by_id_in_set(image_set, id_in_set) == None:
+        ophan_list += dir + os.path.sep + file,
+  
+  os.path.walk(images_root + os.path.sep + image_set, find_ophan_walker, ophan_list)
+  for ophan in ophan_list:
+    print ophan
+  print "<%d ophan found>" % len(ophan_list)
+  if len(ophan_list) > 0:
+    print "what to do with those ohpans?"
+    print "(d)elete them all"
+    print "(m)ove them to a place"
+    print "(w)rite to a listing file"
+    choice = raw_input()
+    if choice == "d":
+      for ophan in ophan_list:
+        os.remove(ophan)
+    elif choice == "m":
+      dest_dir = raw_input("move to dir: ")
+      for ophan in ophan_list:
+        shutil.move(ophan, dest_dir)
+    elif choice == "w":
+      fname = raw_input("name of file: ")
+      f = open(fname, "w")
+      for ophan in ophan_list:
+        f.write(ophan + "\n")
+      f.close()
 
 def moe_help():
   print "moe.py: manage all my acg pictures"
@@ -585,6 +631,7 @@ def moe_help():
   print "available commands:"
   print ""
   print "  cleanup              delete images with rating 0, and compact the black list"
+  print "  find-ophan           find images that are in images root, but not in database"
   print "  help                 display this info"
   print "  import               batch import pictures"
   print "  import-album         import existing album"
@@ -605,6 +652,8 @@ if __name__ == "__main__":
     moe_help()
   elif sys.argv[1] == "cleanup":
     moe_cleanup()
+  elif sys.argv[1] == "find-ophan":
+    moe_find_ophan()
   elif sys.argv[1] == "import":
     moe_import()
   elif sys.argv[1] == "import-album":
