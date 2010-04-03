@@ -4,3 +4,4 @@ size_db
 *.log
 *.txt
 *.db3
+*.db3-journal
