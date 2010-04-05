@@ -69,8 +69,8 @@ def db_add_image(fpath, image_set, id_in_set):
   print "[db.add] %s" % fpath
   bucket_name = util_get_bucket_name(id_in_set)
   dest_folder = db_get_setting("images_root") + os.path.sep + image_set + os.path.sep + bucket_name
-  dest_file = dest_folder + os.path.sep + os.path.split(fpath)[1]
   file_ext = os.path.splitext(fpath)[1]
+  dest_file = dest_folder + os.path.sep + str(id_in_set) + file_ext
   md5 = util_md5_of_file(fpath)
   # Check if md5 already in db
   image_found = db_get_image_by_md5(md5)
@@ -380,7 +380,8 @@ def util_mirror_danbooru_site(site_url):
             download_fpath = tmp_folder + os.path.sep + image_set_base + os.path.sep + str(id_in_set) + image_ext
             db_add_image(download_fpath, image_set_base, id_in_set)
             db_commit()
-            os.remove(download_fpath)
+            if os.path.exists(download_fpath):
+              os.remove(download_fpath)
           db_set_image_tags(image_set_base, id_in_set, info[u"tags"].split())
           db_commit()
           if info.has_key(u"file_size"):
@@ -396,7 +397,8 @@ def util_mirror_danbooru_site(site_url):
             download_fpath = tmp_folder + os.path.sep + image_set_highres + os.path.sep + str(id_in_set) + image_ext
             db_add_image(download_fpath, image_set_highres, id_in_set)
             db_commit()
-            os.remove(download_fpath)
+            if os.path.exists(download_fpath):
+              os.remove(download_fpath)
           db_set_image_tags(image_set_highres, id_in_set, info[u"tags"].split())
           db_commit()
         except:
@@ -460,7 +462,7 @@ def moe_info():
       if input == "":
         break
       if " " in input:
-        splt = image_set.split()
+        splt = input.split()
         image_set = splt[0]
         image_id = int(splt[1])
         info = util_get_image_info(image_set, image_id)
@@ -578,6 +580,15 @@ def moe_mirror_moe_imouto():
 
 def moe_mirror_nekobooru():
   util_mirror_danbooru_site("http://nekobooru.net")
+
+def moe_mirror_all():
+  if os.name == "nt":
+    os.system("start moe.py mirror-danbooru")
+    os.system("start moe.py mirror-konachan")
+    os.system("start moe.py mirror-nekobooru")
+    os.system("start moe.py mirror-moe-imouto")
+  else:
+    print "This function is not supported in your system."
 
 def moe_cleanup():
   # Delete images with rating 0
@@ -726,13 +737,98 @@ def moe_update_file_size():
       db_commit()
   print "%d files done" % counter
   db_commit()
-  
+
+def moe_add():
+  image_set = raw_input("image set: ")
+  image_set = image_set.strip()
+  image_path = raw_input("image path (will be moved into library):\n")
+  tags = raw_input("input tags (in one line, separate with space):\n")
+  c = DB_CONN.cursor()
+  c.execute("select max(id_in_set) from images where set_name = '%s'" % image_set)
+  ret = c.fetchone()
+  if ret == None:
+    # First image in a new set.
+    id_in_set = 1
+  else:
+    # Auto increase the image id_in_set.
+    id_in_set = ret[0] + 1
+  db_add_image(image_path, image_set, id_in_set)
+  db_set_image_tags(image_set, id_in_set, tags.split())
+  db_commit()
+
+def moe_add_dir():
+  image_set = raw_input("image set: ")
+  image_set = image_set.strip()
+  image_dir = raw_input("dir path (will be moved into library):\n")
+  tags = raw_input("input tags (in one line, separate with space):\n")
+  c = DB_CONN.cursor()
+  c.execute("select max(id_in_set) from images where set_name = '%s'" % image_set)
+  ret = c.fetchone()
+  if ret == None:
+    # First image in a new set.
+    id_in_set = 1
+  else:
+    # Auto increase the image id_in_set.
+    id_in_set = ret[0] + 1
+  tag_list = tags.split()
+  counter = 0
+  for file in os.listdir(image_dir):
+    fpath = image_dir + os.path.sep + file
+    if util_is_image(fpath) == False:
+      continue
+    db_add_image(fpath, image_set, id_in_set)
+    db_set_image_tags(image_set, id_in_set, tag_list)
+    id_in_set += 1
+    counter += 1
+    if counter % 100 == 0:
+      db_commit()
+  db_commit()
+
+def moe_add_dir_tree():
+  image_set = raw_input("image set: ")
+  image_set = image_set.strip()
+  image_dir = raw_input("dir path (will be moved into library):\n")
+  tags = raw_input("input tags (in one line, separate with space):\n")
+  c = DB_CONN.cursor()
+  c.execute("select max(id_in_set) from images where set_name = '%s'" % image_set)
+  ret = c.fetchone()
+  # It is tricky to put id_in_set into an list, other wise wa cannot change the value across function calls.
+  if ret == None:
+    # First image in a new set.
+    id_in_set = [1]
+  else:
+    # Auto increase the image id_in_set.
+    id_in_set = [ret[0] + 1]
+  tag_list = tags.split()
+  def add_dir_tree_walker(id_in_set, dir, files):
+    print "working in dir: %s" % dir
+    for file in files:
+      fpath = dir + os.path.sep + file
+      if util_is_image(fpath) == False:
+        continue
+      db_add_image(fpath, image_set, id_in_set[0])
+      db_set_image_tags(image_set, id_in_set[0], tag_list)
+      id_in_set[0] += 1
+    db_commit()
+  os.path.walk(image_dir, add_dir_tree_walker, id_in_set)
+
+def moe_export():
+  pass
+
+def moe_export_album():
+  pass
+
 def moe_help():
   print "moe.py: manage all my acg pictures"
   print "usage: moe.py <command>"
   print "available commands:"
   print ""
+  print "  add                  add a new image to library"
+  print "  add-dir              add all images in a directory to the library"
+  print "  add-dir-tree         add all images in a directory tree to the library"
   print "  cleanup              delete images with rating 0, and compact the black list"
+  print "  export               export images"
+  print "  export-album         export images in an album"
   print "  find-ophan           find images that are in images root, but not in database"
   print "  help                 display this info"
   print "  import               batch import pictures"
@@ -753,8 +849,18 @@ def moe_help():
 if __name__ == "__main__":
   if len(sys.argv) == 1 or sys.argv[1] == "help":
     moe_help()
+  elif sys.argv[1] == "add":
+    moe_add()
+  elif sys.argv[1] == "add-dir":
+    moe_add_dir()
+  elif sys.argv[1] == "add-dir-tree":
+    moe_add_dir_tree()
   elif sys.argv[1] == "cleanup":
     moe_cleanup()
+  elif sys.argv[1] == "export":
+    moe_export()
+  elif sys.argv[1] == "export-album":
+    moe_export_album()
   elif sys.argv[1] == "find-ophan":
     moe_find_ophan()
   elif sys.argv[1] == "import":
@@ -769,6 +875,8 @@ if __name__ == "__main__":
     moe_info()
   elif sys.argv[1] == "info-album":
     moe_info_album()
+  elif sys.argv[1] == "mirror-all":
+    moe_mirror_all()
   elif sys.argv[1] == "mirror-danbooru":
     moe_mirror_danbooru()
   elif sys.argv[1] == "mirror-konachan":
