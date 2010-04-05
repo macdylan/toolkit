@@ -585,8 +585,86 @@ def moe_cleanup():
   c.execute("select set_name, id_in_set from images where rating = 0")
   ret_all = c.fetchall()
   for ret in ret_all:
-    db_del_image(ret[0], ret[1])
-  # TODO delete empty folder, compact black list, delete thumbs.db, delete tags with 0 images, vacuum the db
+    set_name, id_in_set = ret
+    c.execute("insert into black_list(set_name, start_id, end_id) values('%s', %d, %d)" % (set_name, id_in_set, id_in_set))
+    db_del_image(set_name, id_in_set)
+  # Remove empty folders.
+  images_root = db_get_setting("images_root")
+  def rm_empty_dir_walker(arg, dir, files):
+    print "working in dir: %s" % dir
+    for file in files:
+      fpath = dir + os.path.sep + file
+      if file.lower() == "thumbs.db":
+        print "[rm] %s" % fpath
+        os.remove(fpath)
+    if len(os.listdir(dir)) == 0:
+      print "[rmdir] %s" % dir
+      os.rmdir(dir)
+  # Get list of image sets.
+  image_sets = []
+  c.execute("select set_name from images group by set_name")
+  ret_all = c.fetchall()
+  for ret in ret_all:
+    image_sets += ret[0],
+  for image_set in image_sets:
+    os.path.walk(images_root + os.path.sep + image_set, rm_empty_dir_walker, None)
+  # Shrink black list.
+  internal_black_list = {}
+  for image_set in image_sets:
+    internal_black_list[image_set] = set()
+  c.execute("select * from black_list")
+  ret_all = c.fetchall()
+  for ret in ret_all:
+    set_name, start_id, end_id = ret
+    for i in range(start_id, end_id + 1):
+      internal_black_list[set_name].add(i)
+    # Synchronize black list for "normal_res" and "high_res" image sets.
+    if set_name.endswith("_highres"):
+      normal_res_set_name = set_name[:-8]
+      for i in range(start_id, end_id + 1):
+        internal_black_list[normal_res_set_name].add(i)
+    elif (set_name + "_highres") in image_sets:
+      high_res_set_name = set_name + "_highres"
+      for i in range(start_id, end_id + 1):
+        internal_black_list[high_res_set_name].add(i)
+  new_black_list = {}
+  for image_set in image_sets:
+    helper_list = list(internal_black_list[image_set])
+    helper_list.sort()
+    new_black_list[image_set] = []
+    last_i = None
+    new_start_id = None
+    new_end_id = None
+    for i in helper_list:
+      if new_start_id == None:
+        new_start_id = i
+      elif i != last_i + 1:
+        new_end_id = last_i
+        new_black_list[image_set] += (new_start_id, new_end_id),
+        new_start_id = i
+        new_end_id = None
+      last_i = i
+    if new_start_id != None:
+      new_end_id = last_i
+      new_black_list[image_set] += (new_start_id, new_end_id),
+  c.execute("delete from black_list")
+  for image_set in image_sets:
+    for item in new_black_list[image_set]:
+      c.execute("insert into black_list(set_name, start_id, end_id) values('%s', %d, %d)" % (image_set, item[0], item[1]))
+  db_commit()
+  # Delete images in black list.
+  c.execute("select * from black_list")
+  ret_all = c.fetchall()
+  print "%d items in black list" % len(ret_all)
+  counter = 0
+  for ret in ret_all:
+    set_name, start_id, end_id = ret
+    for i in range(start_id, end_id + 1):
+      db_del_image(set_name, i)
+    counter += 1
+    if counter % 10 == 0:
+      print "%d items done" % counter
+  print "%d items done" % counter
 
 def moe_find_ophan():
   images_root = db_get_setting("images_root")
@@ -629,6 +707,26 @@ def moe_find_ophan():
         f.write(ophan + "\n")
       f.close()
 
+def moe_update_file_size():
+  print "executing database query..."
+  images_root = db_get_setting("images_root")
+  c = DB_CONN.cursor()
+  c.execute("select id, set_name, id_in_set, ext from images where file_size is null")
+  ret_all = c.fetchall()
+  print "%d files in total" % len(ret_all)
+  counter = 0
+  for ret in ret_all:
+    counter += 1
+    id, set_name, id_in_set, ext = ret
+    image_file = images_root + os.path.sep + set_name + os.path.sep + util_get_bucket_name(id_in_set) + os.path.sep + str(id_in_set) + ext
+    file_size = os.stat(image_file).st_size
+    c.execute("update images set file_size = %d where id = %d" % (file_size, id))
+    if counter % 100 == 0:
+      print "%d files done" % counter
+      db_commit()
+  print "%d files done" % counter
+  db_commit()
+  
 def moe_help():
   print "moe.py: manage all my acg pictures"
   print "usage: moe.py <command>"
@@ -648,6 +746,7 @@ def moe_help():
   print "  mirror-konachan      mirror konachan.com"
   print "  mirror-moe-imouto    mirror moe.imouto.org"
   print "  mirror-nekobooru     mirror nekobooru.com"
+  print "  update-file-size     make sure every images's file_size is read into databse"
   print ""
   print "author: Santa Zhang (santa1987@gmail.com)"
 
@@ -678,5 +777,7 @@ if __name__ == "__main__":
     moe_mirror_moe_imouto()
   elif sys.argv[1] == "mirror-nekobooru":
     moe_mirror_nekobooru()
+  elif sys.argv[1] == "update-file-size":
+    moe_update_file_size()
   else:
     print "command '%s' not understood, see 'moe help' for more info" % sys.argv[1]
