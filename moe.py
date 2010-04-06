@@ -28,6 +28,7 @@ DB_CONN.execute("create table if not exists images_has_tags(image_id int, tag_id
 DB_CONN.execute("create table if not exists albums(id integer primary key, name text unique)")
 DB_CONN.execute("create table if not exists albums_has_images(album_id int, image_id int)")
 DB_CONN.execute("create table if not exists black_list(set_name text, start_id int, end_id int)")
+DB_CONN.execute("create table if not exists black_list_md5(md5 text)")
 DB_CONN.execute("create table if not exists settings(key text, value text)")
 
 # Create indexes if necessary.
@@ -35,6 +36,8 @@ DB_CONN.execute("create index if not exists images_index on images(id, set_name,
 DB_CONN.execute("create index if not exists tags_index on tags(id, name)")
 DB_CONN.execute("create index if not exists images_has_tags_index on images_has_tags(image_id, tag_id)")
 DB_CONN.execute("create index if not exists albums_has_imags_index on albums_has_images(album_id, image_id)")
+DB_CONN.execute("create index if not exists black_list_index on black_list(set_name, start_id, end_id)")
+DB_CONN.execute("create index if not exists black_list_md5_index on black_list_md5(md5)")
 DB_CONN.execute("create index if not exists settings_index on settings(key, value)")
 
 # Insert basic config data if necessary.
@@ -60,6 +63,14 @@ def db_commit():
 def db_image_in_black_list(image_set, id_in_set):
   c = DB_CONN.cursor()
   c.execute("select * from black_list where set_name = '%s' and start_id <= %d and %d <= end_id" % (image_set, id_in_set, id_in_set))
+  if c.fetchone() != None:
+    return True
+  else:
+    return False
+
+def db_image_in_black_list_md5(md5):
+  c = DB_CONN.cursor()
+  c.execute("select * from black_list_md5 where md5 = '%s'" % md5)
   if c.fetchone() != None:
     return True
   else:
@@ -367,6 +378,9 @@ def util_mirror_danbooru_site(site_url):
           if db_image_in_black_list(image_set_base, id_in_set):
             print "[skip] '%s %d' is in black list" % (image_set_base, id_in_set)
             continue
+          if db_image_in_black_list_md5(info[u"md5"]):
+            print "[skip] '%s %d' is in black list (checked by md5)" % (image_set_base, id_in_set)
+            continue
           if db_get_image_by_md5(info[u"md5"]) != None:
             print "[skip] '%s %d' has duplicated md5" % (image_set_base, id_in_set)
             continue
@@ -591,14 +605,23 @@ def moe_mirror_all():
     print "This function is not supported in your system."
 
 def moe_cleanup():
-  # Delete images with rating 0
   c = DB_CONN.cursor()
-  c.execute("select set_name, id_in_set from images where rating = 0")
+  # Get list of image sets.
+  image_sets = []
+  c.execute("select set_name from images group by set_name")
   ret_all = c.fetchall()
   for ret in ret_all:
-    set_name, id_in_set = ret
+    image_sets += ret[0],
+  # Delete images with rating 0
+  c.execute("select set_name, id_in_set, md5 from images where rating = 0")
+  ret_all = c.fetchall()
+  for ret in ret_all:
+    set_name, id_in_set, md5 = ret
     c.execute("insert into black_list(set_name, start_id, end_id) values('%s', %d, %d)" % (set_name, id_in_set, id_in_set))
+    c.execute("insert into black_list_md5(md5) values('%s')" % (md5))
     db_del_image(set_name, id_in_set)
+    if set_name + "_highres" in image_sets:
+      db_del_image(set_name + "_highres", id_in_set)
   # Remove empty folders.
   images_root = db_get_setting("images_root")
   def rm_empty_dir_walker(arg, dir, files):
@@ -611,12 +634,6 @@ def moe_cleanup():
     if len(os.listdir(dir)) == 0:
       print "[rmdir] %s" % dir
       os.rmdir(dir)
-  # Get list of image sets.
-  image_sets = []
-  c.execute("select set_name from images group by set_name")
-  ret_all = c.fetchall()
-  for ret in ret_all:
-    image_sets += ret[0],
   for image_set in image_sets:
     os.path.walk(images_root + os.path.sep + image_set, rm_empty_dir_walker, None)
   # Shrink black list.
