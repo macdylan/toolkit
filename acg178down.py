@@ -75,6 +75,7 @@ for chap in toc_arr:
       continue
     down_f = open(fn + u".tmp", "wb")
     full_pg_unescaped = full_pg.decode("unicode_escape").encode("utf-8")
+    full_pg_unescaped = full_pg_unescaped.replace(" ", "%20")
     try:
       down_data = urllib2.urlopen(full_pg_unescaped).read()
       down_f.write(down_data)
