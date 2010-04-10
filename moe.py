@@ -93,7 +93,8 @@ def db_add_image(fpath, image_set, id_in_set, final_id_list = None):
     print "md5 duplicate: same as '%s %d'" % (image_found[1], image_found[2])
     return False
   else:
-    final_id_list += (image_set, id_in_set),
+    if final_id_list != None:
+      final_id_list += (image_set, id_in_set),
   util_make_dirs(dest_folder)
   if os.path.exists(dest_file):
     print "[warning] the file '%s' exists" % dest_file
