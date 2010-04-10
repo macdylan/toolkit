@@ -76,7 +76,9 @@ def db_image_in_black_list_md5(md5):
   else:
     return False
 
-def db_add_image(fpath, image_set, id_in_set):
+# add an image into the database
+# if final_id_list is provided as an list, the added image's ('image_set', id_in_set) (or the duplicated image's) will be appended to the list
+def db_add_image(fpath, image_set, id_in_set, final_id_list = None):
   print "[db.add] %s" % fpath
   bucket_name = util_get_bucket_name(id_in_set)
   dest_folder = db_get_setting("images_root") + os.path.sep + image_set + os.path.sep + bucket_name
@@ -86,8 +88,12 @@ def db_add_image(fpath, image_set, id_in_set):
   # Check if md5 already in db
   image_found = db_get_image_by_md5(md5)
   if image_found != None:
+    if final_id_list != None:
+      final_id_list += (image_found[1], image_found[2]),
     print "md5 duplicate: same as '%s %d'" % (image_found[1], image_found[2])
     return False
+  else:
+    final_id_list += (image_set, id_in_set),
   util_make_dirs(dest_folder)
   if os.path.exists(dest_file):
     print "[warning] the file '%s' exists" % dest_file
@@ -756,6 +762,8 @@ def moe_update_file_size():
   db_commit()
 
 def moe_add():
+  print "WARNING: adding images into moe db will REMOVE the source images!"
+  print "WARNIGN: make sure you are just adding a copy of the source images!"
   image_set = raw_input("image set: ")
   image_set = image_set.strip()
   image_path = raw_input("image path (will be moved into library):\n")
@@ -774,9 +782,14 @@ def moe_add():
   db_commit()
 
 def moe_add_dir():
+  print "WARNING: adding images into moe db will REMOVE the source images!"
+  print "WARNIGN: make sure you are just adding a copy of the source images!"
   image_set = raw_input("image set: ")
   image_set = image_set.strip()
   image_dir = raw_input("dir path (will be moved into library):\n")
+  image_album = raw_input("put the pictures into album (press ENTER to skip adding into album):\n")
+  if image_album == "":
+    image_album = None
   tags = raw_input("input tags (in one line, separate with space):\n")
   c = DB_CONN.cursor()
   c.execute("select max(id_in_set) from images where set_name = '%s'" % image_set)
@@ -789,45 +802,76 @@ def moe_add_dir():
     id_in_set = ret[0] + 1
   tag_list = tags.split()
   counter = 0
+  list_images = []
   for file in os.listdir(image_dir):
     fpath = image_dir + os.path.sep + file
     if util_is_image(fpath) == False:
       continue
-    db_add_image(fpath, image_set, id_in_set)
+    db_add_image(fpath, image_set, id_in_set, list_images)
     db_set_image_tags(image_set, id_in_set, tag_list)
     id_in_set += 1
     counter += 1
     if counter % 100 == 0:
       db_commit()
   db_commit()
+  # add images into album
+  if image_album != None:
+    db_add_album(image_album)
+    counter = 0
+    print "adding %d images into '%s'" % (len(list_images), image_album)
+    for img in list_images:
+      counter += 1
+      if (counter % 20) == 0:
+        print "%d done" % counter
+      db_add_album_image(image_album, img[0], img[1])
+    print "%d done" % counter
+    db_commit()
 
 def moe_add_dir_tree():
+  print "WARNING: adding images into moe db will REMOVE the source images!"
+  print "WARNIGN: make sure you are just adding a copy of the source images!"
   image_set = raw_input("image set: ")
   image_set = image_set.strip()
   image_dir = raw_input("dir path (will be moved into library):\n")
+  image_album = raw_input("put the pictures into album (press ENTER to skip adding into album):\n")
+  if image_album == "":
+    image_album = None
   tags = raw_input("input tags (in one line, separate with space):\n")
   c = DB_CONN.cursor()
   c.execute("select max(id_in_set) from images where set_name = '%s'" % image_set)
   ret = c.fetchone()
-  # It is tricky to put id_in_set into an list, other wise wa cannot change the value across function calls.
   if ret == None:
     # First image in a new set.
-    id_in_set = [1]
+    id_in_set = 1
   else:
     # Auto increase the image id_in_set.
-    id_in_set = [ret[0] + 1]
+    id_in_set = ret[0] + 1
   tag_list = tags.split()
-  def add_dir_tree_walker(id_in_set, dir, files):
+  walker_args = [id_in_set, []]
+  def add_dir_tree_walker(walker_args, dir, files):
     print "working in dir: %s" % dir
     for file in files:
       fpath = dir + os.path.sep + file
       if util_is_image(fpath) == False:
         continue
-      db_add_image(fpath, image_set, id_in_set[0])
-      db_set_image_tags(image_set, id_in_set[0], tag_list)
-      id_in_set[0] += 1
+      db_add_image(fpath, image_set, walker_args[0], walker_args[1])
+      db_set_image_tags(image_set, walker_args[0], tag_list)
+      walker_args[0] += 1
     db_commit()
-  os.path.walk(image_dir, add_dir_tree_walker, id_in_set)
+  os.path.walk(image_dir, add_dir_tree_walker, walker_args)
+  # add images into album
+  if image_album != None:
+    db_add_album(image_album)
+    list_images = walker_args[1]
+    counter = 0
+    print "adding %d images into '%s'" % (len(list_images), image_album)
+    for img in list_images:
+      counter += 1
+      if (counter % 20) == 0:
+        print "%d done" % counter
+      db_add_album_image(image_album, img[0], img[1])
+    print "%d done" % counter
+    db_commit()
 
 def moe_export():
   pass
