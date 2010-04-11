@@ -961,7 +961,9 @@ def moe_export_psp():
     counter += 1
     id_in_set, ext = ret[2], ret[5]
     img_path = images_root + os.path.sep + image_set + os.path.sep + util_get_bucket_name(id_in_set) + os.path.sep + str(id_in_set) + ext
-    dest_file = export_dir + os.path.sep + image_set + " " + str(id_in_set) + ".jpg"
+    dest_dir = export_dir + os.path.sep + image_set + os.path.sep + util_get_bucket_name(id_in_set)
+    util_make_dirs(dest_dir)
+    dest_file = dest_dir + os.path.sep + str(id_in_set) + ".jpg"
     cmd = 'convert -resize 480x480 "%s" "%s"' % (img_path, dest_file)
     util_execute(cmd)
     if counter % 20 == 0:
