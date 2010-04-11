@@ -964,7 +964,7 @@ def moe_export_psp():
     dest_dir = export_dir + os.path.sep + image_set + os.path.sep + util_get_bucket_name(id_in_set)
     util_make_dirs(dest_dir)
     dest_file = dest_dir + os.path.sep + str(id_in_set) + ".jpg"
-    cmd = 'convert -resize 480x480 "%s" "%s"' % (img_path, dest_file)
+    cmd = 'convert -flatten -resize 480x480 "%s" "%s"' % (img_path, dest_file)
     util_execute(cmd)
     if counter % 20 == 0:
       print "%d images done" % counter
