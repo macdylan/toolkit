@@ -348,6 +348,17 @@ def util_mirror_danbooru_site(site_url):
   
   # Start mirroring from page 1.
   page_id = 1
+  # Check if need to start downloading from other pages.
+  for i in range(len(sys.argv)):
+    arg = sys.argv[i]
+    if arg.startswith("--page="):
+      page_id = int(arg[7:])
+    elif arg == "-p":
+      if i <= len(sys.argv) - 2:
+        page_id = int(sys.argv[i + 1])
+      else:
+        print "Wrong parameters, please provide page number after '-p'!"
+        return
   while True:
     try:
       query_url = site_url + ("/post/index.json?page=%d" % page_id)
