@@ -5,8 +5,3 @@ size_db
 *.txt
 *.db3
 *.db3-journal
-*.user
-moe_browser/Makefile*
-moe_browser/ui_*
-moe_browser/debug/
-moe_browser/release/

@@ -601,12 +601,51 @@ def moe_import_rating():
       else:
         continue
       c = DB_CONN.cursor()
-      c.execute("select * from images where set_name = '%s' and id_in_set = %d" % (image_set, image_id))
-      if c.fetchone() != None:
-        c.execute("update images set rating = %d where set_name = '%s' and id_in_set = %d" % (rating_value, image_set, image_id))
+      c.execute("update images set rating = %d where set_name = '%s' and id_in_set = %d" % (rating_value, image_set, image_id))
     db_commit()
     
   os.path.walk(rating_folder, import_walker, None)
+
+def moe_import_mangameeya_rating():
+  txt_fn = raw_input("Rating file path: ")
+  with open(txt_fn) as f:
+    img_fn = None
+    img_rating = None
+    for line in f.readlines():
+      line = line.strip()
+      if line == "" or line.startswith("#"):
+        continue
+      if img_fn == None:
+        img_fn = line
+      else:
+        img_rating = int(line)
+        try:
+          # check if is valid image
+          folder, main_img_fn = os.path.split(img_fn)
+          id_in_set = int(os.path.splitext(main_img_fn)[0])
+          folder, tmp = os.path.split(folder)
+          folder, img_set = os.path.split(folder)
+          if img_rating == 1:
+            rating_txt = "so-so"
+            db_rating = 1
+          elif img_rating == 2:
+            rating_txt = "good"
+            db_rating = 2
+          elif img_rating == 3:
+            rating_txt = "excellent"
+            db_rating = 3
+          elif img_rating == 4:
+            rating_txt = "delete!"
+            db_rating = 0
+          print "%s %d --> %s" % (img_set, id_in_set, rating_txt)
+          c = DB_CONN.cursor()
+          c.execute("update images set rating = %d where set_name = '%s' and id_in_set = %d" % (db_rating, img_set, id_in_set))
+        except:
+          print "[warning] not valid image: %s" % img_fn
+          continue
+        img_fn = None
+        img_rating = None
+    db_commit()
 
 def moe_mirror_danbooru():
   util_mirror_danbooru_site("http://danbooru.donmai.us")
@@ -1021,27 +1060,28 @@ def moe_help():
   print "usage: moe.py <command>"
   print "available commands:"
   print ""
-  print "  add                  add a new image to library"
-  print "  add-dir              add all images in a directory to the library"
-  print "  add-dir-tree         add all images in a directory tree to the library"
-  print "  cleanup              delete images with rating 0, and compact the black list"
-  print "  export               export images"
-  print "  export-album         export images in an album"
-  print "  export-psp           export images for PSP rating"
-  print "  find-ophan           find images that are in images root, but not in database"
-  print "  help                 display this info"
-  print "  import               batch import pictures"
-  print "  import-album         import existing album"
-  print "  import-black-list    import existing black list file"
-  print "  import-rating        import existing rating"
-  print "  info                 display info about an image"
-  print "  info-album           display info about an album"
-  print "  mirror-all           mirror all known sites"
-  print "  mirror-danbooru      mirror danbooru.donmai.us"
-  print "  mirror-konachan      mirror konachan.com"
-  print "  mirror-moe-imouto    mirror moe.imouto.org"
-  print "  mirror-nekobooru     mirror nekobooru.com"
-  print "  update-file-size     make sure every images's file_size is read into databse"
+  print "  add                        add a new image to library"
+  print "  add-dir                    add all images in a directory to the library"
+  print "  add-dir-tree               add all images in a directory tree to the library"
+  print "  cleanup                    delete images with rating 0, and compact the black list"
+  print "  export                     export images"
+  print "  export-album               export images in an album"
+  print "  export-psp                 export images for PSP rating"
+  print "  find-ophan                 find images that are in images root, but not in database"
+  print "  help                       display this info"
+  print "  import                     batch import pictures"
+  print "  import-album               import existing album"
+  print "  import-black-list          import existing black list file"
+  print "  import-rating              import existing rating"
+  print "  import-mangameeya-rating   import rating from my MangaMeeya rating_helper.py"
+  print "  info                       display info about an image"
+  print "  info-album                 display info about an album"
+  print "  mirror-all                 mirror all known sites"
+  print "  mirror-danbooru            mirror danbooru.donmai.us"
+  print "  mirror-konachan            mirror konachan.com"
+  print "  mirror-moe-imouto          mirror moe.imouto.org"
+  print "  mirror-nekobooru           mirror nekobooru.com"
+  print "  update-file-size           make sure every images's file_size is read into databse"
   print ""
   print "author: Santa Zhang (santa1987@gmail.com)"
 
@@ -1072,6 +1112,8 @@ if __name__ == "__main__":
     moe_import_black_list()
   elif sys.argv[1] == "import-rating":
     moe_import_rating()
+  elif sys.argv[1] == "import-mangameeya-rating":
+    moe_import_mangameeya_rating()
   elif sys.argv[1] == "info":
     moe_info()
   elif sys.argv[1] == "info-album":
