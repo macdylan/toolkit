@@ -324,6 +324,54 @@ def util_download_danbooru_image(image_set, id_in_set, image_url, image_size = 0
     traceback.print_exc()
     time.sleep(1)
 
+def util_mirrro_danbooru_site_down_image(info_list, image_set_base, image_set_highres, tmp_folder):
+  for info in info_list:
+    try:
+      id_in_set = int(info[u"id"])
+      if db_image_in_black_list(image_set_base, id_in_set):
+        print "[skip] '%s %d' is in black list" % (image_set_base, id_in_set)
+        continue
+      if db_image_in_black_list_md5(info[u"md5"]):
+        print "[skip] '%s %d' is in black list (checked by md5)" % (image_set_base, id_in_set)
+        continue
+      if db_get_image_by_md5(info[u"md5"]) != None:
+        print "[skip] '%s %d' has duplicated md5" % (image_set_base, id_in_set)
+        continue
+      if info.has_key(u"sample_file_size"):
+        sample_file_size = info[u"sample_file_size"]
+      else:
+        sample_file_size = 0
+      if util_download_danbooru_image(image_set_base, id_in_set, info[u"sample_url"], sample_file_size):
+        image_url = "http://" + urllib2.quote(info[u"sample_url"][7:])
+        image_ext = image_url[image_url.rfind("."):]
+        download_fpath = tmp_folder + os.path.sep + image_set_base + os.path.sep + str(id_in_set) + image_ext
+        db_add_image(download_fpath, image_set_base, id_in_set)
+        db_commit()
+        if os.path.exists(download_fpath):
+          os.remove(download_fpath)
+      db_set_image_tags(image_set_base, id_in_set, info[u"tags"].split())
+      db_commit()
+      if info.has_key(u"file_size"):
+        highres_file_size = info[u"file_size"]
+      else:
+        highres_file_size = 0
+      if highres_file_size != 0 and highres_file_size == sample_file_size:
+        print "[skip] highres file is same as sample file"
+        continue
+      if util_download_danbooru_image(image_set_highres, id_in_set, info[u"file_url"], highres_file_size, info[u"md5"]):
+        image_url = "http://" + urllib2.quote(info[u"file_url"][7:])
+        image_ext = image_url[image_url.rfind("."):]
+        download_fpath = tmp_folder + os.path.sep + image_set_highres + os.path.sep + str(id_in_set) + image_ext
+        db_add_image(download_fpath, image_set_highres, id_in_set)
+        db_commit()
+        if os.path.exists(download_fpath):
+          os.remove(download_fpath)
+      db_set_image_tags(image_set_highres, id_in_set, info[u"tags"].split())
+      db_commit()
+    except:
+      traceback.print_exc()
+      time.sleep(1)
+
 def util_mirror_danbooru_site(site_url):
   SOCKET_TIMEOUT = 30
   socket.setdefaulttimeout(SOCKET_TIMEOUT)
@@ -367,6 +415,11 @@ def util_mirror_danbooru_site(site_url):
       # Go on to next page
       page_id += 1
       
+      # After page 1000, the danbooru site only has html access, with prev/next links on each page
+      if image_set_base == "danbooru" and page_id >= 1000:
+        util_mirror_danbooru_site_1000(site_url)
+        return
+      
       try:
         query_reply = "\n".join(urllib2.urlopen(query_url).readlines())
       except HTTPError, e:
@@ -390,56 +443,100 @@ def util_mirror_danbooru_site(site_url):
         page_id = 1
         continue
       
-      for info in info_list:
-        try:
-          id_in_set = int(info[u"id"])
-          if db_image_in_black_list(image_set_base, id_in_set):
-            print "[skip] '%s %d' is in black list" % (image_set_base, id_in_set)
-            continue
-          if db_image_in_black_list_md5(info[u"md5"]):
-            print "[skip] '%s %d' is in black list (checked by md5)" % (image_set_base, id_in_set)
-            continue
-          if db_get_image_by_md5(info[u"md5"]) != None:
-            print "[skip] '%s %d' has duplicated md5" % (image_set_base, id_in_set)
-            continue
-          if info.has_key(u"sample_file_size"):
-            sample_file_size = info[u"sample_file_size"]
-          else:
-            sample_file_size = 0
-          if util_download_danbooru_image(image_set_base, id_in_set, info[u"sample_url"], sample_file_size):
-            image_url = "http://" + urllib2.quote(info[u"sample_url"][7:])
-            image_ext = image_url[image_url.rfind("."):]
-            download_fpath = tmp_folder + os.path.sep + image_set_base + os.path.sep + str(id_in_set) + image_ext
-            db_add_image(download_fpath, image_set_base, id_in_set)
-            db_commit()
-            if os.path.exists(download_fpath):
-              os.remove(download_fpath)
-          db_set_image_tags(image_set_base, id_in_set, info[u"tags"].split())
-          db_commit()
-          if info.has_key(u"file_size"):
-            highres_file_size = info[u"file_size"]
-          else:
-            highres_file_size = 0
-          if highres_file_size != 0 and highres_file_size == sample_file_size:
-            print "[skip] highres file is same as sample file"
-            continue
-          if util_download_danbooru_image(image_set_highres, id_in_set, info[u"file_url"], highres_file_size, info[u"md5"]):
-            image_url = "http://" + urllib2.quote(info[u"file_url"][7:])
-            image_ext = image_url[image_url.rfind("."):]
-            download_fpath = tmp_folder + os.path.sep + image_set_highres + os.path.sep + str(id_in_set) + image_ext
-            db_add_image(download_fpath, image_set_highres, id_in_set)
-            db_commit()
-            if os.path.exists(download_fpath):
-              os.remove(download_fpath)
-          db_set_image_tags(image_set_highres, id_in_set, info[u"tags"].split())
-          db_commit()
-        except:
-          traceback.print_exc()
-          time.sleep(1)
+      util_mirrro_danbooru_site_down_image(info_list, image_set_base, image_set_highres, tmp_folder)
       
     except:
       traceback.print_exc()
       time.sleep(1)
+
+# mirror danbooru main site, which only has html access for page >= 1000
+def util_mirror_danbooru_site_ex(site_url, before_id = None):
+  SOCKET_TIMEOUT = 30
+  socket.setdefaulttimeout(SOCKET_TIMEOUT)
+  tmp_folder = db_get_setting("tmp_folder")
+  
+  if site_url.find("danbooru") != -1:
+    image_set_base = "danbooru"
+    image_set_highres = "danbooru_highres"
+  elif site_url.find("konachan") != -1:
+    image_set_base = "konachan"
+    image_set_highres = "konachan_highres"
+  elif site_url.find("imouto") != -1:
+    image_set_base = "moe_imouto"
+    image_set_highres = "moe_imouto_highres"
+  elif site_url.find("nekobooru") != -1:
+    image_set_base = "nekobooru"
+    image_set_highres = "nekobooru_highres"
+  else:
+    print "site '%s' not supported yet!"
+    return
+  
+  tmp_folder = db_get_setting("tmp_folder")
+  print "mirroring danbooru main site, after page 1000: %s" % site_url
+  page_url = None
+  while True:
+    try:
+      
+      if page_url == None:
+        if before_id == None:
+          # by default, start from page 1000
+          page_url = site_url + "/post/index.html?page=%d" % 1000
+        else:
+          page_url = site_url + "/post/index.html?before_id=%d" % before_id
+      else:
+        print "[page] %s" % page_url
+      
+      page_src = urllib2.urlopen(page_url).read()
+      idx = 0
+      idx2 = 0
+      while True:
+        idx = page_src.find("Post.register({", idx)
+        if idx <= 0:
+          break
+        idx2 = page_src.find(");", idx)
+        if idx2 <= 0:
+          break
+        json_data = page_src[(idx + 14):idx2]
+        idx = idx2
+        
+        info_list = []
+        try:
+          info_list = [json.loads(json_data)]
+        except:
+          # json decode failure, the site is probably down for maintenance... (danbooru.donmai.us, usually)
+          # on this condition, we wait for a few minutes
+          print "site down for maintenance, wait for 2 minutes, on %s" % time.asctime()
+          print "when resumed, will restart current page"
+          time.sleep(120) # wait 2 minutes
+          continue
+        
+        util_mirrro_danbooru_site_down_image(info_list, image_set_base, image_set_highres, tmp_folder)
+      
+      new_page_url = None
+      
+      idx = page_src.find("/post?before_id=")
+      if idx <= 0:
+        print "[done] last page mirrored! restart job!"
+        page_url = None
+        continue
+      idx2 = page_src.find('"', idx)
+      if idx <= 0:
+        print "[done] last page mirrored! restart job!"
+        page_url = None
+        continue
+        
+      new_page_url = site_url + page_src[idx:idx2]
+      if new_page_url == page_url:
+        print "[fatal] failed to find next page! restart job!"
+        page_url = None
+        continue
+      page_url = new_page_url
+      page_id += 1
+      
+    except:
+      traceback.print_exc()
+      time.sleep(1)
+
 
 def util_execute(cmd):
   print "[cmd] %s" % cmd
@@ -649,6 +746,12 @@ def moe_import_mangameeya_rating():
 
 def moe_mirror_danbooru():
   util_mirror_danbooru_site("http://danbooru.donmai.us")
+
+def moe_mirror_danbooru_1000():
+  util_mirror_danbooru_site_ex("http://danbooru.donmai.us")
+
+def moe_mirror_danbooru_before(before_id):
+  util_mirror_danbooru_site_ex("http://danbooru.donmai.us", before_id)
 
 def moe_mirror_konachan():
   util_mirror_danbooru_site("http://konachan.com")
@@ -1078,6 +1181,8 @@ def moe_help():
   print "  info-album                 display info about an album"
   print "  mirror-all                 mirror all known sites"
   print "  mirror-danbooru            mirror danbooru.donmai.us"
+  print "  mirror-danbooru-1000       mirror danbooru.donmai.us from 1000th page"
+  print "  mirror-danbooru-before     mirror danbooru.donmai.us before a certain picture id"
   print "  mirror-konachan            mirror konachan.com"
   print "  mirror-moe-imouto          mirror moe.imouto.org"
   print "  mirror-nekobooru           mirror nekobooru.com"
@@ -1122,6 +1227,10 @@ if __name__ == "__main__":
     moe_mirror_all()
   elif sys.argv[1] == "mirror-danbooru":
     moe_mirror_danbooru()
+  elif sys.argv[1] == "mirror-danbooru-1000":
+    moe_mirror_danbooru_1000()
+  elif sys.argv[1] == "mirror-danbooru-before":
+    moe_mirror_danbooru_before(int(sys.argv[2]))
   elif sys.argv[1] == "mirror-konachan":
     moe_mirror_konachan()
   elif sys.argv[1] == "mirror-moe-imouto":

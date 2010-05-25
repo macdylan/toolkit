@@ -5,3 +5,4 @@ size_db
 *.txt
 *.db3
 *.db3-journal
+SyncToy*.dat
