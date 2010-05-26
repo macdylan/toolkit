@@ -417,7 +417,7 @@ def util_mirror_danbooru_site(site_url):
       
       # After page 1000, the danbooru site only has html access, with prev/next links on each page
       if image_set_base == "danbooru" and page_id >= 1000:
-        util_mirror_danbooru_site_1000(site_url)
+        util_mirror_danbooru_site_ex(site_url)
         return
       
       try:
