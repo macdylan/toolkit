@@ -15,7 +15,17 @@
 # The sqlite3 database which will be used.
 SQLITE3_DB = "moe.db3"
 
-import sys, os, json, hashlib, sqlite3, shutil, urllib2, re, time, socket, traceback
+import sys
+import os
+import json
+import hashlib
+import sqlite3
+import shutil
+import urllib2
+import re
+import time
+import socket
+import traceback
 from urllib2 import HTTPError
 from select import *
 # Open the sqlite3 connection.
@@ -1033,6 +1043,10 @@ def moe_add_dir_tree():
     print "%d done" % counter
     db_commit()
 
+def moe_backup_db():
+  tm_str = time.strftime("%y%m%d-%H%M%S", time.localtime())
+  util_execute("copy moe.db3 moe.backup.%s.db3" % tm_str)
+
 def moe_export():
   image_set = raw_input("image set: ")
   id_in_set_range = raw_input("image id range (eg: 1223 or 1223-1225): ")
@@ -1165,6 +1179,7 @@ def moe_help():
   print "  add                        add a new image to library"
   print "  add-dir                    add all images in a directory to the library"
   print "  add-dir-tree               add all images in a directory tree to the library"
+  print "  backup-db                  backup database"
   print "  cleanup                    delete images with rating 0, and compact the black list"
   print "  export                     export images"
   print "  export-album               export images in an album"
@@ -1198,6 +1213,8 @@ if __name__ == "__main__":
     moe_add_dir()
   elif sys.argv[1] == "add-dir-tree":
     moe_add_dir_tree()
+  elif sys.argv[1] == "backup-db":
+    moe_backup_db()
   elif sys.argv[1] == "cleanup":
     moe_cleanup()
   elif sys.argv[1] == "export":
