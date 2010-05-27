@@ -531,7 +531,6 @@ def util_mirror_danbooru_site_ex(site_url, before_id = None):
         page_url = None
         continue
       page_url = new_page_url
-      page_id += 1
       
     except:
       traceback.print_exc()
