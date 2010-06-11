@@ -29,7 +29,7 @@ import traceback
 from urllib2 import HTTPError
 from select import *
 # Open the sqlite3 connection.
-DB_CONN = sqlite3.connect(SQLITE3_DB)
+DB_CONN = sqlite3.connect(SQLITE3_DB, 100)
 
 # Create tables if necessary.
 DB_CONN.execute("create table if not exists images(id integer primary key, set_name text, id_in_set int, md5 text, rating int, ext text, file_size int)")
