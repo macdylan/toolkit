@@ -24,7 +24,7 @@ page_src = urllib2.urlopen(root_page).read()
 
 idx = page_src.index("var g_comic_name = '") + 20
 idx2 = page_src.index("\r\n", idx) - 2
-comic_name = page_src[idx:idx2].decode("utf-8")
+comic_name = page_src[idx:idx2].replace(" ", "").decode("utf-8")
 
 idx = page_src.index("cartoon_online_border")
 idx = page_src.index("<ul>", idx)
