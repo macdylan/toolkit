@@ -9,7 +9,10 @@ from urllib2 import HTTPError
 def prepare_folder(path):
   if os.path.exists(path) == False:
     os.makedirs(path)
-    print "[mkdir] " + path
+    try:
+      print "[mkdir] " + path
+    except:
+      pass
 
 print "This script is used to download manga from http://acg.178.com"
 
@@ -68,10 +71,16 @@ for chap in toc_arr:
     leaf_nm = full_pg[idx:]
     print leaf_nm
     fn = u"acg178down/" + comic_name + u"/" + chap_title + u"/" + leaf_nm.decode("unicode_escape")
-    print fn
+    try:
+      print fn
+    except:
+      pass
     down_filename = fn
     if os.path.exists(down_filename):
-      print "[pass]", down_filename
+      try:
+        print "[pass]", down_filename
+      except:
+        pass
       continue
     down_f = open(fn + u".tmp", "wb")
     full_pg_unescaped = full_pg.decode("unicode_escape").encode("utf-8")
