@@ -48,6 +48,8 @@ for sp in toc_src_split:
     continue
   toc_arr += (title, href), 
 
+# download new chapters first
+toc_arr.reverse()
 
 # now download chapter
 for chap in toc_arr:
