@@ -1,0 +1,7 @@
+*.o
+ui_*
+moc_*
+Makefile
+Pix.app/
+*.user
+
