@@ -18,6 +18,11 @@ protected:
 
 private:
     Ui::MainWindow *ui;
+
+
+private slots:
+    void on_actionShow_Sidebar_triggered(bool checked);
+    void on_actionFull_Screen_triggered(bool checked);
 };
 
 #endif // MAINWINDOW_H

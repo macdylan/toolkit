@@ -24,3 +24,21 @@ void MainWindow::changeEvent(QEvent *e)
         break;
     }
 }
+
+void MainWindow::on_actionFull_Screen_triggered(bool checked)
+{
+    if (checked) {
+        this->showFullScreen();
+    } else {
+        this->showNormal();
+    }
+}
+
+void MainWindow::on_actionShow_Sidebar_triggered(bool checked)
+{
+    if (checked) {
+        this->ui->mainSidebar->show();
+    } else {
+        this->ui->mainSidebar->hide();
+    }
+}
