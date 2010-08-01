@@ -30,7 +30,7 @@
     <number>0</number>
    </property>
    <item row="0" column="0">
-    <widget class="QListView" name="listView">
+    <widget class="QTreeView" name="treeView">
      <property name="focusPolicy">
       <enum>Qt::NoFocus</enum>
      </property>
@@ -43,6 +43,12 @@
      <property name="lineWidth">
       <number>0</number>
      </property>
+     <attribute name="headerVisible">
+      <bool>false</bool>
+     </attribute>
+     <attribute name="headerVisible">
+      <bool>false</bool>
+     </attribute>
     </widget>
    </item>
   </layout>

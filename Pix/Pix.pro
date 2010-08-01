@@ -11,7 +11,10 @@ SOURCES += main.cpp \
     aboutdialog.cpp \
     preferencesdialog.cpp \
     getinfodialog.cpp \
-    maintoolbarwidget.cpp
+    maintoolbarwidget.cpp \
+    sidebarmodel.cpp \
+    kernel.cpp \
+    sidebardelegate.cpp
 HEADERS += mainwindow.h \
     mainsidebar.h \
     mainsidebar.h \
@@ -19,7 +22,10 @@ HEADERS += mainwindow.h \
     aboutdialog.h \
     preferencesdialog.h \
     getinfodialog.h \
-    maintoolbarwidget.h
+    maintoolbarwidget.h \
+    sidebarmodel.h \
+    kernel.h \
+    sidebardelegate.h
 FORMS += mainwindow.ui \
     mainsidebar.ui \
     mainview.ui \
