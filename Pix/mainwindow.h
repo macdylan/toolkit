@@ -6,6 +6,7 @@
 class AboutDialog;
 class PreferencesDialog;
 class GetInfoDialog;
+class MainToolBarWidget;
 
 namespace Ui {
     class MainWindow;
@@ -26,6 +27,7 @@ private:
     AboutDialog *aboutDialog;
     PreferencesDialog *preferencesDialog;
     GetInfoDialog *getInfoDialog;
+    MainToolBarWidget *mainToolBarWidget;
 
 private slots:
     void on_actionShow_Status_Bar_triggered(bool checked);

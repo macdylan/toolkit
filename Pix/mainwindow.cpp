@@ -4,6 +4,7 @@
 #include "aboutdialog.h"
 #include "preferencesdialog.h"
 #include "getinfodialog.h"
+#include "maintoolbarwidget.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -13,6 +14,11 @@ MainWindow::MainWindow(QWidget *parent) :
     this->aboutDialog = new AboutDialog(this);
     this->preferencesDialog = new PreferencesDialog(this);
     this->getInfoDialog = new GetInfoDialog(this);
+    this->mainToolBarWidget = new MainToolBarWidget(this);
+
+    this->ui->mainToolBar->addSeparator();
+    this->ui->mainToolBar->addWidget(this->mainToolBarWidget);
+
 }
 
 MainWindow::~MainWindow()
@@ -21,6 +27,7 @@ MainWindow::~MainWindow()
     delete aboutDialog;
     delete preferencesDialog;
     delete getInfoDialog;
+    delete mainToolBarWidget;
 }
 
 void MainWindow::changeEvent(QEvent *e)
@@ -65,7 +72,7 @@ void MainWindow::on_actionPreferences_triggered()
 
 void MainWindow::on_actionGet_Info_triggered()
 {
-    bool couldGetInfo = true;
+    bool couldGetInfo = true;   // whether there's something selected, so we could display info for it
     if (couldGetInfo) {
         this->getInfoDialog->show();
     }

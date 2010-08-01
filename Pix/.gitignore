@@ -4,4 +4,5 @@ moc_*
 Makefile
 Pix.app/
 *.user
-
+Pix.xcodeproj/
+Info.plist

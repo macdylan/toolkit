@@ -10,17 +10,21 @@ SOURCES += main.cpp \
     mainview.cpp \
     aboutdialog.cpp \
     preferencesdialog.cpp \
-    getinfodialog.cpp
+    getinfodialog.cpp \
+    maintoolbarwidget.cpp
 HEADERS += mainwindow.h \
     mainsidebar.h \
     mainsidebar.h \
     mainview.h \
     aboutdialog.h \
     preferencesdialog.h \
-    getinfodialog.h
+    getinfodialog.h \
+    maintoolbarwidget.h
 FORMS += mainwindow.ui \
     mainsidebar.ui \
     mainview.ui \
     aboutdialog.ui \
     preferencesdialog.ui \
-    getinfodialog.ui
+    getinfodialog.ui \
+    maintoolbarwidget.ui \
+    maintoolbarwidget.ui
