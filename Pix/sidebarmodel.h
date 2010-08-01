@@ -49,7 +49,7 @@ class SidebarItem {
 
 public:
 
-    SidebarItem(const QModelIndex&);
+    SidebarItem(const QModelIndex&idx);
 
     SidebarType type() const {
         return myType;

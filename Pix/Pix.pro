@@ -14,7 +14,8 @@ SOURCES += main.cpp \
     maintoolbarwidget.cpp \
     sidebarmodel.cpp \
     kernel.cpp \
-    sidebardelegate.cpp
+    sidebardelegate.cpp \
+    slideshow.cpp
 HEADERS += mainwindow.h \
     mainsidebar.h \
     mainsidebar.h \
@@ -25,7 +26,8 @@ HEADERS += mainwindow.h \
     maintoolbarwidget.h \
     sidebarmodel.h \
     kernel.h \
-    sidebardelegate.h
+    sidebardelegate.h \
+    slideshow.h
 FORMS += mainwindow.ui \
     mainsidebar.ui \
     mainview.ui \
@@ -33,4 +35,5 @@ FORMS += mainwindow.ui \
     preferencesdialog.ui \
     getinfodialog.ui \
     maintoolbarwidget.ui \
-    maintoolbarwidget.ui
+    maintoolbarwidget.ui \
+    slideshow.ui

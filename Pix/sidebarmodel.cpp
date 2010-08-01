@@ -37,3 +37,14 @@ int SidebarModel::rowCount(const QModelIndex &parent) const {
     return 10;
 }
 
+SidebarItem::SidebarItem(const QModelIndex &idx) :
+    myIndex(idx)
+{
+    if (idx.parent().isValid()) {
+        switch (idx.parent().row()) {
+            // TODO
+        }
+    } else {
+        // TODO
+    }
+}
