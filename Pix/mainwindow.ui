@@ -15,6 +15,12 @@
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
+    <property name="margin">
+     <number>0</number>
+    </property>
+    <property name="spacing">
+     <number>0</number>
+    </property>
     <item row="0" column="0">
      <widget class="MainSidebar" name="mainSidebar">
       <property name="minimumSize">
@@ -130,6 +136,8 @@
     </property>
     <addaction name="actionFull_Screen"/>
     <addaction name="actionShow_Sidebar"/>
+    <addaction name="actionShow_Toolbar"/>
+    <addaction name="actionShow_Status_Bar"/>
    </widget>
    <widget class="QMenu" name="menuTools">
     <property name="title">
@@ -240,6 +248,28 @@
    </property>
    <property name="text">
     <string>Show Sidebar</string>
+   </property>
+  </action>
+  <action name="actionShow_Toolbar">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show Toolbar</string>
+   </property>
+  </action>
+  <action name="actionShow_Status_Bar">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show Status Bar</string>
    </property>
   </action>
  </widget>

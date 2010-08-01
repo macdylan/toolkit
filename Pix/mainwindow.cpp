@@ -1,16 +1,26 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include "aboutdialog.h"
+#include "preferencesdialog.h"
+#include "getinfodialog.h"
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    this->aboutDialog = new AboutDialog(this);
+    this->preferencesDialog = new PreferencesDialog(this);
+    this->getInfoDialog = new GetInfoDialog(this);
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+    delete aboutDialog;
+    delete preferencesDialog;
+    delete getInfoDialog;
 }
 
 void MainWindow::changeEvent(QEvent *e)
@@ -40,5 +50,41 @@ void MainWindow::on_actionShow_Sidebar_triggered(bool checked)
         this->ui->mainSidebar->show();
     } else {
         this->ui->mainSidebar->hide();
+    }
+}
+
+void MainWindow::on_actionAbout_triggered()
+{
+    this->aboutDialog->show();
+}
+
+void MainWindow::on_actionPreferences_triggered()
+{
+    this->preferencesDialog->show();
+}
+
+void MainWindow::on_actionGet_Info_triggered()
+{
+    bool couldGetInfo = true;
+    if (couldGetInfo) {
+        this->getInfoDialog->show();
+    }
+}
+
+void MainWindow::on_actionShow_Toolbar_triggered(bool checked)
+{
+    if (checked) {
+        this->ui->mainToolBar->show();
+    } else {
+        this->ui->mainToolBar->hide();
+    }
+}
+
+void MainWindow::on_actionShow_Status_Bar_triggered(bool checked)
+{
+    if (checked) {
+        this->ui->statusBar->show();
+    } else {
+        this->ui->statusBar->hide();
     }
 }

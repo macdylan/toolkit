@@ -3,6 +3,10 @@
 
 #include <QMainWindow>
 
+class AboutDialog;
+class PreferencesDialog;
+class GetInfoDialog;
+
 namespace Ui {
     class MainWindow;
 }
@@ -19,8 +23,16 @@ protected:
 private:
     Ui::MainWindow *ui;
 
+    AboutDialog *aboutDialog;
+    PreferencesDialog *preferencesDialog;
+    GetInfoDialog *getInfoDialog;
 
 private slots:
+    void on_actionShow_Status_Bar_triggered(bool checked);
+    void on_actionShow_Toolbar_triggered(bool checked);
+    void on_actionGet_Info_triggered();
+    void on_actionPreferences_triggered();
+    void on_actionAbout_triggered();
     void on_actionShow_Sidebar_triggered(bool checked);
     void on_actionFull_Screen_triggered(bool checked);
 };

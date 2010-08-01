@@ -7,11 +7,20 @@ TEMPLATE = app
 SOURCES += main.cpp \
     mainwindow.cpp \
     mainsidebar.cpp \
-    mainview.cpp
+    mainview.cpp \
+    aboutdialog.cpp \
+    preferencesdialog.cpp \
+    getinfodialog.cpp
 HEADERS += mainwindow.h \
     mainsidebar.h \
     mainsidebar.h \
-    mainview.h
+    mainview.h \
+    aboutdialog.h \
+    preferencesdialog.h \
+    getinfodialog.h
 FORMS += mainwindow.ui \
     mainsidebar.ui \
-    mainview.ui
+    mainview.ui \
+    aboutdialog.ui \
+    preferencesdialog.ui \
+    getinfodialog.ui
