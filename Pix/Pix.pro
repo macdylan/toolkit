@@ -15,7 +15,8 @@ SOURCES += main.cpp \
     sidebarmodel.cpp \
     kernel.cpp \
     sidebardelegate.cpp \
-    slideshow.cpp
+    slideshow.cpp \
+    myroundbutton.cpp
 HEADERS += mainwindow.h \
     mainsidebar.h \
     mainsidebar.h \
@@ -27,7 +28,8 @@ HEADERS += mainwindow.h \
     sidebarmodel.h \
     kernel.h \
     sidebardelegate.h \
-    slideshow.h
+    slideshow.h \
+    myroundbutton.h
 FORMS += mainwindow.ui \
     mainsidebar.ui \
     mainview.ui \
