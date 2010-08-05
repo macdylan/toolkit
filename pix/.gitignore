@@ -5,3 +5,4 @@ build/
 Makefile
 Rakefile
 rake.gen.conf
+*.swp
