@@ -7,6 +7,7 @@
 
 #include "sqlite3/sqlite3.h"
 
+#include "mylock.h"
 #include "pixlibrary.h"
 #include "pixalbum.h"
 #include "pagingtree.h"
@@ -57,7 +58,9 @@ private:
 
   std::string fname;
   std::vector<PixAlbum> cachedAlbums;
+  MyLock cachedAlbumsLock;
   std::vector<PixLibrary> cachedLibraries;
+  MyLock cachedLibrariesLock;
   sqlite3* conn;
 };
 

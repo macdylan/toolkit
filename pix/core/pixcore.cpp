@@ -6,7 +6,7 @@
 #include <sstream>
 #include <errno.h>
 
-using namespace std;
+#include "mylock.h"
 
 #include "pixcore.h"
 
@@ -148,12 +148,14 @@ vector<PixAlbum> PixCore::listAlbums(bool nocache /* = false */) {
       sqlite3_free(error_msg);
       exit(1);
     }
+    MyScopedLock(&this->cachedAlbumsLock);
     this->cachedAlbums = albums;
   }
   return this->cachedAlbums;
 }
 
 bool PixCore::hasAlbum(const string& aname) {
+  MyScopedLock(&this->cachedAlbumsLock);
   for (vector<PixAlbum>::iterator it = this->cachedAlbums.begin(); it != this->cachedAlbums.end(); ++it) {
     if (it->getName() == aname) {
       return true;
@@ -194,6 +196,7 @@ int PixCore::renameAlbum(const string& oldName, const string& newName) {
   if (this->hasAlbum(newName)) {
     return EEXIST;
   }
+  MyScopedLock(&this->cachedAlbumsLock);
   for (vector<PixAlbum>::iterator it = this->cachedAlbums.begin(); it != this->cachedAlbums.end(); ++it) {
     if (it->getName() == oldName) {
       my_exec(this->conn, "update albums set album_name = \"" + newName + "\" where album_name = \"" + oldName + "\"");
@@ -202,8 +205,10 @@ int PixCore::renameAlbum(const string& oldName, const string& newName) {
     }
   }
   return ENOENT;
-} 
+}
+
 int PixCore::getAlbum(const string& aname, PixAlbum& album) {
+  MyScopedLock(&this->cachedAlbumsLock);
   for (vector<PixAlbum>::iterator it = this->cachedAlbums.begin(); it != this->cachedAlbums.end(); ++it) {
     if (it->getName() == aname) {
       album = *it;
@@ -242,12 +247,14 @@ vector<PixLibrary> PixCore::listLibraries(bool nocache /* = false */) {
       //sqlite3_free(error_msg);
       exit(1);
     }
+    MyScopedLock(&this->cachedLibrariesLock);
     this->cachedLibraries = libraries;
   }
   return this->cachedLibraries;
 }
 
 bool PixCore::hasLibrary(const std::string& lname) {
+  MyScopedLock(&this->cachedLibrariesLock);
   for (vector<PixLibrary>::iterator it = this->cachedLibraries.begin(); it != this->cachedLibraries.end(); ++it) {
     if (it->getName() == lname) {
       return true;
@@ -288,6 +295,7 @@ int PixCore::renameLibrary(const string& oldName, const string& newName) {
   if (this->hasLibrary(newName)) {
     return EEXIST;
   }
+  MyScopedLock(&this->cachedLibrariesLock);
   for (vector<PixLibrary>::iterator it = this->cachedLibraries.begin(); it != this->cachedLibraries.end(); ++it) {
     if (it->getName() == oldName) {
       my_exec(this->conn, "update libraries set library_name = \"" + newName + "\" where library_name = \"" + oldName + "\"");
@@ -299,6 +307,7 @@ int PixCore::renameLibrary(const string& oldName, const string& newName) {
 }
 
 int PixCore::getLibrary(const string& lname, PixLibrary& library) {
+  MyScopedLock(&this->cachedLibrariesLock);
   for (vector<PixLibrary>::iterator it = this->cachedLibraries.begin(); it != this->cachedLibraries.end(); ++it) {
     if (it->getName() == lname) {
       library = *it;
