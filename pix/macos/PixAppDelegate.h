@@ -1,6 +1,6 @@
 //
-//  PixMacAppDelegate.h
-//  PixMac
+//  PixAppDelegate.h
+//  Pix
 //
 //  Created by Santa Zhang on 8/5/10.
 //  Copyright 2010 Tsinghua University. All rights reserved.
@@ -8,7 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 
-@interface PixMacAppDelegate : NSObject <NSApplicationDelegate> {
+@interface PixAppDelegate : NSObject <NSApplicationDelegate> {
     NSWindow *window;
 }
 

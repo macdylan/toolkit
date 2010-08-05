@@ -1,14 +1,14 @@
 //
-//  PixMacAppDelegate.m
-//  PixMac
+//  PixAppDelegate.m
+//  Pix
 //
 //  Created by Santa Zhang on 8/5/10.
 //  Copyright 2010 Tsinghua University. All rights reserved.
 //
 
-#import "PixMacAppDelegate.h"
+#import "PixAppDelegate.h"
 
-@implementation PixMacAppDelegate
+@implementation PixAppDelegate
 
 @synthesize window;
 

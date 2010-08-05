@@ -1,6 +1,6 @@
 //
 //  main.m
-//  PixMac
+//  Pix
 //
 //  Created by Santa Zhang on 8/5/10.
 //  Copyright 2010 Tsinghua University. All rights reserved.
