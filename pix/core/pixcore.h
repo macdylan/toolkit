@@ -62,6 +62,7 @@ private:
   std::vector<PixLibrary> cachedLibraries;
   MyLock cachedLibrariesLock;
   sqlite3* conn;
+  MyLock connLock;
 };
 
 #endif  // PIX_CORE_H_

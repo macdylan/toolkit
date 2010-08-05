@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <vector>
+#include <sstream>
 
 #include "pixcore.h"
 
@@ -36,6 +37,13 @@ void do_test() {
     printf("library: (%d) %s\n", it->getId(), it->getName().c_str());
   }
   pc.removeLibrary("lib2");
+  for (int i = 4; i < 1000; i++) {
+    ostringstream o1;
+    ostringstream o2;
+    o1 << "lib" << i;
+    o2 << "lib" << (i + 1);
+    pc.renameLibrary(o1.str().c_str(), o2.str().c_str());
+  }
   libraries = pc.listLibraries();
   for (vector<PixLibrary>::iterator it = libraries.begin(); it != libraries.end(); ++it) {
     printf("library: (%d) %s\n", it->getId(), it->getName().c_str());

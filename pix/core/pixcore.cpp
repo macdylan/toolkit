@@ -12,7 +12,8 @@
 
 using namespace std;
 
-static void my_exec(sqlite3* conn, const char* sql) {
+static void my_exec(sqlite3* conn, const char* sql, MyLock* l) {
+  MyScopedLock lock(l);
   char* error_msg = NULL;
   printf("[exec] %s\n", sql);
   int ret = sqlite3_exec(conn, sql, NULL, NULL, &error_msg);
@@ -25,8 +26,8 @@ static void my_exec(sqlite3* conn, const char* sql) {
   }
 }
 
-static void my_exec(sqlite3* conn, const string& sql) {
-  my_exec(conn, sql.c_str());
+static void my_exec(sqlite3* conn, const string& sql, MyLock* l) {
+  my_exec(conn, sql.c_str(), l);
 }
 
 PixCore::PixCore(const string& fn) : fname(fn), conn(NULL) {
@@ -35,38 +36,45 @@ PixCore::PixCore(const string& fn) : fname(fn), conn(NULL) {
   my_exec(this->conn,
           "create table if not exists libraries("
             "library_id integer primary key,"
-            "library_name text)");
+            "library_name text)",
+          &this->connLock);
   
   my_exec(this->conn,
           "create table if not exists albums("
             "album_id integer primary key,"
-            "album_name text unique)");
+            "album_name text unique)",
+          &this->connLock);
 
   my_exec(this->conn,
           "create table if not exists images("
             "image_id integer primary key,"
             "id_in_library integer,"
-            "library_id integer)");
+            "library_id integer)",
+          &this->connLock);
 
   my_exec(this->conn,
           "create table if not exists tags("
             "tag_id integer primary key,"
-            "tag_name text)");
+            "tag_name text)",
+          &this->connLock);
 
   my_exec(this->conn,
           "create table if not exists images_has_tags("
             "image_id integer,"
-            "tag_id integer)");
+            "tag_id integer)",
+          &this->connLock);
 
   my_exec(this->conn,
           "create table if not exists albums_has_images("
             "image_id integer,"
-            "album_id integer)");
+            "album_id integer)",
+          &this->connLock);
   
   my_exec(this->conn,
           "create table if not exists settings("
             "key text primary key,"
-            "value text)");
+            "value text)",
+          &this->connLock);
 
   my_exec(this->conn,
           "create table if not exists library_paging("
@@ -75,37 +83,48 @@ PixCore::PixCore(const string& fn) : fname(fn), conn(NULL) {
             "parent_id integer,"
             "subtree_count integer,"
             "first_id_in_library integer,"
-            "last_id_in_library integer)");
+            "last_id_in_library integer)",
+          &this->connLock);
 
   my_exec(this->conn,
-          "create index if not exists index1 on images(image_id)");
+          "create index if not exists index1 on images(image_id)",
+          &this->connLock);
 
   my_exec(this->conn,
-          "create index if not exists index2 on images(id_in_library, library_id)");
+          "create index if not exists index2 on images(id_in_library, library_id)",
+          &this->connLock);
 
   my_exec(this->conn,
-          "create index if not exists index3 on tags(tag_id)");
+          "create index if not exists index3 on tags(tag_id)",
+          &this->connLock);
 
   my_exec(this->conn,
-          "create index if not exists index4 on tags(tag_name)");
+          "create index if not exists index4 on tags(tag_name)",
+          &this->connLock);
 
   my_exec(this->conn,
-          "create index if not exists index5 on images_has_tags(image_id)");
+          "create index if not exists index5 on images_has_tags(image_id)",
+          &this->connLock);
 
   my_exec(this->conn,
-          "create index if not exists index6 on images_has_tags(tag_id)");
+          "create index if not exists index6 on images_has_tags(tag_id)",
+          &this->connLock);
 
   my_exec(this->conn,
-          "create index if not exists index7 on albums_has_images(album_id)");
+          "create index if not exists index7 on albums_has_images(album_id)",
+          &this->connLock);
 
   my_exec(this->conn,
-          "create index if not exists index8 on albums_has_images(image_id)");
+          "create index if not exists index8 on albums_has_images(image_id)",
+          &this->connLock);
 
   my_exec(this->conn,
-          "create index if not exists index9 on library_paging(id, library_id)");
+          "create index if not exists index9 on library_paging(id, library_id)",
+          &this->connLock);
 
   my_exec(this->conn,
-          "create index if not exists index10 on library_paging(parent_id, library_id)");
+          "create index if not exists index10 on library_paging(parent_id, library_id)",
+          &this->connLock);
 
   // load albums into cache
   this->reloadAlbums();
@@ -138,6 +157,7 @@ static int list_albums_into_vector(void* vec_ptr, int n_cols, char* val[], char*
 
 vector<PixAlbum> PixCore::listAlbums(bool nocache /* = false */) {
   if (nocache) {
+    MyScopedLock lock(&this->connLock);
     vector<PixAlbum> albums;
     char* error_msg = NULL;
     int ret = sqlite3_exec(this->conn, "select album_id, album_name from albums",
@@ -168,7 +188,7 @@ int PixCore::addAlbum(const string& aname) {
   if (this->hasAlbum(aname)) {
     return EEXIST;
   } else {
-    my_exec(this->conn, "insert into albums(album_name) values(\"" + aname + "\")");
+    my_exec(this->conn, "insert into albums(album_name) values(\"" + aname + "\")", &this->connLock);
     this->reloadAlbums();
     return 0;
   }
@@ -176,12 +196,12 @@ int PixCore::addAlbum(const string& aname) {
 
 int PixCore::removeAlbum(const string& aname) {
   if (this->hasAlbum(aname)) {
-    my_exec(this->conn, "delete from albums where album_name = \"" + aname + "\"");
+    my_exec(this->conn, "delete from albums where album_name = \"" + aname + "\"", &this->connLock);
     ostringstream oss;
     PixAlbum album;
     this->getAlbum(aname, album);
     oss << album.getId();
-    my_exec(this->conn, "delete from albums_has_images where album_id = \"" + oss.str() + "\"");
+    my_exec(this->conn, "delete from albums_has_images where album_id = \"" + oss.str() + "\"", &this->connLock);
     this->reloadAlbums();
     return 0;
   } else {
@@ -199,7 +219,7 @@ int PixCore::renameAlbum(const string& oldName, const string& newName) {
   MyScopedLock(&this->cachedAlbumsLock);
   for (vector<PixAlbum>::iterator it = this->cachedAlbums.begin(); it != this->cachedAlbums.end(); ++it) {
     if (it->getName() == oldName) {
-      my_exec(this->conn, "update albums set album_name = \"" + newName + "\" where album_name = \"" + oldName + "\"");
+      my_exec(this->conn, "update albums set album_name = \"" + newName + "\" where album_name = \"" + oldName + "\"", &this->connLock);
       *it = PixAlbum(it->getId(), newName);
       return 0;
     }
@@ -237,6 +257,7 @@ static int list_libraries_into_vector(void* vec_ptr, int n_cols, char* val[], ch
 
 vector<PixLibrary> PixCore::listLibraries(bool nocache /* = false */) {
   if (nocache) {
+    MyScopedLock lock(&this->connLock);
     vector<PixLibrary> libraries;
     char* error_msg = NULL;
     int ret = sqlite3_exec(this->conn, "select library_id, library_name from libraries",
@@ -267,7 +288,7 @@ int PixCore::addLibrary(const string& lname) {
   if (this->hasLibrary(lname)) {
     return EEXIST;
   } else {
-    my_exec(this->conn, "insert into libraries(library_name) values(\"" + lname + "\")");
+    my_exec(this->conn, "insert into libraries(library_name) values(\"" + lname + "\")", &this->connLock);
     this->reloadLibraries();
     return 0;
   }
@@ -275,12 +296,12 @@ int PixCore::addLibrary(const string& lname) {
 
 int PixCore::removeLibrary(const string& lname) {
   if (this->hasLibrary(lname)) {
-    my_exec(this->conn, "delete from libraries where library_name = \"" + lname + "\"");
+    my_exec(this->conn, "delete from libraries where library_name = \"" + lname + "\"", &this->connLock);
     ostringstream oss;
     PixLibrary library;
     this->getLibrary(lname, library);
     oss << library.getId();
-    my_exec(this->conn, "delete from images where library_id = \"" + oss.str() + "\"");
+    my_exec(this->conn, "delete from images where library_id = \"" + oss.str() + "\"", &this->connLock);
     this->reloadLibraries();
     return 0;
   } else {
@@ -298,7 +319,8 @@ int PixCore::renameLibrary(const string& oldName, const string& newName) {
   MyScopedLock(&this->cachedLibrariesLock);
   for (vector<PixLibrary>::iterator it = this->cachedLibraries.begin(); it != this->cachedLibraries.end(); ++it) {
     if (it->getName() == oldName) {
-      my_exec(this->conn, "update libraries set library_name = \"" + newName + "\" where library_name = \"" + oldName + "\"");
+      my_exec(this->conn, "update libraries set library_name = \"" + newName +
+                        "\" where library_name = \"" + oldName + "\"", &this->connLock);
       *it = PixLibrary(it->getId(), newName);
       return 0;
     }
