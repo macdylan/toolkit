@@ -36,7 +36,7 @@ PixCore::PixCore(const string& fn) : fname(fn), conn(NULL) {
   my_exec(this->conn,
           "create table if not exists libraries("
             "library_id integer primary key,"
-            "library_name text)",
+            "library_name text unique)",
           &this->connLock);
   
   my_exec(this->conn,
@@ -55,7 +55,7 @@ PixCore::PixCore(const string& fn) : fname(fn), conn(NULL) {
   my_exec(this->conn,
           "create table if not exists tags("
             "tag_id integer primary key,"
-            "tag_name text)",
+            "tag_name text unique)",
           &this->connLock);
 
   my_exec(this->conn,
@@ -126,9 +126,10 @@ PixCore::PixCore(const string& fn) : fname(fn), conn(NULL) {
           "create index if not exists index10 on library_paging(parent_id, library_id)",
           &this->connLock);
 
-  // load albums into cache
+  // load cached info
   this->reloadAlbums();
   this->reloadLibraries();
+  this->reloadTags();
 }
 
 PixCore::~PixCore() {
@@ -155,8 +156,8 @@ static int list_albums_into_vector(void* vec_ptr, int n_cols, char* val[], char*
   return 0;
 }
 
-vector<PixAlbum> PixCore::listAlbums(bool nocache /* = false */) {
-  if (nocache) {
+vector<PixAlbum> PixCore::listAlbums(bool refresh /* = false */) {
+  if (refresh) {
     MyScopedLock lock(&this->connLock);
     vector<PixAlbum> albums;
     char* error_msg = NULL;
@@ -255,8 +256,8 @@ static int list_libraries_into_vector(void* vec_ptr, int n_cols, char* val[], ch
   return 0;
 }
 
-vector<PixLibrary> PixCore::listLibraries(bool nocache /* = false */) {
-  if (nocache) {
+vector<PixLibrary> PixCore::listLibraries(bool refresh /* = false */) {
+  if (refresh) {
     MyScopedLock lock(&this->connLock);
     vector<PixLibrary> libraries;
     char* error_msg = NULL;
@@ -333,6 +334,106 @@ int PixCore::getLibrary(const string& lname, PixLibrary& library) {
   for (vector<PixLibrary>::iterator it = this->cachedLibraries.begin(); it != this->cachedLibraries.end(); ++it) {
     if (it->getName() == lname) {
       library = *it;
+      return 0;
+    }
+  }
+  return ENOENT;
+}
+
+static int list_tags_into_vector(void* vec_ptr, int n_cols, char* val[], char* col[]) {
+  assert(n_cols == 2);
+  int tid = -1;
+  char* tname = NULL;
+  for (int i = 0; i < n_cols; i++) {
+    if (strcmp(col[i], "tag_id") == 0) {
+      tid = atoi(val[i]);
+    } else if (strcmp(col[i], "tag_name") == 0) {
+      tname = val[i];
+    }
+  }
+  assert(tid != -1 && tname != NULL);
+  PixTag tag(tid, tname);
+  ((vector<PixTag>*) vec_ptr)->push_back(tag);
+  return 0;
+}
+
+vector<PixTag> PixCore::listTags(bool refresh /* = false */) {
+  if (refresh) {
+    MyScopedLock lock(&this->connLock);
+    vector<PixTag> tags;
+    char* error_msg = NULL;
+    int ret = sqlite3_exec(this->conn, "select tag_id, tag_name from tags",
+        list_tags_into_vector,
+        &tags, &error_msg);
+    if (ret != SQLITE_OK) {
+      printf("[fatal] sqlite: %s\n", error_msg);
+      sqlite3_free(error_msg);
+      exit(1);
+    }
+    MyScopedLock(&this->cachedTagsLock);
+    this->cachedTags = tags;
+  }
+  return this->cachedTags;
+}
+
+bool PixCore::hasTag(const string& tname) {
+  MyScopedLock(&this->cachedTagsLock);
+  for (vector<PixTag>::iterator it = this->cachedTags.begin(); it != this->cachedTags.end(); ++it) {
+    if (it->getName() == tname) {
+      return true;
+    }
+  }
+  return false;
+}
+
+int PixCore::addTag(const string& tname) {
+  if (this->hasTag(tname)) {
+    return EEXIST;
+  } else {
+    my_exec(this->conn, "insert into tags(tag_name) values(\"" + tname + "\")", &this->connLock);
+    this->reloadTags();
+    return 0;
+  }
+}
+
+int PixCore::removeTag(const string& tname) {
+  if (this->hasTag(tname)) {
+    my_exec(this->conn, "delete from tags where tag_name = \"" + tname + "\"", &this->connLock);
+    ostringstream oss;
+    PixTag tag;
+    this->getTag(tname, tag);
+    oss << tag.getId();
+    my_exec(this->conn, "delete from images_has_tags where tag_id = \"" + oss.str() + "\"", &this->connLock);
+    this->reloadTags();
+    return 0;
+  } else {
+    return ENOENT;
+  }
+}
+
+int PixCore::renameTag(const string& oldName, const string& newName) {
+  if (oldName == newName) {
+    return 0;
+  }
+  if (this->hasTag(newName)) {
+    return EEXIST;
+  }
+  MyScopedLock(&this->cachedTagsLock);
+  for (vector<PixTag>::iterator it = this->cachedTags.begin(); it != this->cachedTags.end(); ++it) {
+    if (it->getName() == oldName) {
+      my_exec(this->conn, "update tags set tag_name = \"" + newName + "\" where tag_name = \"" + oldName + "\"", &this->connLock);
+      *it = PixTag(it->getId(), newName);
+      return 0;
+    }
+  }
+  return ENOENT;
+}
+
+int PixCore::getTag(const string& tname, PixTag& tag) {
+  MyScopedLock(&this->cachedTagsLock);
+  for (vector<PixTag>::iterator it = this->cachedTags.begin(); it != this->cachedTags.end(); ++it) {
+    if (it->getName() == tname) {
+      tag = *it;
       return 0;
     }
   }

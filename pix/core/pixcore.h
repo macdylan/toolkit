@@ -10,6 +10,7 @@
 #include "mylock.h"
 #include "pixlibrary.h"
 #include "pixalbum.h"
+#include "pixtag.h"
 #include "pagingtree.h"
 
 class PixCore {
@@ -18,7 +19,7 @@ public:
   explicit PixCore(const std::string& fn);
   ~PixCore();
 
-  std::vector<PixAlbum> listAlbums(bool nocache = false);
+  std::vector<PixAlbum> listAlbums(bool refresh = false);
 
   void reloadAlbums() {
     this->listAlbums(true);
@@ -34,7 +35,7 @@ public:
 
   int getAlbum(const std::string& aname, PixAlbum& album);
 
-  std::vector<PixLibrary> listLibraries(bool nocache = false);
+  std::vector<PixLibrary> listLibraries(bool refresh = false);
 
   void reloadLibraries() {
     this->listLibraries(true);
@@ -50,6 +51,22 @@ public:
 
   int getLibrary(const std::string& lname, PixLibrary& library);
 
+  std::vector<PixTag> listTags(bool refresh = false);
+
+  void reloadTags() {
+    this->listTags(true);
+  }
+
+  bool hasTag(const std::string& tname);
+
+  int addTag(const std::string& tname);
+
+  int removeTag(const std::string& tname);
+
+  int renameTag(const std::string& oldName, const std::string& newName);
+
+  int getTag(const std::string& tname, PixTag& tag);
+
 private:
 
   // disallow
@@ -61,6 +78,8 @@ private:
   MyLock cachedAlbumsLock;
   std::vector<PixLibrary> cachedLibraries;
   MyLock cachedLibrariesLock;
+  std::vector<PixTag> cachedTags;
+  MyLock cachedTagsLock;
   sqlite3* conn;
   MyLock connLock;
 };

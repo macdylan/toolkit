@@ -37,16 +37,29 @@ void do_test() {
     printf("library: (%d) %s\n", it->getId(), it->getName().c_str());
   }
   pc.removeLibrary("lib2");
-  for (int i = 4; i < 1000; i++) {
+/*  for (int i = 4; i < 1000; i++) {
     ostringstream o1;
     ostringstream o2;
     o1 << "lib" << i;
     o2 << "lib" << (i + 1);
     pc.renameLibrary(o1.str().c_str(), o2.str().c_str());
-  }
+  }*/
   libraries = pc.listLibraries();
   for (vector<PixLibrary>::iterator it = libraries.begin(); it != libraries.end(); ++it) {
     printf("library: (%d) %s\n", it->getId(), it->getName().c_str());
+  }
+  vector<PixTag> tags = pc.listTags();
+  pc.addTag("tag1");
+  pc.addTag("tag2");
+  for (vector<PixTag>::iterator it = tags.begin(); it != tags.end(); ++it) {
+    printf("tags: (%d) %s\n", it->getId(), it->getName().c_str());
+  }
+  pc.renameTag("tag1", "xtag1");
+  pc.renameTag("x", "y");
+  pc.removeTag("tag2");
+  tags = pc.listTags();
+  for (vector<PixTag>::iterator it = tags.begin(); it != tags.end(); ++it) {
+    printf("tags: (%d) %s\n", it->getId(), it->getName().c_str());
   }
 }
 
