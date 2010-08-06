@@ -130,6 +130,7 @@ PixCore::PixCore(const string& fn) : fname(fn), conn(NULL) {
   this->reloadAlbums();
   this->reloadLibraries();
   this->reloadTags();
+  this->reloadSettings();
 }
 
 PixCore::~PixCore() {
@@ -422,6 +423,7 @@ int PixCore::renameTag(const string& oldName, const string& newName) {
   for (vector<PixTag>::iterator it = this->cachedTags.begin(); it != this->cachedTags.end(); ++it) {
     if (it->getName() == oldName) {
       my_exec(this->conn, "update tags set tag_name = \"" + newName + "\" where tag_name = \"" + oldName + "\"", &this->connLock);
+      // TODO handle error. renaming might fail
       *it = PixTag(it->getId(), newName);
       return 0;
     }
@@ -438,5 +440,77 @@ int PixCore::getTag(const string& tname, PixTag& tag) {
     }
   }
   return ENOENT;
+}
+
+bool PixCore::hasSetting(const string& key) {
+  MyScopedLock lock(&this->cachedSettingsLock);
+  if (this->cachedSettings.find(key) == this->cachedSettings.end()) {
+    return false;
+  } else {
+    return true;
+  }
+}
+
+int PixCore::getSetting(const string& key, string& value) {
+  MyScopedLock lock(&this->cachedSettingsLock);
+  map<string, string>::iterator it = this->cachedSettings.find(key);
+  if (it == this->cachedSettings.end()) {
+    return ENOENT;
+  } else {
+    value = it->second;
+    return 0;
+  }
+}
+
+int PixCore::setSetting(const string& key, const string& value) {
+  MyScopedLock lock(&this->cachedSettingsLock);
+  this->cachedSettings[key] = value;
+  // TODO what if value has ""?
+  my_exec(this->conn, "update settings set value = \"" + value + "\" where key = \"" + key + "\"", &this->connLock);
+  // TODO handle error
+  return 0;
+}
+
+static int list_settings_into_vector(void* vec_ptr, int n_cols, char* val[], char* col[]) {
+  assert(n_cols == 2);
+  char* key = NULL;
+  char* value = NULL;
+  for (int i = 0; i < n_cols; i++) {
+    if (strcmp(col[i], "key") == 0) {
+      key = col[i];
+    } else if (strcmp(col[i], "value") == 0) {
+      value = col[i];
+    }
+  }
+  assert(key != NULL && value != NULL);
+  ((vector<pair<string, string> >*) vec_ptr)->push_back(make_pair<string, string>(key, value));
+  return 0;
+}
+
+vector<pair<string, string> > PixCore::listSettings(bool refresh /* = false */) {
+  vector<pair<string, string> > settings;
+  if (refresh) {
+    MyScopedLock lock(&this->connLock);
+    char* error_msg = NULL;
+    int ret = sqlite3_exec(this->conn, "select key, value from settings",
+        list_settings_into_vector,
+        &settings, &error_msg);
+    if (ret != SQLITE_OK) {
+      printf("[fatal] sqlite: %s\n", error_msg);
+      sqlite3_free(error_msg);
+      exit(1);
+    }
+    MyScopedLock(&this->cachedSettingsLock);
+    this->cachedSettings.clear();
+    for (vector<pair<string, string> >::iterator it = settings.begin(); it != settings.end(); ++it) {
+      this->cachedSettings[it->first] = it->second;
+    }
+  } {
+    MyScopedLock(&this->cachedSettingsLock);
+    for (map<string, string>::iterator it = this->cachedSettings.begin(); it != this->cachedSettings.end(); ++it) {
+      settings.push_back(*it);
+    }
+  }
+  return settings;
 }
 

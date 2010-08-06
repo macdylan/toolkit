@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <utility>
 
 #include "sqlite3/sqlite3.h"
 
@@ -67,6 +68,18 @@ public:
 
   int getTag(const std::string& tname, PixTag& tag);
 
+  bool hasSetting(const std::string& key);
+
+  int getSetting(const std::string& key, std::string& value);
+
+  int setSetting(const std::string& key, const std::string& value);
+
+  std::vector<std::pair<std::string, std::string> > listSettings(bool refresh = false);
+
+  void reloadSettings() {
+    this->listSettings(true);
+  }
+
 private:
 
   // disallow
@@ -80,6 +93,8 @@ private:
   MyLock cachedLibrariesLock;
   std::vector<PixTag> cachedTags;
   MyLock cachedTagsLock;
+  std::map<std::string, std::string> cachedSettings;
+  MyLock cachedSettingsLock;
   sqlite3* conn;
   MyLock connLock;
 };
