@@ -8,6 +8,8 @@
 #include <pthread.h>
 #endif  // WIN32
 
+#include "utils.h"
+
 class MyLock {
 
 public:
@@ -48,10 +50,7 @@ public:
   }
 
 private:
-  // disallow
-
-  MyLock(const MyLock&) {}
-  void operator =(const MyLock&) {}
+  DISALLOW_ASSIGNMENT(MyLock)
 
 #ifdef WIN32
 // TODO win32 lock
@@ -73,6 +72,8 @@ public:
   }
 
 private:
+  DISALLOW_ASSIGNMENT(MyScopedLock)
+
   MyLock* lock;
 };
 

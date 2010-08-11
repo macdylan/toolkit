@@ -8,6 +8,7 @@
 
 #include "sqlite3/sqlite3.h"
 
+#include "utils.h"
 #include "mylock.h"
 #include "pixlibrary.h"
 #include "pixalbum.h"
@@ -82,9 +83,7 @@ public:
 
 private:
 
-  // disallow
-  PixCore(const PixCore&) {};
-  void operator =(const PixCore&) {};
+  DISALLOW_ASSIGNMENT(PixCore)
 
   std::string fname;
   std::vector<PixAlbum> cachedAlbums;
