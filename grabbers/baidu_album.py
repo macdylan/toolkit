@@ -31,6 +31,13 @@ while True:
 	print "[page] %s" % cur_page
 	page_src = urllib2.urlopen(cur_page).read()
 	
+	idx = page_src.find("<title") + 8
+	idx2 = page_src.find("</title>", idx) - 1
+	page_title = page_src[idx:idx2].strip()
+	#idx3 = page_title.rfind("_")
+	#page_title = page_title[:idx3]
+	print "[title] %s" % page_title
+	
 	idx = page_src.find("albumName: ")
 	idx2 = page_src.find("\n", idx)
 	find_sec = page_src[idx:idx2]
@@ -63,7 +70,7 @@ while True:
 			idx = cur_page.rfind(".")
 			img_url = "http://hiphotos.baidu.com/" + album_owner + "/pic/item/" + image_id + ".jpg"
 			print "[img] %d.jpg: %s" % (pic_sn, img_url)
-			fn = "baidu_album" + os.path.sep + album_name + os.path.sep + ("%d.jpg" % pic_sn)
+			fn = "baidu_album" + os.path.sep + album_name + os.path.sep + ("%s.jpg" % page_title.decode("gbk"))
 			try:
 				if os.path.exists(fn):
 					print "already downloaded, skip"
