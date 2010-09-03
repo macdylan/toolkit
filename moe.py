@@ -678,6 +678,13 @@ def moe_import_rating():
   image_set = raw_input("image set name: ")
   rating_folder = raw_input("ratings folder: ")
   
+  has_highres = False
+  c = DB_CONN.cursor()
+  c.execute("select * from images where set_name = \"%s_highres\" limit 1" % image_set)
+  ret_all = c.fetchall()
+  if len(ret_all) != 0:
+    has_highres = True
+  
   def import_walker(arg, dir, files):
     print "working on dir: %s" % dir
     for file in files:
@@ -708,6 +715,8 @@ def moe_import_rating():
         continue
       c = DB_CONN.cursor()
       c.execute("update images set rating = %d where set_name = '%s' and id_in_set = %d" % (rating_value, image_set, image_id))
+      if has_highres:
+        c.execute("update images set rating = %d where set_name = '%s_highres' and id_in_set = %d" % (rating_value, image_set, image_id))
     db_commit()
     
   os.path.walk(rating_folder, import_walker, None)
@@ -752,6 +761,24 @@ def moe_import_mangameeya_rating():
         img_fn = None
         img_rating = None
     db_commit()
+
+def moe_highres_rating():
+  normal_set = raw_input("The normal res image set:")
+  highres_set = raw_input("The normal res image set[%s_highres]:" % normal_set)
+  if highres_set == "":
+    highres_set = normal_set + "_highres"
+  c = DB_CONN.cursor()
+  c.execute("select id_in_set, rating from images where set_name = \"%s\" and rating is not NULL" % normal_set)
+  ret_all = c.fetchall()
+  print "mirroring %d ratings into highres image set" % len(ret_all)
+  counter = 0
+  for r in ret_all:
+    c.execute("update images set rating = %d where id_in_set = %d and set_name = \"%s\"" % (r[1], r[0], highres_set))
+    if counter % 100 == 0:
+      print "%d done (of %d)" % (counter, len(ret_all))
+      db_commit()
+    counter += 1
+  db_commit()
 
 def moe_mirror_danbooru():
   util_mirror_danbooru_site("http://danbooru.donmai.us")
@@ -1191,6 +1218,7 @@ def moe_help():
   print "  import-black-list          import existing black list file"
   print "  import-rating              import existing rating"
   print "  import-mangameeya-rating   import rating from my MangaMeeya rating_helper.py"
+  print "  highres-rating             mirror rating of normal res image set to highres image set"
   print "  info                       display info about an image"
   print "  info-album                 display info about an album"
   print "  mirror-all                 mirror all known sites"
@@ -1235,6 +1263,8 @@ if __name__ == "__main__":
     moe_import_rating()
   elif sys.argv[1] == "import-mangameeya-rating":
     moe_import_mangameeya_rating()
+  elif sys.argv[1] == "highres-rating":
+    moe_highres_rating()
   elif sys.argv[1] == "info":
     moe_info()
   elif sys.argv[1] == "info-album":
