@@ -20,6 +20,7 @@ static void my_exec(sqlite3* conn, const char* sql, MyLock* l) {
   if (ret != SQLITE_OK) {
     printf("[fatal] sqlite: %s\n", error_msg);
     sqlite3_free(error_msg);
+    sqlite3_close(conn);
     exit(1);
   } else {
     printf("[info] done: %s\n", sql);
@@ -168,6 +169,7 @@ vector<PixAlbum> PixCore::listAlbums(bool refresh /* = false */) {
     if (ret != SQLITE_OK) {
       printf("[fatal] sqlite: %s\n", error_msg);
       sqlite3_free(error_msg);
+      sqlite3_close(conn);
       exit(1);
     }
     MyScopedLock(&this->cachedAlbumsLock);
@@ -267,7 +269,8 @@ vector<PixLibrary> PixCore::listLibraries(bool refresh /* = false */) {
         &libraries, &error_msg);
     if (ret != SQLITE_OK) {
       printf("[fatal] sqlite: %s\n", error_msg);
-      //sqlite3_free(error_msg);
+      sqlite3_free(error_msg);
+      sqlite3_close(conn);
       exit(1);
     }
     MyScopedLock(&this->cachedLibrariesLock);
@@ -369,6 +372,7 @@ vector<PixTag> PixCore::listTags(bool refresh /* = false */) {
     if (ret != SQLITE_OK) {
       printf("[fatal] sqlite: %s\n", error_msg);
       sqlite3_free(error_msg);
+      sqlite3_close(conn);
       exit(1);
     }
     MyScopedLock(&this->cachedTagsLock);
@@ -498,6 +502,7 @@ vector<pair<string, string> > PixCore::listSettings(bool refresh /* = false */) 
     if (ret != SQLITE_OK) {
       printf("[fatal] sqlite: %s\n", error_msg);
       sqlite3_free(error_msg);
+      sqlite3_close(conn);
       exit(1);
     }
     MyScopedLock(&this->cachedSettingsLock);
