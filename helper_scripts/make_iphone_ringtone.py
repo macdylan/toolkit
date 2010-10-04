@@ -46,7 +46,7 @@ if len(sys.argv) != 1:
       ringtone_f = smart_strip(f) + ".m4r"
       print "%s ==> %s" % (f, ringtone_f)
       tmp_f = smart_strip(f) + ".m4a"
-      my_exec("ffmpeg -y -i \"%s\" -t 30 -ac 2 -ar 44100 -ab 320k -acodec libfaac \"%s\"" % (f, tmp_f))
+      my_exec("ffmpeg -y -i \"%s\" -t 40 -ac 2 -ar 44100 -ab 320k -acodec libfaac \"%s\"" % (f, tmp_f))
       my_exec("mv \"%s\" \"%s\"" % (tmp_f, ringtone_f))
 
 
