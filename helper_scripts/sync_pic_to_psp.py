@@ -30,7 +30,7 @@ def do_sync_from_to(from_dir, to_dir):
       continue
     if from_f not in to_dir_ls:
       print "[add] %s" % from_f
-      my_exec("convert \"%s/%s\" -size 1280x800 \"%s/%s\"" % (from_dir, from_f, to_dir, from_f))
+      my_exec("convert \"%s/%s\" -resize 1280x800 \"%s/%s\"" % (from_dir, from_f, to_dir, from_f))
 
 pc_base = "/Users/santa/Dropbox/Photos/"
 psp_base = "/Volumes/NO NAME/Picture/"
