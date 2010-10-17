@@ -81,16 +81,87 @@ def util_make_dirs(path):
     print "[mkdir] %s" % path
     os.makedirs(path)
 
+def is_finished(folder):
+  mark_fn = folder + os.path.sep + "FINISHED"
+  return os.path.exists(mark_fn)
+
+def mark_unfinished(folder):
+  lock_fn = folder + os.path.sep + "UNFINISHED"
+  f = open(lock_fn, "w")
+  f.close()
+
+def mark_finished(folder):
+  lock_fn = folder + os.path.sep + "UNFINISHED"
+  unlock_fn = folder + os.path.sep + "FINISHED"
+  os.rename(lock_fn, unlock_fn)
+
+def do_real_mirror_chapter(chapter_link, folder):
+  util_make_dirs(folder)
+  if (is_finished(folder)):
+    print "[skip] already mirrored or black listed"
+    # TODO blacklist
+  mark_unfinished(folder)
+  
+  chap_src = gunzip(urllib2.urlopen(chapter_link).read())
+  
+  idx = chap_src.find("<div class=\"gdtm")
+  idx = chap_src.find("<a href=", idx) + 9
+  idx2 = chap_src.find("\">", idx)
+  pic_page_url =  chap_src[idx:idx2]
+  
+  while True:
+    pic_src = gunzip(urllib2.urlopen(pic_page_url).read())
+    
+    # determine id
+    idx = pic_src.find("<span>") + 6
+    idx2 = pic_src.find("</span>", idx)
+    cur_pic_id = int(pic_src[idx:idx2])
+    idx = pic_src.find("<span>", idx2) + 6
+    idx2 = pic_src.find("</span>", idx)
+    total_pic_count = int(pic_src[idx:idx2])
+    print "%03d-of-%d" % (cur_pic_id, total_pic_count)
+    
+    # find image url
+    idx = pic_src.find("</iframe>")
+    idx = pic_src.find("<img src=\"", idx) + 10
+    idx2 = pic_src.find("\" style", idx)
+    img_url = pic_src[idx:idx2]
+    img_fn = img_url.split("/")[-1]
+    short_local_fn = "%03d-of-%d_%s" % (cur_pic_id, total_pic_count, img_fn)
+    local_fn = folder + os.path.sep + short_local_fn
+    print img_url, local_fn
+    tmp_fn = local_fn + ".tmp"
+    if not os.path.exists(local_fn):
+      tmp_f = open(tmp_fn, "wb")
+      tmp_f.write(urllib2.urlopen(img_url).read())
+      tmp_f.close()
+      os.rename(tmp_fn, local_fn)
+    else:
+      print "[skip] %s already downloaded" % short_local_fn
+    
+    
+    # find next page
+    
+    idx = pic_src.find("/img/p.png")
+    idx = pic_src.find("a href=", idx) + 8
+    idx2 = pic_src.find("\"", idx)
+    
+    if pic_page_url == pic_src[idx:idx2]:
+      break
+    else:
+      pic_page_url = pic_src[idx:idx2]
+  
+  mark_finished(folder)
 
 def do_mirror_chapter(genre, chapter_id, chapter_name, chapter_ranking, chapter_link):
   folder = "eh_down" + os.path.sep + genre + os.path.sep + chapter_id + "-" + chapter_name
-  util_make_dirs(folder)
+  do_real_mirror_chapter(chapter_link, folder)
 
 def start_download_from_index_page(page_id):
   while True:
     try:
       page_url = "http://g.e-hentai.org/?page=%d" % page_id
-      print "[index page] %s" % page_url
+      print "\n[index page] %s" % page_url
       page_data = gunzip(urllib2.urlopen(page_url).read())
     
       # analyze index table
@@ -128,7 +199,7 @@ def start_download_from_index_page(page_id):
         idx6 = page_data.find(".gif", idx5)
         chapter_ranking = page_data[idx5:idx6]
       
-        print "[%s] #%s - %s\nranking:%s, link:%s\n" % (genre, chapter_id, chapter_name, chapter_ranking, chapter_link)
+        print "\n[%s] #%s - %s\nranking:%s, link:%s" % (genre, chapter_id, chapter_name, chapter_ranking, chapter_link)
         do_mirror_chapter(genre, chapter_id, chapter_name, chapter_ranking, chapter_link)
       
         idx = idx + 10
@@ -161,7 +232,11 @@ def start_download_from_index_page(page_id):
       traceback.print_exc()
       time.sleep(1)
 
-# TODO config start page
-start_index_page = 0
-
-start_download_from_index_page(start_index_page)
+if len(sys.argv) > 0:
+  if sys.argv[1] == "album":
+    print "usage: eh_down.py album <album_url> down_folder"
+    do_real_mirror_chapter(sys.argv[2], sys.argv[3])
+else:
+  # TODO config start page
+  start_index_page = 0
+  start_download_from_index_page(start_index_page)
