@@ -245,7 +245,7 @@ def start_download_from_index_page(page_id):
       traceback.print_exc()
       time.sleep(1)
 
-if len(sys.argv) > 0:
+if len(sys.argv) > 1:
   if sys.argv[1] == "album":
     print "usage: eh_down.py album <album_url> down_folder"
     do_real_mirror_chapter(sys.argv[2], sys.argv[3])
