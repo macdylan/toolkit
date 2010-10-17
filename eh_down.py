@@ -130,7 +130,7 @@ def do_real_mirror_chapter(chapter_link, folder):
       img_fn = img_url.split("/")[-1]
       short_local_fn = "%03d-of-%d_%s" % (cur_pic_id, total_pic_count, img_fn)
       local_fn = folder + os.path.sep + short_local_fn
-      print img_url, local_fn
+      print "%s => %s" % (img_url, local_fn)
       tmp_fn = local_fn + ".tmp"
       if not os.path.exists(local_fn):
         tmp_f = open(tmp_fn, "wb")
