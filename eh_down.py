@@ -129,6 +129,8 @@ def do_real_mirror_chapter(chapter_link, folder):
       img_url = pic_src[idx:idx2]
       img_url = img_url.replace("&amp;", "&")
       img_fn = img_url.split("/")[-1]
+      if len(img_fn) > 15:
+        img_fn = img_fn[-15:]
       short_local_fn = "%03d-of-%d_%s" % (cur_pic_id, total_pic_count, img_fn)
       local_fn = folder + os.path.sep + short_local_fn
       print "%s => %s" % (img_url, local_fn)
@@ -145,6 +147,8 @@ def do_real_mirror_chapter(chapter_link, folder):
       # find next page
     
       idx = pic_src.find("/img/p.png")
+      if idx < 0:
+        exit()
       idx = pic_src.find("a href=", idx) + 8
       idx2 = pic_src.find("\"", idx)
     
@@ -152,6 +156,7 @@ def do_real_mirror_chapter(chapter_link, folder):
         break
       else:
         pic_page_url = pic_src[idx:idx2]
+        print "next page url = %s" % pic_page_url
         
     except:
       traceback.print_exc()
