@@ -127,6 +127,7 @@ def do_real_mirror_chapter(chapter_link, folder):
       idx = pic_src.find("<img src=\"", idx) + 10
       idx2 = pic_src.find("\" style", idx)
       img_url = pic_src[idx:idx2]
+      img_url = img_url.replace("&amp;", "&")
       img_fn = img_url.split("/")[-1]
       short_local_fn = "%03d-of-%d_%s" % (cur_pic_id, total_pic_count, img_fn)
       local_fn = folder + os.path.sep + short_local_fn
