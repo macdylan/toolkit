@@ -108,50 +108,57 @@ def do_real_mirror_chapter(chapter_link, folder):
   idx = chap_src.find("<a href=", idx) + 9
   idx2 = chap_src.find("\">", idx)
   pic_page_url =  chap_src[idx:idx2]
-  
+  could_mark_finish = True
   while True:
-    pic_src = gunzip(urllib2.urlopen(pic_page_url).read())
+    try:
+      pic_src = gunzip(urllib2.urlopen(pic_page_url).read())
     
-    # determine id
-    idx = pic_src.find("<span>") + 6
-    idx2 = pic_src.find("</span>", idx)
-    cur_pic_id = int(pic_src[idx:idx2])
-    idx = pic_src.find("<span>", idx2) + 6
-    idx2 = pic_src.find("</span>", idx)
-    total_pic_count = int(pic_src[idx:idx2])
-    print "%03d-of-%d" % (cur_pic_id, total_pic_count)
+      # determine id
+      idx = pic_src.find("<span>") + 6
+      idx2 = pic_src.find("</span>", idx)
+      cur_pic_id = int(pic_src[idx:idx2])
+      idx = pic_src.find("<span>", idx2) + 6
+      idx2 = pic_src.find("</span>", idx)
+      total_pic_count = int(pic_src[idx:idx2])
+      print "%03d-of-%d" % (cur_pic_id, total_pic_count)
     
-    # find image url
-    idx = pic_src.find("</iframe>")
-    idx = pic_src.find("<img src=\"", idx) + 10
-    idx2 = pic_src.find("\" style", idx)
-    img_url = pic_src[idx:idx2]
-    img_fn = img_url.split("/")[-1]
-    short_local_fn = "%03d-of-%d_%s" % (cur_pic_id, total_pic_count, img_fn)
-    local_fn = folder + os.path.sep + short_local_fn
-    print img_url, local_fn
-    tmp_fn = local_fn + ".tmp"
-    if not os.path.exists(local_fn):
-      tmp_f = open(tmp_fn, "wb")
-      tmp_f.write(urllib2.urlopen(img_url).read())
-      tmp_f.close()
-      os.rename(tmp_fn, local_fn)
-    else:
-      print "[skip] %s already downloaded" % short_local_fn
+      # find image url
+      idx = pic_src.find("</iframe>")
+      idx = pic_src.find("<img src=\"", idx) + 10
+      idx2 = pic_src.find("\" style", idx)
+      img_url = pic_src[idx:idx2]
+      img_fn = img_url.split("/")[-1]
+      short_local_fn = "%03d-of-%d_%s" % (cur_pic_id, total_pic_count, img_fn)
+      local_fn = folder + os.path.sep + short_local_fn
+      print img_url, local_fn
+      tmp_fn = local_fn + ".tmp"
+      if not os.path.exists(local_fn):
+        tmp_f = open(tmp_fn, "wb")
+        tmp_f.write(urllib2.urlopen(img_url).read())
+        tmp_f.close()
+        os.rename(tmp_fn, local_fn)
+      else:
+        print "[skip] %s already downloaded" % short_local_fn
     
     
-    # find next page
+      # find next page
     
-    idx = pic_src.find("/img/p.png")
-    idx = pic_src.find("a href=", idx) + 8
-    idx2 = pic_src.find("\"", idx)
+      idx = pic_src.find("/img/p.png")
+      idx = pic_src.find("a href=", idx) + 8
+      idx2 = pic_src.find("\"", idx)
     
-    if pic_page_url == pic_src[idx:idx2]:
-      break
-    else:
-      pic_page_url = pic_src[idx:idx2]
-  
-  mark_finished(folder)
+      if pic_page_url == pic_src[idx:idx2]:
+        break
+      else:
+        pic_page_url = pic_src[idx:idx2]
+        
+    except:
+      traceback.print_exc()
+      time.sleep(1)
+      could_mark_finish = False
+
+  if could_mark_finish:
+    mark_finished(folder)
 
 def do_mirror_chapter(genre, chapter_id, chapter_name, chapter_ranking, chapter_link):
   folder = "eh_down" + os.path.sep + genre + os.path.sep + chapter_id + "-" + chapter_name
