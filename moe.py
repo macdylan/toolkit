@@ -764,7 +764,7 @@ def moe_import_mangameeya_rating():
 
 def moe_highres_rating():
   normal_set = raw_input("The normal res image set:")
-  highres_set = raw_input("The normal res image set[%s_highres]:" % normal_set)
+  highres_set = raw_input("The highres res image set[%s_highres]:" % normal_set)
   if highres_set == "":
     highres_set = normal_set + "_highres"
   c = DB_CONN.cursor()
@@ -894,7 +894,7 @@ def moe_cleanup():
       db_del_image(set_name, i)
     counter += 1
     if counter % 10 == 0:
-      print "%d items done" % counter
+      print "%d items done (of %d)" % (counter, len(ret_all))
   print "%d items done" % counter
 
 def moe_find_ophan():
