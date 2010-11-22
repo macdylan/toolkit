@@ -382,6 +382,98 @@ def util_mirrro_danbooru_site_down_image(info_list, image_set_base, image_set_hi
       traceback.print_exc()
       time.sleep(1)
 
+def util_mirror_danbooru_site_html(site_url):
+  SOCKET_TIMEOUT = 30
+  socket.setdefaulttimeout(SOCKET_TIMEOUT)
+  tmp_folder = db_get_setting("tmp_folder")
+  print "mirroring danbooru-like site: %s (through html request)" % site_url
+
+  if site_url.find("danbooru") != -1:
+    image_set_base = "danbooru"
+    image_set_highres = "danbooru_highres"
+  elif site_url.find("konachan") != -1:
+    image_set_base = "konachan"
+    image_set_highres = "konachan_highres"
+  elif site_url.find("imouto") != -1:
+    image_set_base = "moe_imouto"
+    image_set_highres = "moe_imouto_highres"
+  elif site_url.find("nekobooru") != -1:
+    image_set_base = "nekobooru"
+    image_set_highres = "nekobooru_highres"
+  else:
+    print "site '%s' not supported yet!"
+    return
+  
+  # Start mirroring from page 1.
+  page_id = 1
+  # Check if need to start downloading from other pages.
+  for i in range(len(sys.argv)):
+    arg = sys.argv[i]
+    if arg.startswith("--page="):
+      page_id = int(arg[7:])
+    elif arg == "-p":
+      if i <= len(sys.argv) - 2:
+        page_id = int(sys.argv[i + 1])
+      else:
+        print "Wrong parameters, please provide page number after '-p'!"
+        return
+  
+  while True:
+    try:
+      query_url = site_url + ("/post?page=%d" % page_id)
+      print "working on page %d (through html request)" % page_id
+      
+      # Go on to next page
+      page_id += 1
+      
+      # After page 1000, the danbooru site only has html access, with prev/next links on each page
+      if image_set_base == "danbooru" and page_id >= 1000:
+        util_mirror_danbooru_site_ex(site_url)
+        return
+      
+      try:
+        page_src = "\n".join(urllib2.urlopen(query_url).readlines())
+        json_matches = []
+        
+        idx = 0
+        idx2 = 0
+        while True:
+          idx = page_src.find("Post.register(", idx2)
+          if idx < 0:
+            break
+          idx2 = page_src.find("})", idx)
+          one_match = page_src[(idx + 14):(idx2 + 1)]
+          json_matches += one_match,
+        
+        query_reply = "[" + ",".join(json_matches) + "]"
+      except HTTPError, e:
+        print "server response code: " + str(e.code)
+      
+      info_list = []
+      try:
+        info_list.extend(json.loads(query_reply))
+      except:
+        # json decode failure, the site is probably down for maintenance... (danbooru.donmai.us, usually)
+        # on this condition, we wait for a few minutes
+        print "site down for maintenance, wait for 2 minutes, on %s" % time.asctime()
+        print "when resumed, will restart from page 1"
+        time.sleep(120) # wait 2 minutes
+        page_id = 1
+        continue
+      
+      if len(info_list) == 0:
+        print "no more images"
+        print "restart downloading from page 1 in 2 minutes (through html request)"
+        page_id = 1
+        time.sleep(120) # wait 2 minutes
+        continue
+      
+      util_mirrro_danbooru_site_down_image(info_list, image_set_base, image_set_highres, tmp_folder)
+      
+    except:
+      traceback.print_exc()
+      time.sleep(1)
+
 def util_mirror_danbooru_site(site_url):
   SOCKET_TIMEOUT = 30
   socket.setdefaulttimeout(SOCKET_TIMEOUT)
@@ -449,8 +541,9 @@ def util_mirror_danbooru_site(site_url):
       
       if len(info_list) == 0:
         print "no more images"
-        print "restart downloading from page 1"
+        print "restart downloading from page 1 in 2 minutes"
         page_id = 1
+        time.sleep(120) # wait 2 minutes
         continue
       
       util_mirrro_danbooru_site_down_image(info_list, image_set_base, image_set_highres, tmp_folder)
@@ -795,6 +888,9 @@ def moe_mirror_konachan():
 def moe_mirror_moe_imouto():
   util_mirror_danbooru_site("http://moe.imouto.org")
 
+def moe_mirror_moe_imouto_html():
+  util_mirror_danbooru_site_html("http://moe.imouto.org")
+
 def moe_mirror_nekobooru():
   util_mirror_danbooru_site("http://nekobooru.net")
 
@@ -803,7 +899,7 @@ def moe_mirror_all():
     os.system("start moe.py mirror-danbooru")
     os.system("start moe.py mirror-konachan")
     os.system("start moe.py mirror-nekobooru")
-    os.system("start moe.py mirror-moe-imouto")
+    os.system("start moe.py mirror-moe-imouto-html")
   else:
     print "This function is not supported in your system."
 
@@ -1227,6 +1323,7 @@ def moe_help():
   print "  mirror-danbooru-before     mirror danbooru.donmai.us before a certain picture id"
   print "  mirror-konachan            mirror konachan.com"
   print "  mirror-moe-imouto          mirror moe.imouto.org"
+  print "  mirror-moe-imouto-html     mirror moe.imouto.org (through html request)"
   print "  mirror-nekobooru           mirror nekobooru.com"
   print "  update-file-size           make sure every images's file_size is read into databse"
   print ""
@@ -1281,6 +1378,8 @@ if __name__ == "__main__":
     moe_mirror_konachan()
   elif sys.argv[1] == "mirror-moe-imouto":
     moe_mirror_moe_imouto()
+  elif sys.argv[1] == "mirror-moe-imouto-html":
+    moe_mirror_moe_imouto_html()
   elif sys.argv[1] == "mirror-nekobooru":
     moe_mirror_nekobooru()
   elif sys.argv[1] == "update-file-size":
