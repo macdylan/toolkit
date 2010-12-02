@@ -30,7 +30,7 @@ def hk_read_crc32_dict(crc32_dict_fn):
 def hk_try_get_crc32_info(fname, crc32_dict):
   if crc32_dict.has_key(fname):
     return crc32_dict[fname]
-  splt = re.split("\[|\]|\(|\)", fname)
+  splt = re.split("\[|\]|\(|\)|_", fname)
   for sp in splt:
     if len(sp) == 8 and is_hex(sp):
       return sp
@@ -38,7 +38,7 @@ def hk_try_get_crc32_info(fname, crc32_dict):
 
 def hk_calc_crc32_from_file(crc32_bin, fpath):
   crc = None
-  cmd = "%s %s" % (crc32_bin, fpath)
+  cmd = "%s \"%s\"" % (crc32_bin, fpath)
   pipe = os.popen(cmd)
   crc = pipe.readlines()[0].split()[0]
   pipe.close()
