@@ -33,7 +33,7 @@ def do_sync_from_to(from_dir, to_dir):
       my_exec("convert \"%s/%s\" -resize 1280x800 \"%s/%s\"" % (from_dir, from_f, to_dir, from_f))
 
 pc_base = "/Users/santa/Dropbox/Photos/"
-psp_base = "/Volumes/NO NAME/Picture/"
+psp_base = "/Volumes/My PSP 3000/Picture/"
 
 do_sync_from_to(pc_base + "Other Photos", psp_base + "Other Photos")
 do_sync_from_to(pc_base + "ACG Cellphone", psp_base + "ACG Cellphone")
