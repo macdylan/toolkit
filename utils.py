@@ -11,7 +11,7 @@ def get_config(key):
     f = open(conf_fn)
     for line in f.readlines():
       line = line.strip()
-      if line.startswith("#") or line == "":
+      if line.startswith(";") or line.startswith("#") or line == "":
         continue
       idx = line.find("=")
       if idx < 0:

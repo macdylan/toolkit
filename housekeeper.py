@@ -15,7 +15,7 @@ def hk_read_crc32_dict(crc32_dict_fn):
     f = open(crc32_dict_fn)
     for line in f.readlines():
       line = line.strip()
-      if line.startswith("#") or line == "":
+      if line.startswith(";") or line.startswith("#") or line == "":
         continue
       idx = line.find(" ")
       if idx < 0:
@@ -58,6 +58,8 @@ def hk_check_crc32_walker(crc32_bin, folder, files):
       # ignore housekeeper's data
       continue
     fpath = folder + os.path.sep + fn
+    if os.path.isdir(fpath):
+      continue
     crc32_info = hk_try_get_crc32_info(fn, crc32_dict)
     if crc32_info == None:
       write_log("[ignore] %s" % fpath)
