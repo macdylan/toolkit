@@ -891,6 +891,9 @@ def moe_mirror_moe_imouto():
 def moe_mirror_moe_imouto_html():
   util_mirror_danbooru_site_html("http://moe.imouto.org")
 
+def moe_mirror_konachan_html():
+  util_mirror_danbooru_site_html("http://konachan.com")
+
 def moe_mirror_nekobooru():
   util_mirror_danbooru_site("http://nekobooru.net")
 
@@ -1294,6 +1297,17 @@ def moe_export_album():
       print "%d images done" % counter
   print "%d images done" % counter
 
+def moe_list_albums():
+  print "Loading data..."
+  c = DB_CONN.cursor()
+  c.execute("select id, name from albums order by name")
+  albums = c.fetchall()
+  for album in albums:
+    id, name = album
+    query_sql = "select count(*) from albums_has_images where album_id = %d" % id
+    count = int(c.execute(query_sql).fetchone()[0])
+    print "%s  (id=%d, count=%d)" % (name, id, count)
+
 def moe_help():
   print "moe.py: manage all my acg pictures"
   print "usage: moe.py <command>"
@@ -1317,6 +1331,7 @@ def moe_help():
   print "  highres-rating             mirror rating of normal res image set to highres image set"
   print "  info                       display info about an image"
   print "  info-album                 display info about an album"
+  print "  list-albums                list all the albums and their size"
   print "  mirror-all                 mirror all known sites"
   print "  mirror-danbooru            mirror danbooru.donmai.us"
   print "  mirror-danbooru-1000       mirror danbooru.donmai.us from 1000th page"
@@ -1366,6 +1381,8 @@ if __name__ == "__main__":
     moe_info()
   elif sys.argv[1] == "info-album":
     moe_info_album()
+  elif sys.argv[1] == "list-albums":
+    moe_list_albums()
   elif sys.argv[1] == "mirror-all":
     moe_mirror_all()
   elif sys.argv[1] == "mirror-danbooru":
@@ -1376,6 +1393,8 @@ if __name__ == "__main__":
     moe_mirror_danbooru_before(int(sys.argv[2]))
   elif sys.argv[1] == "mirror-konachan":
     moe_mirror_konachan()
+  elif sys.argv[1] == "mirror-konachan-html":
+    moe_mirror_konachan_html()
   elif sys.argv[1] == "mirror-moe-imouto":
     moe_mirror_moe_imouto()
   elif sys.argv[1] == "mirror-moe-imouto-html":
