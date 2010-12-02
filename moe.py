@@ -1312,7 +1312,7 @@ def moe_help():
   print "moe.py: manage all my acg pictures"
   print "usage: moe.py <command>"
   print "available commands:"
-  print ""
+  print
   print "  add                        add a new image to library"
   print "  add-dir                    add all images in a directory to the library"
   print "  add-dir-tree               add all images in a directory tree to the library"
@@ -1341,7 +1341,7 @@ def moe_help():
   print "  mirror-moe-imouto-html     mirror moe.imouto.org (through html request)"
   print "  mirror-nekobooru           mirror nekobooru.com"
   print "  update-file-size           make sure every images's file_size is read into databse"
-  print ""
+  print
   print "author: Santa Zhang (santa1987@gmail.com)"
 
 if __name__ == "__main__":
