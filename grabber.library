@@ -8,6 +8,33 @@
 #
 # there is empty lines between manga books
 
+name=crossdays
+url=http://manhua.178.com/c/crossdays.shtml
+
+name=kon
+url=http://manhua.178.com/k/k-on.shtml
+
+name=xxxholic
+url=http://manhua.178.com/x/xxxholic.shtml
+
+name=kaminomi
+url=http://manhua.178.com/z/zhiyoushenzhidao.shtml
+
+name=guardneko
+url=http://manhua.178.com/s/shouhumaoniangfeiju.shtml
+
+name=tamurakun
+url=http://manhua.178.com/w/wmldtctx.shtml
+
+name=qiangwangheize
+url=http://manhua.178.com/q/qianwanheizhe.shtml
+
+name=byosuku5cm
+url=http://manhua.178.com/m/miaosuwulimi.shtml
+
+name=sanhualimi
+url=http://manhua.178.com/s/sanhualimi.shtml
+
 name=mayoineko
 url=http://manhua.178.com/m/mitumaooverrun.shtml
 
@@ -23,7 +50,7 @@ url=http://manhua.178.com/t/tianjiangzhiwu.shtml
 name=gunslingergirl
 url=http://manhua.178.com/k/kqsn.shtml
 
-name=mofashidetiaojian
+name=mofashidetiaojian_xiaritiankon
 url=http://manhua.178.com/m/mfsdtjxrtk.shtml
 
 
