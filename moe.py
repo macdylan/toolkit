@@ -3,18 +3,6 @@
 # Author: Santa Zhang (santa1987@gmail.com)
 #
 
-# Database models:
-#
-# images(id, set_name, id_in_set, md5, rating, ext, file_size)
-# tags(id, name)
-# images_has_tags(image_id, tag_id)
-# albums(id, name)
-# albums_has_images(album_id, image_id)
-# black_list(set_name, start_id, end_id)
-
-# The sqlite3 database which will be used.
-SQLITE3_DB = "moe.db3"
-
 import sys
 import os
 import json
@@ -28,6 +16,22 @@ import socket
 import traceback
 from urllib2 import HTTPError
 from select import *
+from utils import *
+
+# Database models:
+#
+# images(id, set_name, id_in_set, md5, rating, ext, file_size)
+# tags(id, name)
+# images_has_tags(image_id, tag_id)
+# albums(id, name)
+# albums_has_images(album_id, image_id)
+# black_list(set_name, start_id, end_id)
+
+# The sqlite3 database which will be used.
+SQLITE3_DB = get_config("db_file")
+if os.path.exists(SQLITE3_DB) == False:
+  print "[warning] database file '%s' not exist, will create new file!" % SQLITE3_DB
+
 # Open the sqlite3 connection.
 DB_CONN = sqlite3.connect(SQLITE3_DB, 100)
 
@@ -39,7 +43,6 @@ DB_CONN.execute("create table if not exists albums(id integer primary key, name 
 DB_CONN.execute("create table if not exists albums_has_images(album_id int, image_id int)")
 DB_CONN.execute("create table if not exists black_list(set_name text, start_id int, end_id int)")
 DB_CONN.execute("create table if not exists black_list_md5(md5 text)")
-DB_CONN.execute("create table if not exists settings(key text, value text)")
 
 # Create indexes if necessary.
 DB_CONN.execute("create index if not exists images_index on images(id, set_name, id_in_set, md5, rating, ext, file_size)")
@@ -48,24 +51,10 @@ DB_CONN.execute("create index if not exists images_has_tags_index on images_has_
 DB_CONN.execute("create index if not exists albums_has_imags_index on albums_has_images(album_id, image_id)")
 DB_CONN.execute("create index if not exists black_list_index on black_list(set_name, start_id, end_id)")
 DB_CONN.execute("create index if not exists black_list_md5_index on black_list_md5(md5)")
-DB_CONN.execute("create index if not exists settings_index on settings(key, value)")
 
-# Insert basic config data if necessary.
-c = DB_CONN.cursor()
-c.execute("select value from settings where key = 'images_root'")
-ret = c.fetchall()
-if len(ret) == 0:
-  print "Please input the 'image_root' where all images will be saved to:"
-  image_root = raw_input()
-  c.execute("insert into settings(key, value) values('images_root', '%s')" % image_root)
-  DB_CONN.commit()
-c.execute("select value from settings where key = 'tmp_folder'")
-ret = c.fetchall()
-if len(ret) == 0:
-  print "Please input the 'tmp_folder' where temp results will be saved:"
-  tmp_foler = raw_input()
-  c.execute("insert into settings(key, value) values('tmp_folder', '%s')" % tmp_foler)
-  DB_CONN.commit()
+# read basic config data
+g_image_root = get_config("image_root")
+g_tmp_folder = get_config("tmp_folder")
 
 def db_commit():
   DB_CONN.commit()
@@ -91,7 +80,7 @@ def db_image_in_black_list_md5(md5):
 def db_add_image(fpath, image_set, id_in_set, final_id_list = None):
   print "[db.add] %s" % fpath
   bucket_name = util_get_bucket_name(id_in_set)
-  dest_folder = db_get_setting("images_root") + os.path.sep + image_set + os.path.sep + bucket_name
+  dest_folder = g_image_root + os.path.sep + image_set + os.path.sep + bucket_name
   file_ext = os.path.splitext(fpath)[1]
   dest_file = dest_folder + os.path.sep + str(id_in_set) + file_ext
   md5 = util_md5_of_file(fpath)
@@ -172,7 +161,7 @@ def db_del_image(image_set, id_in_set):
   c.execute("delete from images where id = %d" % image_id)
   db_commit()
   # Delete file after commit.
-  fpath = db_get_setting("images_root") + os.path.sep + img[1] + os.path.sep + util_get_bucket_name(img[2]) + os.path.sep + str(img[2]) + img[5]
+  fpath = g_image_root + os.path.sep + img[1] + os.path.sep + util_get_bucket_name(img[2]) + os.path.sep + str(img[2]) + img[5]
   print "[del] %s" % fpath
   os.remove(fpath)
 
@@ -242,26 +231,6 @@ def db_get_image_albums(image_set, id_in_set):
   albums.sort()
   return albums
 
-db_setting_images_root = None
-db_setting_tmp_folder = None
-def db_get_setting(key):
-  if key == "images_root":
-    global db_setting_images_root
-    if db_setting_images_root == None:
-      c = DB_CONN.cursor()
-      c.execute("select value from settings where key = 'images_root'")
-      ret = c.fetchone()
-      db_setting_images_root = ret[0]
-    return db_setting_images_root
-  elif key == "tmp_folder":
-    global db_setting_tmp_folder
-    if db_setting_tmp_folder == None:
-      c = DB_CONN.cursor()
-      c.execute("select value from settings where key = 'tmp_folder'")
-      ret = c.fetchone()
-      db_setting_tmp_folder = ret[0]
-    return db_setting_tmp_folder
-
 def util_is_image(fname):
   fname = fname.lower()
   for ext in [".jpg", ".png", ".gif", ".swf", ".bmp"]:
@@ -301,7 +270,7 @@ def util_get_image_info(image_set, id_in_set):
   return info
 
 def util_download_danbooru_image(image_set, id_in_set, image_url, image_size = 0, image_md5 = None):
-  images_root = db_get_setting("images_root")
+  images_root = g_image_root
   image_url = "http://" + urllib2.quote(image_url[7:])
   image_ext = image_url[image_url.rfind("."):]
   dest_image = images_root + os.path.sep + image_set + os.path.sep + util_get_bucket_name(id_in_set) + os.path.sep + str(id_in_set) + image_ext
@@ -309,7 +278,7 @@ def util_download_danbooru_image(image_set, id_in_set, image_url, image_size = 0
     db_add_image(dest_image, image_set, id_in_set)
     print "[skip] '%s %d' already downloaded" % (image_set, id_in_set)
     return False
-  tmp_folder = db_get_setting("tmp_folder")
+  tmp_folder = g_tmp_folder
   util_make_dirs(tmp_folder + os.path.sep + image_set)
   try:
     download_fpath = tmp_folder + os.path.sep + image_set + os.path.sep + str(id_in_set) + image_ext
@@ -385,7 +354,7 @@ def util_mirrro_danbooru_site_down_image(info_list, image_set_base, image_set_hi
 def util_mirror_danbooru_site_html(site_url):
   SOCKET_TIMEOUT = 30
   socket.setdefaulttimeout(SOCKET_TIMEOUT)
-  tmp_folder = db_get_setting("tmp_folder")
+  tmp_folder = g_tmp_folder
   print "mirroring danbooru-like site: %s (through html request)" % site_url
 
   if site_url.find("danbooru") != -1:
@@ -477,7 +446,7 @@ def util_mirror_danbooru_site_html(site_url):
 def util_mirror_danbooru_site(site_url):
   SOCKET_TIMEOUT = 30
   socket.setdefaulttimeout(SOCKET_TIMEOUT)
-  tmp_folder = db_get_setting("tmp_folder")
+  tmp_folder = g_tmp_folder
   print "mirroring danbooru-like site: %s" % site_url
   
   if site_url.find("danbooru") != -1:
@@ -556,7 +525,7 @@ def util_mirror_danbooru_site(site_url):
 def util_mirror_danbooru_site_ex(site_url, before_id = None):
   SOCKET_TIMEOUT = 30
   socket.setdefaulttimeout(SOCKET_TIMEOUT)
-  tmp_folder = db_get_setting("tmp_folder")
+  tmp_folder = g_tmp_folder
   
   if site_url.find("danbooru") != -1:
     image_set_base = "danbooru"
@@ -574,7 +543,7 @@ def util_mirror_danbooru_site_ex(site_url, before_id = None):
     print "site '%s' not supported yet!"
     return
   
-  tmp_folder = db_get_setting("tmp_folder")
+  tmp_folder = g_tmp_folder
   print "mirroring danbooru main site, after page 1000: %s" % site_url
   page_url = None
   while True:
@@ -900,7 +869,7 @@ def moe_mirror_nekobooru():
 def moe_mirror_all():
   if os.name == "nt":
     os.system("start moe.py mirror-danbooru")
-    os.system("start moe.py mirror-konachan")
+    os.system("start moe.py mirror-konachan-html")
     os.system("start moe.py mirror-nekobooru")
     os.system("start moe.py mirror-moe-imouto-html")
   else:
@@ -925,7 +894,7 @@ def moe_cleanup():
     if set_name + "_highres" in image_sets:
       db_del_image(set_name + "_highres", id_in_set)
   # Remove empty folders.
-  images_root = db_get_setting("images_root")
+  images_root = g_image_root
   def rm_empty_dir_walker(arg, dir, files):
     print "working in dir: %s" % dir
     for file in files:
@@ -997,7 +966,7 @@ def moe_cleanup():
   print "%d items done" % counter
 
 def moe_find_ophan():
-  images_root = db_get_setting("images_root")
+  images_root = g_image_root
   if len(sys.argv) == 3:
     image_set = sys.argv[2]
   else:
@@ -1039,7 +1008,7 @@ def moe_find_ophan():
 
 def moe_update_file_size():
   print "executing database query..."
-  images_root = db_get_setting("images_root")
+  images_root = g_image_root
   c = DB_CONN.cursor()
   c.execute("select id, set_name, id_in_set, ext from images where file_size is null")
   ret_all = c.fetchall()
@@ -1197,10 +1166,9 @@ def moe_export():
     else:
       rating_sql += "rating = %s" % c
   export_dir = raw_input("export to folder: ")
+  images_root = g_image_root
   query_sql = "select * from images where set_name = '%s' and %d <= id_in_set and id_in_set <= %d and (%s)" % (image_set, id_low, id_high, rating_sql)
   c = DB_CONN.cursor()
-  c.execute("select value from settings where key = 'images_root'")
-  images_root = c.fetchone()[0]
   c.execute(query_sql)
   ret_all = c.fetchall()
   print "%d images to be exported" % len(ret_all)
@@ -1241,10 +1209,9 @@ def moe_export_psp():
     else:
       rating_sql += "rating = %s" % c
   export_dir = raw_input("export to folder: ")
+  images_root = g_image_root
   query_sql = "select * from images where set_name = '%s' and %d <= id_in_set and id_in_set <= %d and (%s)" % (image_set, id_low, id_high, rating_sql)
   c = DB_CONN.cursor()
-  c.execute("select value from settings where key = 'images_root'")
-  images_root = c.fetchone()[0]
   c.execute(query_sql)
   ret_all = c.fetchall()
   print "%d images to be exported" % len(ret_all)
@@ -1279,9 +1246,8 @@ def moe_export_album():
     else:
       rating_sql += "rating = %s" % c
   export_dir = raw_input("export to folder: ")
+  images_root = g_image_root
   c = DB_CONN.cursor()
-  c.execute("select value from settings where key = 'images_root'")
-  images_root = c.fetchone()[0]
   query_sql = "select set_name, id_in_set, ext, rating from albums, albums_has_images, images where albums.name = '%s' and albums.id = albums_has_images.album_id and images.id = albums_has_images.image_id and (%s)" % (album_name, rating_sql)
   c.execute(query_sql)
   ret_all = c.fetchall()
