@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # One script to manage all my pictures.
 #
 # Author: Santa Zhang (santa1987@gmail.com)
@@ -1370,4 +1372,4 @@ if __name__ == "__main__":
   elif sys.argv[1] == "update-file-size":
     moe_update_file_size()
   else:
-    print "command '%s' not understood, see 'moe help' for more info" % sys.argv[1]
+    print "command '%s' not understood, see 'moe.py help' for more info" % sys.argv[1]

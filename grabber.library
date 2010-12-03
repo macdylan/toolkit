@@ -1,0 +1,17 @@
+# library file for manga books managed by grabber.py
+#
+# each manga is defined by those items:
+# name=the english name of the manga, used as identifier (name is variable-like)
+# url=the url of the manga book, usually the table of contents page
+#
+# comment and white space is not allowed after '='
+#
+# there is empty lines between manga books
+
+
+name=ichigomashimaro
+url=manhua.178.com/c/cmmht.shtml
+
+name=tolovedarkness
+url=manhua.178.com/c/chubaowangnvd.shtml
+

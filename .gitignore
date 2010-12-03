@@ -8,3 +8,5 @@ size_db
 *.db3-journal
 SyncToy*.dat
 *.pyc
+*.bak
+*.bak.*

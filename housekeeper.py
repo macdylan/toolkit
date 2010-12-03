@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # One script to manage my important collections.
 #
 # Author: Santa Zhang (santa1987@gmail.com)
@@ -128,12 +130,13 @@ def hk_write_crc32():
   os.path.walk(root_dir, hk_write_crc32_walker, (crc32_bin, ignore_pattern))
 
 def hk_help():
-  print "housekeeper.py helper script to manage my important collections"
+  print "housekeeper.py: helper script to manage my important collections"
   print "usage: housekeeper.py <command>"
   print "available commands:"
   print
   print "  check-crc32          check file integrity by crc32"
   print "  check-ascii-fnames   make sure all file has ascii-only name"
+  print "  help                 display this info"
   print "  write-crc32          write crc32 data in every directory"
   print
   print "author: Santa Zhang (santa1987@gmail.com)"
@@ -148,4 +151,4 @@ if __name__ == "__main__":
   elif sys.argv[1] == "write-crc32":
     hk_write_crc32()
   else:
-    print "command '%s' not understood, see 'housekeeper help' for more info" % sys.argv[1]
+    print "command '%s' not understood, see 'housekeeper.py help' for more info" % sys.argv[1]

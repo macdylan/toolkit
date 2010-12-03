@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # General utilities. And also provide useful routines for other scripts.
 #
 # Author: Santa Zhang (santa1987@gmail.com)
@@ -55,4 +57,23 @@ def write_log(text):
   tm = time.strftime("%Y.%m.%d %H:%M:%S", time.localtime())
   f.write("[%s] %s\n" % (tm, text))
   f.close()
+
+def dos2unix_text_file(fname):
+  print "TODO"
+
+
+def print_help_for_utils():
+  print "utils.py: general utilities"
+  print "usage: utils.py <command>"
+  print
+  print "  help         display this info"
+  print
+  print "author: Santa Zhang (santa1987@gmail.com)"
+
+
+if __name__ == "__main__":
+  if len(sys.argv) == 1 or sys.argv[1] == "help":
+    print_help_for_utils()
+  else:
+    print "command '%s' not understood, see 'utils.py help' for more info" % sys.argv[1]
 
