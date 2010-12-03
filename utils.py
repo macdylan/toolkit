@@ -1,3 +1,8 @@
+# General utilities. And also provide useful routines for other scripts.
+#
+# Author: Santa Zhang (santa1987@gmail.com)
+#
+
 import sys
 import os
 import time
@@ -34,6 +39,12 @@ def is_hex(text):
     if ('0' <= c and c <= '9') or ('a' <= c and c <= 'f'):
       continue
     else:
+      return False
+  return True
+
+def is_ascii(text):
+  for c in text:
+    if ord(c) >= 128 or ord(c) < 0:
       return False
   return True
 

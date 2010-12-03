@@ -75,7 +75,21 @@ def hk_check_crc32():
   crc32_bin = get_config("crc32_bin")
   root_dir = raw_input("The root directory to start with? ")
   os.path.walk(root_dir, hk_check_crc32_walker, crc32_bin)
-  
+
+
+def hk_check_ascii_fnames_walker(arg, folder, files):
+  write_log("[dir] %s" % folder)
+  for fn in files:
+    fpath = folder + os.path.sep + fn
+    if is_ascii(fpath):
+      write_log("[pass] %s" % fpath)
+    else:
+      write_log("[failure] %s" % fpath)
+    
+
+def hk_check_ascii_fnames():
+  root_dir = raw_input("The root directory to start with? ")
+  os.path.walk(root_dir, hk_check_ascii_fnames_walker, None)
 
 def hk_help():
   print "housekeeper.py helper script to manage my important collections"
@@ -83,6 +97,7 @@ def hk_help():
   print "available commands:"
   print
   print "  check-crc32          check file integrity by crc32"
+  print "  check-ascii-fnames   make sure all file has ascii-only name"
   print
   print "author: Santa Zhang (santa1987@gmail.com)"
 
@@ -91,5 +106,7 @@ if __name__ == "__main__":
     hk_help()
   elif sys.argv[1] == "check-crc32":
     hk_check_crc32()
+  elif sys.argv[1] == "check-ascii-fnames":
+    hk_check_ascii_fnames()
   else:
     print "command '%s' not understood, see 'housekeeper help' for more info" % sys.argv[1]
