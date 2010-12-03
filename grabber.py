@@ -281,6 +281,12 @@ def grab_load_library():
       name = line[5:]
     elif line.startswith("url="):
       url = line[4:]
+  if name != None and url != None:
+    if library.has_key(name):
+      print "[warning] duplicate name '%s' in grabber.library" % name
+    library[name] = url
+    name = None
+    url = None
   lib_f.close()
   return library
 
