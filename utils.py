@@ -9,7 +9,7 @@ import sys
 import os
 import time
 
-def get_config(key):
+def get_config(key, default_value=None):
   conf_fn = os.path.splitext(sys.argv[0])[0] + ".conf"
   value = None
   
@@ -29,7 +29,9 @@ def get_config(key):
   finally:
     if f != None:
       f.close()
-      
+  
+  if default_value != None and value == None:
+    value = default_value
   if value == None:
     raise Exception("Config '%s' not found!" % key)
   else:
