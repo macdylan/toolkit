@@ -8,6 +8,24 @@
 #
 # there is empty lines between manga books
 
+name=mayoineko
+url=http://manhua.178.com/m/mitumaooverrun.shtml
+
+name=tolove
+url=http://manhua.178.com/c/chubaowangnv.shtml
+
+name=fortunearterial
+url=http://manhua.178.com/f/fortunearterial.shtml
+
+name=soraotoshimono
+url=http://manhua.178.com/t/tianjiangzhiwu.shtml
+
+name=gunslingergirl
+url=http://manhua.178.com/k/kqsn.shtml
+
+name=mofashidetiaojian
+url=http://manhua.178.com/m/mfsdtjxrtk.shtml
+
 
 name=ichigomashimaro
 url=manhua.178.com/c/cmmht.shtml
@@ -15,3 +33,18 @@ url=manhua.178.com/c/cmmht.shtml
 name=tolovedarkness
 url=manhua.178.com/c/chubaowangnvd.shtml
 
+name=mowangnaiba
+url=http://manhua.178.com/m/mowangnaiba.shtml
+
+
+name=ytshaonv
+url=http://manhua.178.com/y/ytsn.shtml
+
+name=futurediary
+url=http://manhua.178.com/w/wlrj.shtml
+
+name=railgun
+url=http://manhua.178.com/m/mkxdcdcp.shtml
+
+name=dianqijielutu
+url=http://manhua.178.com/d/dianqijielutu.shtml
