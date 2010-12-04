@@ -126,7 +126,7 @@ def hk_write_crc32_walker(args, folder, files):
 def hk_write_crc32():
   crc32_bin = get_config("crc32_bin")
   ignore_pattern = get_config("crc32_ignore_pattern")
-  root_dir = "l:\\games_ps2_wii_xbox"#raw_input("The root directory to start with? ")
+  root_dir = raw_input("The root directory to start with? ")
   os.path.walk(root_dir, hk_write_crc32_walker, (crc32_bin, ignore_pattern))
 
 def hk_help():
