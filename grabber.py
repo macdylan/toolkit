@@ -133,6 +133,7 @@ def grab_download_manhua178(manga_url, **opt):
   idx = page_src.index("var g_comic_name = \"") + 20
   idx2 = page_src.index("\r\n", idx) - 2
   comic_name = page_src[idx:idx2].replace(" ", "").decode("utf-8")
+  comic_name = comic_name.strip()
 
   idx = page_src.index("cartoon_online_border")
   idx = page_src.index("<ul>", idx)
@@ -162,6 +163,7 @@ def grab_download_manhua178(manga_url, **opt):
   # now download chapter
   for chap in toc_arr:
     chap_title = chap[0].decode("utf-8")
+    chap_title = chap_title.strip()
     chap_href = chap[1]
     chapter_folder_path = comic_folder_path + u"/" + chap_title
 
