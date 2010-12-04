@@ -9,7 +9,21 @@ import sys
 import os
 import time
 import shutil
+from subprocess import Popen, PIPE, STDOUT
 from utils import *
+
+def jc_get_ffmpeg_info():
+  ffmpeg_bin = get_config("ffmpeg_bin")
+  info = ''
+  pipe = Popen(ffmpeg_bin, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=True)
+  lines = pipe.stderr.read()
+  for line in lines.splitlines():
+    if line.find("version") >= 0 or line.startswith("  "):
+      info += line + "\n"
+  return info
+
+def jc_ffmpeg_info():
+  print jc_get_ffmpeg_info()
 
 def jc_dos2unix_print_help():
   print "convert dos text file to unix text file"
@@ -50,6 +64,7 @@ def jc_print_help():
   print "usage: justconvert.py <command>"
   print
   print "  dos2unix     convert dos text file to unix text file"
+  print "  ffmpeg-info  display info about ffmpeg"
   print "  help         display this info"
   print
   print "author: Santa Zhang (santa1987@gmail.com)"
@@ -60,6 +75,8 @@ if __name__ == "__main__":
     jc_print_help()
   elif sys.argv[1] == "dos2unix":
     jc_dos2unix()
+  elif sys.argv[1] == "ffmpeg-info":
+    jc_ffmpeg_info()
   else:
     print "command '%s' not understood, see 'justconvert.py help' for more info" % sys.argv[1]
 
