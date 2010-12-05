@@ -20,7 +20,7 @@ import urllib2
 from urllib2 import HTTPError
 from utils import *
 
-SOCKET_TIMEOUT = 10
+SOCKET_TIMEOUT = 30
 socket.setdefaulttimeout(SOCKET_TIMEOUT)
 
 # fetch global const values
