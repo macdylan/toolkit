@@ -52,6 +52,10 @@ def zipdir(basedir, archivename):
     for root, dirs, files in os.walk(basedir):
       #NOTE: ignore empty directories
       for fn in files:
+        # ignore useless files
+        if fn.lower() == ".ds_store" or fn.lower() == "thumbs.db":
+          print "exclude useless file '%s' from zip file" % fn
+          continue
         try:
           absfn = os.path.join(root, fn)
           zfn = absfn[len(basedir)+len(os.sep):] #XXX: relative path
@@ -66,6 +70,7 @@ def grab_print_help():
   print "usage: grabber.py <command>"
   print "available commands:"
   print
+  print "  clear-cruft-files    clear cruft files in zip packages"
   print "  download             download a manga book"
   print "  download-reverse     download a manga book, in reverse order"
   print "  help                 display this help message"
@@ -343,9 +348,39 @@ def grab_list_library():
   print
   print "%d items in library" % len(library)
 
+def grab_is_cruft_file(fn):
+  if fn.lower() == ".ds_store" or fn.lower() == "thumbs.db":
+    return True
+  return False
+
+def grab_clear_cruft_files():
+  for root, dirs, files in os.walk(MANGA_FOLDER):
+    for fn in files:
+      if not fn.lower().endswith(".zip"):
+        continue
+      fpath = os.path.join(root, fn)
+      should_rm_zf = False
+      zf = ZipFile(fpath)
+      for entry in zf.namelist():
+        if grab_is_cruft_file(entry):
+          print fpath
+          main_fn = os.path.splitext(fn)[0]
+          extract_path = os.path.join(root, main_fn)
+          prepare_folder(extract_path)
+          zf.extractall(extract_path)
+          should_rm_zf = True
+          break
+      zf.close()
+      if should_rm_zf:
+        print "remove original zip"
+        os.remove(fpath)
+
+
 if __name__ == "__main__":
   if len(sys.argv) == 1 or sys.argv[1] == "help":
     grab_print_help()
+  elif sys.argv[1] == "clear-cruft-files":
+    grab_clear_cruft_files()
   elif sys.argv[1] == "download":
     grab_download()
   elif sys.argv[1] == "download-reverse":
@@ -358,3 +393,4 @@ if __name__ == "__main__":
     grab_update_all()
   else:
     print "command '%s' not understood, see 'grabber.py help' for more info" % sys.argv[1]
+
