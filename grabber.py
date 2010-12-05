@@ -217,7 +217,7 @@ def grab_download_manhua178(manga_url, **opt):
       open(not_finished_fn, "w").close()
       
       chapter_download_ok = True # whether the chapter is successfully downloaded
-      for pg in comic_pages_url:    
+      for pg in comic_pages_url:
         full_pg = (base_url + "/imgs/" + pg)
         idx = full_pg.rfind("/") + 1
         leaf_nm = full_pg[idx:]
@@ -237,11 +237,14 @@ def grab_download_manhua178(manga_url, **opt):
           down_f.close()
           shutil.move(fn + u".tmp", fn)
         except HTTPError, e:
+          print "download failure!"
           down_f.close()
           os.remove(fn + u".tmp")
           err_log_f = open(error_log_fn, "a")
-          err_log_f.write("failed to download: %s\n" % fn)
-          err_log_f.close()
+          try:
+            err_log_f.write("failed to download: %s\n" % fn)
+          finally:
+            err_log_f.close()
           chapter_download_ok = False
       
       # remove the place holder
