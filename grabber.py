@@ -159,7 +159,12 @@ def grab_download_manhua178(manga_url, **opt):
   if opt.has_key("reverse") and opt["reverse"] == True:
     toc_arr.reverse()
   
-  comic_folder_path = MANGA_FOLDER + os.path.sep + comic_name
+  comic_folder_path = MANGA_FOLDER + os.path.sep + comic_name + "(acg178)"
+  prepare_folder(comic_folder_path)
+  link_f = open(comic_folder_path + os.path.sep + "downloaded_from.txt", "w")
+  print "writing download url file"
+  link_f.write(manga_url + "\n")
+  link_f.close()
   
   # now download chapter
   for chap in toc_arr:
@@ -212,7 +217,7 @@ def grab_download_manhua178(manga_url, **opt):
         idx = full_pg.rfind("/") + 1
         leaf_nm = full_pg[idx:]
         print leaf_nm
-        fn = u"" + MANGA_FOLDER + os.path.sep + comic_name + u"/" + chap_title + u"/" + leaf_nm.decode("unicode_escape")
+        fn = comic_folder_path + u"/" + chap_title + u"/" + leaf_nm.decode("unicode_escape")
         grab_message(fn)
         down_filename = fn
         if os.path.exists(down_filename):
