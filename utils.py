@@ -10,7 +10,7 @@ import os
 import time
 
 def get_config(key, default_value=None):
-  conf_fn = os.path.splitext(sys.argv[0])[0] + ".conf"
+  conf_fn = os.path.join(os.path.split(__file__)[0], os.path.splitext(os.path.basename(sys.argv[0]))[0] + ".conf")
   value = None
   
   f = None
