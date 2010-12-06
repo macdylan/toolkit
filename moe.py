@@ -1141,8 +1141,94 @@ def moe_add_dir_tree():
     db_commit()
 
 def moe_backup_db():
+  db_file = get_config("db_file")
+  backup_to = get_config("backup_to")
+  db_main_fn, db_ext_fn = os.path.splitext(os.path.basename(db_file))
   tm_str = time.strftime("%y%m%d-%H%M%S", time.localtime())
-  util_execute("copy moe.db3 moe.backup.%s.db3" % tm_str)
+  cmd = "copy \"%s\" \"%s\\%s.backup.%s%s\"" % (db_file, backup_to, db_main_fn, tm_str, db_ext_fn)
+  util_execute(cmd)
+  backup_counter = 0
+  for fn in os.listdir(backup_to):
+    if fn.startswith("%s.backup." % db_main_fn) and fn.endswith(db_ext_fn):
+      print fn
+      backup_counter += 1
+  print "There is %d backup(s) of database file" % backup_counter
+
+def util_backup_images(images, backup_type):
+  image_root = get_config("image_root")
+  backup_to = get_config("backup_to")
+  counter = 0
+  n_fail = 0
+  n_skip = 0
+  n_copy = 0
+  for img in images:
+    counter += 1
+    set_name, id_in_set, ext_name = img
+    main_fn = "%d%s" % (id_in_set, ext_name)
+    src_folder = os.path.join(image_root, set_name, util_get_bucket_name(id_in_set))
+    src_file = os.path.join(src_folder, main_fn)
+    if os.path.exists(src_file) == False:
+      print "[error] file not exist: %s" % src_file
+      n_fail += 1
+    else:
+      dst_folder = os.path.join(backup_to, set_name, util_get_bucket_name(id_in_set))
+      util_make_dirs(dst_folder)
+      dst_file = os.path.join(dst_folder, main_fn)
+      if os.path.exists(dst_file) == True:
+        if os.stat(src_file).st_size != os.stat(dst_file).st_size:
+          raise Exception("file not consistent, different size: %s, %s" % (src_file, dst_file))
+        n_skip += 1
+      else:
+        n_copy += 1
+        shutil.copy(src_file, dst_file)
+    if counter % 100 == 0:
+      print "[backup:%s] %d of %d done (skip:%d, copy:%d, fail:%d)" % (backup_type, counter, len(images), n_skip, n_copy, n_fail)
+  if counter % 100 != 0:
+    print "[backup:%s] %d of %d done (skip:%d, copy:%d, fail:%d)" % (backup_type, counter, len(images), n_skip, n_copy, n_fail)
+
+def moe_backup_cleanup():
+  print "TODO: cleanup backup repository"
+
+def moe_backup_albums():
+  print "backup albums"
+  query = "select set_name, id_in_set, ext from albums_has_images, images where albums_has_images.image_id == images.id"
+  c = DB_CONN.cursor()
+  c.execute(query)
+  ret = c.fetchall()
+  print "[backup-albums] %d entries to backup" % len(ret)
+  util_backup_images(ret, "albums")
+
+def moe_backup_by_rating(rating):
+  if rating == None:
+    print "backup unrated images"
+    query = "select set_name, id_in_set, ext from images where rating is null"
+  else:
+    print "backup images with rating %d" % rating
+    query = "select set_name, id_in_set, ext from images where rating=%d" % rating
+  c = DB_CONN.cursor()
+  c.execute(query)
+  ret = c.fetchall()
+  if rating == None:
+    print "[backup-unrated] %d entries to backup" % len(ret)
+    util_backup_images(ret, "unrated")
+  else:
+    print "[backup-rate-%d] %d entries to backup" % (rating, len(ret))
+    util_backup_images(ret, "rate-%d" % rating)
+  
+
+def moe_backup_all():
+  # 1st: backup db
+  print "Phase 1: backup db"
+  moe_backup_db()
+  print "Phase 2: backup albums"
+  moe_backup_albums()
+  print "Phase 3: backup rated images"
+  moe_backup_by_rating(3)
+  moe_backup_by_rating(2)
+  moe_backup_by_rating(1)
+  print "Phase 4: backup unrated imags"
+  moe_backup_by_rating(None)
+  moe_backup_cleanup()
 
 def moe_export():
   image_set = raw_input("image set: ")
@@ -1284,7 +1370,14 @@ def moe_help():
   print "  add                        add a new image to library"
   print "  add-dir                    add all images in a directory to the library"
   print "  add-dir-tree               add all images in a directory tree to the library"
+  print "  backup-albums              backup albums"
+  print "  backup-all                 backup everything"
+  print "  backup-cleanup             cleanup backup repository"
   print "  backup-db                  backup database"
+  print "  backup-rate-1              backup images with rating 1"
+  print "  backup-rate-2              backup images with rating 2"
+  print "  backup-rate-3              backup images with rating 3"
+  print "  backup-unrated             backup images without rating"
   print "  cleanup                    delete images with rating 0, and compact the black list"
   print "  export                     export images"
   print "  export-album               export images in an album"
@@ -1323,6 +1416,20 @@ if __name__ == "__main__":
     moe_add_dir_tree()
   elif sys.argv[1] == "backup-db":
     moe_backup_db()
+  elif sys.argv[1] == "backup-all":
+    moe_backup_all()
+  elif sys.argv[1] == "backup-albums":
+    moe_backup_albums()
+  elif sys.argv[1] == "backup-rate-1":
+    moe_backup_by_rating(1)
+  elif sys.argv[1] == "backup-rate-2":
+    moe_backup_by_rating(2)
+  elif sys.argv[1] == "backup-rate-3":
+    moe_backup_by_rating(3)
+  elif sys.argv[1] == "backup-unrated":
+    moe_backup_by_rating(None)
+  elif sys.argv[1] == "backup-cleanup":
+    moe_backup_cleanup()
   elif sys.argv[1] == "cleanup":
     moe_cleanup()
   elif sys.argv[1] == "export":
