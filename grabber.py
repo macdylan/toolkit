@@ -283,7 +283,8 @@ def grab_download(**opt):
   
 
 def grab_load_library():
-  library_fn = "grabber.library"
+  library_fn = os.path.join(os.path.split(__file__)[0], "grabber.library")
+  print library_fn
   lib_f = open(library_fn)
   name = None
   url = None
