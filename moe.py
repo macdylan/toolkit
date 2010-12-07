@@ -1261,7 +1261,6 @@ def moe_backup_by_rating(rating):
   
 
 def moe_backup_all():
-  # 1st: backup db
   print "Phase 1: backup db"
   moe_backup_db()
   print "Phase 2: backup albums"
@@ -1273,6 +1272,65 @@ def moe_backup_all():
   print "Phase 4: backup unrated imags"
   moe_backup_by_rating(None)
   moe_backup_cleanup()
+
+def util_check_image_set_md5(image_root, md5_bin, set_name):
+  print "checking md5 of image set: '%s'" % set_name
+  n_pass = 0
+  n_fail = 0
+  set_folder = os.path.join(image_root, set_name)
+  for folder_name in os.listdir(set_folder):
+    fpath = os.path.join(set_folder, folder_name)
+    if os.path.isdir(fpath):
+      folder_start, folder_stop = folder_name.split("-")
+      print "[check-md5] %s %s-%s" % (set_name, folder_start, folder_stop)
+      c = DB_CONN.cursor()
+      query = "select md5, id_in_set, ext from images where set_name=\"%s\" and %s <= id_in_set and id_in_set <= %s" % (set_name, folder_start, folder_stop)
+      c.execute(query)
+      ret = c.fetchall()
+      folder_path = os.path.join(image_root, set_name, folder_name)
+      md5_fn = os.path.join(folder_path, "md5sum.txt")
+      f = open(md5_fn, "w")
+      try:
+        for e in ret:
+          md5, id_in_set, ext = e
+          f.write("%s %s%s\n" % (md5, id_in_set, ext))
+      finally:
+        f.close()
+      if os.path.exists(md5_fn):
+        try:
+          pipe = os.popen("%s %s" % (md5_bin, folder_path))
+          for line in pipe.readlines():
+            line = line.strip()
+            if line.startswith("pass"):
+              n_pass += 1
+            elif line.startswith("fail"):
+              n_fail += 1
+              write_log("[error] md5sum failed: '%s'" % line)
+          pipe.close()
+        finally:
+          os.remove(md5_fn)
+      print "%d passed, %d failed" % (n_pass, n_fail)
+
+def moe_check_md5():
+  print "This shall be done!"
+  image_root = g_image_root
+  image_sets = [
+    "danbooru",
+    "danbooru_highres",
+    "konachan",
+    "konachan_highres",
+    "moe_imouto",
+    "moe_imouto_highres",
+    "mypic",
+    "nekobooru",
+    "nekobooru_highres"
+  ]
+  md5_bin = os.path.join(os.path.split(__file__)[0], "bin", "moe-check-md5.exe")
+  if os.path.exists(md5_bin) == False:
+    print "md5 check helper is not found: %s" % md5_bin
+    return
+  for set_name in image_sets:
+    util_check_image_set_md5(image_root, md5_bin, set_name)
 
 def moe_export():
   image_set = raw_input("image set: ")
@@ -1422,6 +1480,7 @@ def moe_help():
   print "  backup-rate-2              backup images with rating 2"
   print "  backup-rate-3              backup images with rating 3"
   print "  backup-unrated             backup images without rating"
+  print "  check-md5                  check all images by md5"
   print "  cleanup                    delete images with rating 0, and compact the black list"
   print "  export                     export images"
   print "  export-album               export images in an album"
@@ -1474,6 +1533,8 @@ if __name__ == "__main__":
     moe_backup_by_rating(None)
   elif sys.argv[1] == "backup-cleanup":
     moe_backup_cleanup()
+  elif sys.argv[1] == "check-md5":
+    moe_check_md5()
   elif sys.argv[1] == "cleanup":
     moe_cleanup()
   elif sys.argv[1] == "export":
