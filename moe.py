@@ -1168,7 +1168,7 @@ def util_backup_images(images, backup_type):
     src_folder = os.path.join(image_root, set_name, util_get_bucket_name(id_in_set))
     src_file = os.path.join(src_folder, main_fn)
     if os.path.exists(src_file) == False:
-      print "[error] file not exist: %s" % src_file
+      write_log("[error] file not exist: %s" % src_file)
       n_fail += 1
     else:
       dst_folder = os.path.join(backup_to, set_name, util_get_bucket_name(id_in_set))
@@ -1176,6 +1176,7 @@ def util_backup_images(images, backup_type):
       dst_file = os.path.join(dst_folder, main_fn)
       if os.path.exists(dst_file) == True:
         if os.stat(src_file).st_size != os.stat(dst_file).st_size:
+          write_log("file not consistent, different size: %s, %s" % (src_file, dst_file))
           raise Exception("file not consistent, different size: %s, %s" % (src_file, dst_file))
         n_skip += 1
       else:
@@ -1186,8 +1187,51 @@ def util_backup_images(images, backup_type):
   if counter % 100 != 0:
     print "[backup:%s] %d of %d done (skip:%d, copy:%d, fail:%d)" % (backup_type, counter, len(images), n_skip, n_copy, n_fail)
 
+def util_cleanup_backup_folder(src_folder, dst_folder):
+  src_fmap = {}
+  dst_fmap = {}
+  for fn in os.listdir(src_folder):
+    src_fmap[fn] = 1
+  for fn in os.listdir(dst_folder):
+    dst_fmap[fn] = 1
+  for fn in dst_fmap.keys():
+    if src_fmap.has_key(fn) == False:
+      backup_fpath = os.path.join(dst_folder, fn)
+      write_log("remove backup entry: %s" % backup_fpath)
+      if os.path.isdir(backup_fpath):
+        shutil.rmtree(backup_fpath)
+      else:
+        os.remove(backup_fpath)
+
+def util_cleanup_image_set(image_root, backup_to, set_name):
+  # check level-1 folders
+  src_folder = os.path.join(image_root, set_name)
+  dst_folder = os.path.join(backup_to, set_name)
+  print "checking level 1 folders of '%s'" % set_name
+  util_cleanup_backup_folder(src_folder, dst_folder)
+  # ok, now go on to level2 folders
+  for fn in os.listdir(src_folder):
+    fpath = os.path.join(src_folder, fn)
+    if os.path.isdir(fpath):
+      print "checking level 2 folder: %s\\%s" % (set_name, fn)
+      util_cleanup_backup_folder(fpath, os.path.join(dst_folder, fn))
+  
 def moe_backup_cleanup():
-  print "TODO: cleanup backup repository"
+  image_root = g_image_root
+  backup_to = get_config("backup_to")
+  image_sets = [
+    "danbooru",
+    "danbooru_highres",
+    "konachan",
+    "konachan_highres",
+    "moe_imouto",
+    "moe_imouto_highres",
+    "mypic",
+    "nekobooru",
+    "nekobooru_highres"
+  ]
+  for set_name in image_sets:
+    util_cleanup_image_set(image_root, backup_to, set_name)
 
 def moe_backup_albums():
   print "backup albums"

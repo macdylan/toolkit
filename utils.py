@@ -54,7 +54,7 @@ def is_ascii(text):
 
 def write_log(text):
   print text
-  log_fn = os.path.splitext(sys.argv[0])[0] + ".log"
+  log_fn = os.path.join(os.path.split(__file__)[0], os.path.splitext(os.path.basename(sys.argv[0]))[0] + ".log")
   f = open(log_fn, "a")
   tm = time.strftime("%Y.%m.%d %H:%M:%S", time.localtime())
   f.write("[%s] %s\n" % (tm, text))
