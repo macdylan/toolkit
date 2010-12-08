@@ -246,6 +246,8 @@ def grab_download_manhua178(manga_url, **opt):
           err_log_f = open(error_log_fn, "a")
           try:
             err_log_f.write("failed to download: %s\n" % fn)
+          except:
+            err_log_f.write("failed to download from: %s\n" % full_pg_unescaped)
           finally:
             err_log_f.close()
           chapter_download_ok = False
