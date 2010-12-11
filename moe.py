@@ -158,6 +158,7 @@ def db_del_image(image_set, id_in_set):
   if img == None:
     return None
   image_id = img[0]
+  c = DB_CONN.cursor()
   c.execute("delete from images_has_tags where image_id = %d" % image_id)
   c.execute("delete from albums_has_images where image_id = %d" % image_id)
   c.execute("delete from images where id = %d" % image_id)
