@@ -1,8 +1,0 @@
-*.o
-bin-*/
-obj-*/
-build/
-Makefile
-Rakefile
-rake.gen.conf
-*.swp
