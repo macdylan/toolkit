@@ -1213,9 +1213,10 @@ def util_cleanup_image_set(image_root, backup_to, set_name):
   # ok, now go on to level2 folders
   for fn in os.listdir(src_folder):
     fpath = os.path.join(src_folder, fn)
-    if os.path.isdir(fpath):
+    dst_fpath = os.path.join(dst_folder, fn)
+    if os.path.isdir(fpath) and os.path.isdir(dst_fpath):
       print "checking level 2 folder: %s\\%s" % (set_name, fn)
-      util_cleanup_backup_folder(fpath, os.path.join(dst_folder, fn))
+      util_cleanup_backup_folder(fpath, dst_fpath)
   
 def moe_backup_cleanup():
   image_root = g_image_root
