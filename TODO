@@ -1,0 +1,7 @@
+* moe check-zip: check the contents of zip packages
+* housekeeper updatechrome: update chrome (only for windows)
+* merge helper_scripts into housekeeper
+* merge video_convert into justconvert
+* add grabber: dm.game.mop.com/fengmian/3924.html
+* merge grabbers into grabber
+
