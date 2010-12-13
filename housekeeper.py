@@ -216,8 +216,8 @@ def hk_help():
   print "usage: housekeeper.py <command>"
   print "available commands:"
   print
-  print "  check-crc32             check file integrity by crc32"
   print "  check-ascii-fnames      make sure all file has ascii-only name"
+  print "  check-crc32             check file integrity by crc32"
   print "  help                    display this info"
   print "  lowercase-ext           make sure file extensions are lower case"
   print "  rm-empty-dir            remove empty dir"
