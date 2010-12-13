@@ -9,7 +9,8 @@ import sys
 import os
 import re
 import time
-
+import random
+import shutil
 from utils import *
 
 def hk_read_crc32_dict(crc32_dict_fn):
@@ -94,12 +95,16 @@ def hk_check_ascii_fnames():
   root_dir = raw_input("The root directory to start with? ")
   os.path.walk(root_dir, hk_check_ascii_fnames_walker, None)
 
-def hk_should_ignore_crc32(fname, ignore_pattern):
+def hk_should_ignore_file(fname, ignore_pattern):
   matched = re.search(ignore_pattern, fname)
   if matched != None:
     return True
   else:
     return False
+
+def hk_should_ignore_crc32(fname, ignore_pattern):
+  return hk_should_ignore_file(fname, ignore_pattern)
+
 
 def hk_write_crc32_walker(args, folder, files):
   crc32_bin, ignore_pattern, new_only = args
@@ -168,16 +173,56 @@ def hk_write_crc32_new_only():
   new_only = True
   os.path.walk(root_dir, hk_write_crc32_walker, (crc32_bin, ignore_pattern, new_only))
 
+def hk_util_append_tmp_ext(fpath):
+  while True:
+    tmp_fpath = "%s.tmp.%d" % (fpath, random.randint(0, 100000000))
+    if os.path.exists(tmp_fpath) == False:
+      break
+  return tmp_fpath
+
+def hk_lowercase_ext():
+  root_dir = raw_input("The root directory to start with? ")
+  for root, folders, files in os.walk(root_dir):
+    for fn in files:
+      fpath = os.path.join(root, fn)
+      splt = os.path.splitext(fpath)
+      if splt[1] != splt[1].lower():
+        # rename to a tmp file and rename back
+        new_name = splt[0] + splt[1].lower()
+        tmp_name = hk_util_append_tmp_ext(fpath)
+        print "[rename] %s ==> %s" % (fpath, new_name)
+        os.rename(fpath, tmp_name)
+        os.rename(tmp_name, new_name)
+
+def hk_rm_empty_dir():
+  root_dir = raw_input("The root directory to start with? ")
+  ignore_pattern = get_config("rm_empty_dir_ignore_pattern")
+  for root, folders, files in os.walk(root_dir):
+    if len(folders) > 0:
+      continue
+    is_empty = True
+    for fn in files:
+      if hk_should_ignore_file(fn, ignore_pattern) == False:
+        is_empty = False
+        break
+      else:
+        print "[ignore] %s" % os.path.join(root, fn)
+    if is_empty:
+      print "[empty-dir] %s" % root
+      shutil.rmtree(root)
+
 def hk_help():
   print "housekeeper.py: helper script to manage my important collections"
   print "usage: housekeeper.py <command>"
   print "available commands:"
   print
-  print "  check-crc32           check file integrity by crc32"
-  print "  check-ascii-fnames    make sure all file has ascii-only name"
-  print "  help                  display this info"
-  print "  write-crc32           write crc32 data in every directory, overwrite old crc32 files"
-  print "  write-crc32-new-only  write crc32 data in every directroy, new files only"
+  print "  check-crc32             check file integrity by crc32"
+  print "  check-ascii-fnames      make sure all file has ascii-only name"
+  print "  help                    display this info"
+  print "  lowercase-ext           make sure file extensions are lower case"
+  print "  rm-empty-dir            remove empty dir"
+  print "  write-crc32             write crc32 data in every directory, overwrite old crc32 files"
+  print "  write-crc32-new-only    write crc32 data in every directroy, new files only"
   print
   print "author: Santa Zhang (santa1987@gmail.com)"
 
@@ -188,6 +233,10 @@ if __name__ == "__main__":
     hk_check_crc32()
   elif sys.argv[1] == "check-ascii-fnames":
     hk_check_ascii_fnames()
+  elif sys.argv[1] == "lowercase-ext":
+    hk_lowercase_ext()
+  elif sys.argv[1] == "rm-empty-dir":
+    hk_rm_empty_dir()
   elif sys.argv[1] == "write-crc32":
     hk_write_crc32()
   elif sys.argv[1] == "write-crc32-new-only":
