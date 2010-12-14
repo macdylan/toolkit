@@ -31,7 +31,7 @@ def get_config(key, default_value=None):
       idx = line.find("=")
       if idx < 0:
         continue
-      if (line[:idx] == full_key + ".windows" and os.name == "nt") or (line[:idx] == full_key + ".posix" and os.name == "posix") or (line[:idx] == full_key):
+      if (line[:idx] == full_key + ".windows" and os.name == "nt") or (line[:idx] == full_key + ".posix" and os.name == "posix") or (line[:idx] == full_key) or (line[:idx] == key + ".windows" and os.name == "nt") or (line[:idx] == key + ".posix" and os.name == "posix") or (line[:idx] == key):
         value = line[(idx + 1):]
         break
   finally:
@@ -59,6 +59,13 @@ def is_ascii(text):
     if ord(c) >= 128 or ord(c) < 0:
       return False
   return True
+  
+def is_image(fname):
+  fname = fname.lower()
+  for ext in [".jpg", ".png", ".gif", ".swf", ".bmp"]:
+    if fname.endswith(ext):
+      return True
+  return False
 
 def write_log(text):
   print text

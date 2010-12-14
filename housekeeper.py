@@ -11,7 +11,17 @@ import re
 import time
 import random
 import shutil
+import traceback
 from utils import *
+
+def hk_make_dirs(path):
+  if os.path.exists(path) == False:
+    print "[mkdir] %s" % path
+    os.makedirs(path)
+
+def hk_exec(cmd):
+  print "[cmd] %s" % cmd
+  os.system(cmd)
 
 def hk_read_crc32_dict(crc32_dict_fn):
   crc32_dict = {}
@@ -211,15 +221,184 @@ def hk_rm_empty_dir():
       print "[empty-dir] %s" % root
       shutil.rmtree(root)
 
+def hk_psp_sync_pic():
+  psp_root = get_config("psp_root")
+  pic_root = get_config("psp_sync_pic.pic_root")
+  pic_folders = get_config("psp_sync_pic.folders").split("|")
+  convert_bin = get_config("convert_bin")
+  
+  # check if really a psp dir
+  if os.path.isdir(psp_root) == False:
+    write_log("[error] psp_root is not a valid dir: '%s'" % psp_root)
+    exit(1)
+  psp_root_listing = []
+  for item in os.listdir(psp_root):
+    psp_root_listing += item.lower(),
+  for psp_item in ["picture", "music", "psp", "video"]:
+    if psp_item not in psp_root_listing:
+      write_log("[error] not a valid psp root: '%s'" % psp_root)
+      exit(1)
+  
+  # start syncing
+  for folder in pic_folders:
+    write_log("[psp-sync-pic] folder: '%s'" % folder)
+    from_dir = os.path.join(pic_root, folder)
+    to_dir = os.path.join(psp_root, "Picture", folder)
+    hk_make_dirs(to_dir)
+    from_dir_ls = os.listdir(from_dir)
+    to_dir_ls = os.listdir(to_dir)
+    for to_f in to_dir_ls:
+      to_f_path = os.path.join(to_dir, to_f)
+      if not is_image(to_f):
+        continue
+      if to_f not in from_dir_ls:
+        write_log("[del] %s" % to_f_path)
+        os.remove(to_f_path)
+    for from_f in from_dir_ls:
+      if not is_image(from_f):
+        continue
+      if from_f not in to_dir_ls:
+        from_f_path = os.path.join(from_dir, from_f)
+        to_f_path = os.path.join(to_dir, from_f)
+        write_log("[add] %s" % from_f)
+        hk_exec("%s \"%s\" -resize 1280x800 \"%s\"" % (convert_bin, from_f_path, to_f_path))
+
+def hk_batch_rename():
+  path = raw_input("Path?\n")
+  filter = raw_input("Regexp filter (for fullname, excluding path, i.e., 'basename.extname')?\n")
+  file_list = os.listdir(path)
+  match_list = []
+  print "list of matched files:"
+  for file in file_list:
+    if re.search(filter, file):
+      match_list += file,
+      print file
+
+  print
+  print "choices:"
+  print "1: rename with increasing id"
+  print "2: rename according to a function"
+  choice = raw_input()
+  if choice == "1":
+    print "some hints on renaming pattern:"
+    print "%d -> increasing id"
+    print "%03d -> increasing id, prepadding by 0"
+    print "%% -> % itself"
+    print "provide renaming pattern (for basename only):"
+    pattern = raw_input()
+    print "privide start id[1]:"
+    start_id = raw_input()
+    if start_id == "":
+      start_id = 1
+    else:
+      start_id = int(start_id)
+    print "dry run result (not actually executed):"
+    
+    dry_run = True
+    for dummy_i in range(2):
+      counter = start_id
+      rollback_list = []
+      try:
+        for file in match_list:
+          old_basename = os.path.basename(file)
+          old_spltname = os.path.splitext(old_basename)
+          new_basename = (pattern % counter) + old_spltname[1]
+          print "%s  --->  %s" % (old_basename, new_basename)
+          if dry_run == False:
+            os.rename(path + os.path.sep + old_basename, path + os.path.sep + new_basename)
+          rollback_list += (old_basename, new_basename),
+          counter += 1
+      except:
+        if dry_run:
+          raise # re-throw
+        else:
+          print "error occured, rolling back..."
+          for pair in rollback_list:
+            old_basename = pair[0]
+            new_basename = pair[1]
+            print "(rollback) %s  --->  %s" % (new_basename, old_basename)
+            os.rename(path + os.path.sep + new_basename, path + os.path.sep + old_basename)
+    
+      if dry_run == True:
+        raw_input("press ENTER to confirm and execute the action...")
+        dry_run = False
+      else:
+        break
+    
+  elif choice == "2":
+    print "please provide a lambda function f(x, i):"
+    print "x: original basename (without ext)"
+    print "i: counter (starts from 0)"
+    print """eg:\n        "%s_%d" % (x, i)"""
+    fun_body = raw_input("lambda function?\n")
+    print "dry run result (not actually executed):"
+    
+    dry_run = True
+    for dummy_i in range(2):
+      exec "housekeeper_lambda_rename_helper_function = lambda x, i: (%s)" % fun_body
+      counter = 0
+      rollback_list = []
+      try:
+        for file in match_list:
+          old_basename = os.path.basename(file)
+          old_spltname = os.path.splitext(old_basename)
+          new_basename = housekeeper_lambda_rename_helper_function(old_spltname[0], counter) + old_spltname[1]
+          print "%s  --->  %s" % (old_basename, new_basename)
+          if dry_run == False:
+            os.rename(path + os.path.sep + old_basename, path + os.path.sep + new_basename)
+          rollback_list += (old_basename, new_basename),
+          counter += 1
+      except:
+        if dry_run:
+          raise # re-throw
+        else:
+          print "error occured, rolling back..."
+          for pair in rollback_list:
+            old_basename = pair[0]
+            new_basename = pair[1]
+            print "(rollback) %s  --->  %s" % (new_basename, old_basename)
+            os.rename(path + os.path.sep + new_basename, path + os.path.sep + old_basename)
+    
+      if dry_run == True:
+        raw_input("press ENTER to confirm and execute the action...")
+        dry_run = False
+      else:
+        break
+        
+  else:
+    print "no such choice: '%s'" % choice
+
+def hk_clean_eject_usb(usb_name):
+  mount_folder = "/Volumes/" + usb_name
+  if os.path.isdir(mount_folder) == False:
+    print "USB drive not found: '%s'" % (mount_folder)
+    exit(1)
+  for cruft in [".DS_Store", ".fseventsd", ".Spotlight-V100", ".Trashes"]:
+    cruft_path = os.path.join(mount_folder, cruft)
+    if os.path.exists(cruft_path):
+      if os.path.isdir(cruft_path):
+        print "[rm-dir] %s" % cruft_path
+        try:
+          shutil.rmtree(cruft_path)
+        except:
+          traceback.print_exc()
+      else:
+        print "[rm-file] %s" % cruft_path
+        os.remove(cruft_path)
+  hk_exec("diskutil eject \"%s\"" % usb_name)
+
 def hk_help():
   print "housekeeper.py: helper script to manage my important collections"
   print "usage: housekeeper.py <command>"
   print "available commands:"
   print
+  print "  batch-rename            batch rename files under a folder"
   print "  check-ascii-fnames      make sure all file has ascii-only name"
   print "  check-crc32             check file integrity by crc32"
+  print "  clean-eject-usb <name>  cleanly eject usb drives (cleans .Trash, .SpotLight folders)"
   print "  help                    display this info"
   print "  lowercase-ext           make sure file extensions are lower case"
+  print "  psp-sync-pic            sync images to psp"
   print "  rm-empty-dir            remove empty dir"
   print "  write-crc32             write crc32 data in every directory, overwrite old crc32 files"
   print "  write-crc32-new-only    write crc32 data in every directroy, new files only"
@@ -229,12 +408,21 @@ def hk_help():
 if __name__ == "__main__":
   if len(sys.argv) == 1 or sys.argv[1] == "help":
     hk_help()
+  elif sys.argv[1] == "batch-rename":
+    hk_batch_rename()
   elif sys.argv[1] == "check-crc32":
     hk_check_crc32()
   elif sys.argv[1] == "check-ascii-fnames":
     hk_check_ascii_fnames()
+  elif sys.argv[1] == "clean-eject-usb":
+    if len(sys.argv) < 3:
+      print "usage: housekeeper.py clean-eject-usb <usb_name>"
+      exit(0)
+    hk_clean_eject_usb(sys.argv[2])
   elif sys.argv[1] == "lowercase-ext":
     hk_lowercase_ext()
+  elif sys.argv[1] == "psp-sync-pic":
+    hk_psp_sync_pic()
   elif sys.argv[1] == "rm-empty-dir":
     hk_rm_empty_dir()
   elif sys.argv[1] == "write-crc32":

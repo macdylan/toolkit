@@ -235,11 +235,7 @@ def db_get_image_albums(image_set, id_in_set):
   return albums
 
 def util_is_image(fname):
-  fname = fname.lower()
-  for ext in [".jpg", ".png", ".gif", ".swf", ".bmp"]:
-    if fname.endswith(ext):
-      return True
-  return False
+  return is_image(fname)
 
 def util_make_dirs(path):
   if os.path.exists(path) == False:

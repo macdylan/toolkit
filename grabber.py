@@ -81,12 +81,8 @@ def grab_print_help():
   print "author: Santa Zhang (santa1987@gmail.com)"
   
 def grab_is_image(fname):
-  fn = fname.lower()
-  img_ext = [".jpg", ".bmp", ".png", ".gif"]
-  for ext in img_ext:
-    if fn.endswith(ext):
-      return True
-  return False
+  return is_image(fname)
+
 
 def folder_contains_images(dirpath):
   for fn in os.listdir(dirpath):

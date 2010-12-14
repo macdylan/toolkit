@@ -4,4 +4,5 @@
 * merge video_convert into justconvert
 * add grabber: dm.game.mop.com/fengmian/3924.html
 * merge grabbers into grabber
-
+* macos housekeeper clean-eject-usb
+* housekeeper psp-backup
