@@ -1,3 +1,4 @@
+*.tmproj
 *.swp
 search_db
 md5_db

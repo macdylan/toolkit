@@ -31,7 +31,7 @@ def get_config(key, default_value=None):
       idx = line.find("=")
       if idx < 0:
         continue
-      if key == line[:idx] or full_key == line[:idx]:
+      if (line[:idx] == full_key + ".windows" and os.name == "nt") or (line[:idx] == full_key + ".posix" and os.name == "posix") or (line[:idx] == full_key):
         value = line[(idx + 1):]
         break
   finally:
