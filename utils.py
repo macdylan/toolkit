@@ -10,8 +10,16 @@ import os
 import time
 
 def get_config(key, default_value=None):
-  conf_fn = os.path.join(os.path.split(__file__)[0], os.path.splitext(os.path.basename(sys.argv[0]))[0] + ".conf")
+  module_name = os.path.basename(sys.argv[0])
+  if "." in module_name:
+    module_name = os.path.splitext(module_name)[0]
+  conf_fn = os.path.join(os.path.split(__file__)[0], "toolkit.conf")
   value = None
+  
+  if key.startswith(module_name):
+    full_key = key
+  else:
+    full_key = module_name + "." + key
   
   f = None
   try:
@@ -23,7 +31,7 @@ def get_config(key, default_value=None):
       idx = line.find("=")
       if idx < 0:
         continue
-      if key == line[:idx]:
+      if key == line[:idx] or full_key == line[:idx]:
         value = line[(idx + 1):]
         break
   finally:
@@ -54,7 +62,10 @@ def is_ascii(text):
 
 def write_log(text):
   print text
-  log_fn = os.path.join(os.path.split(__file__)[0], os.path.splitext(os.path.basename(sys.argv[0]))[0] + ".log")
+  main_name = os.path.basename(sys.argv[0])
+  if "." in main_name:
+    main_name = os.path.splitext(main_name)[0]
+  log_fn = os.path.join(os.path.split(__file__)[0], main_name + ".log")
   f = open(log_fn, "a")
   tm = time.strftime("%Y.%m.%d %H:%M:%S", time.localtime())
   f.write("[%s] %s\n" % (tm, text))
