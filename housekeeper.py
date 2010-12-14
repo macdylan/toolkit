@@ -387,6 +387,60 @@ def hk_clean_eject_usb(usb_name):
         os.remove(cruft_path)
   hk_exec("diskutil eject \"%s\"" % usb_name)
 
+
+def has_highres_image_set(set_name):
+  if set_name in ["moe_imouto", "nekobooru", "konachan", "danbooru"]:
+    return True
+  else:
+    return False
+
+def get_bucket_name(id_in_set):
+  BUCKET_SIZE = 100
+  bucket_id = id_in_set / BUCKET_SIZE
+  bucket_name = "%d-%d" % (bucket_id * BUCKET_SIZE, bucket_id * BUCKET_SIZE + BUCKET_SIZE - 1)
+  return bucket_name
+
+def get_highres_image(image_root, set_name, image_id, ext_name):
+  if has_highres_image_set(set_name):
+    bucket_name = get_bucket_name(int(image_id))
+    image_fn = os.path.join(image_root, set_name + "_highres", bucket_name, image_id + "." + ext_name)
+    if os.path.exists(image_fn):
+      return image_fn
+  return None
+
+def split_image_fname(fname):
+  image_set = None
+  image_id = None
+  splt = fname.split()
+  image_set = splt[0]
+  image_id = splt[1].split(".")[0]
+  ext_name = splt[1].split(".")[1]
+  return (image_set, image_id, ext_name)
+
+def hk_upgrade_dropbox_pic():
+  pic_root = get_config("upgrade_res.pic_root")
+  dest_root = get_config("upgrade_res.dest_root")
+  pic_folders = get_config("upgrade_res.folders").split("|")
+  threshold = int(get_config("upgrade_res.size_threshold_mb")) * 1024 * 1024
+  for folder in pic_folders:
+    folder_path = os.path.join(dest_root, folder)
+    for fn in os.listdir(folder_path):
+      fpath = os.path.join(folder_path, fn)
+      if os.path.isfile(fpath) == False or is_image(fn) == False:
+        continue
+      image_set, image_id, ext_name = split_image_fname(fn)
+      highres_image = get_highres_image(pic_root, image_set, image_id, ext_name)
+      if highres_image == None:
+        continue
+      else:
+        if os.stat(highres_image).st_size > threshold:
+          print "[skip] image too big: '%s'" % highres_image
+        else:
+          dest_fn = "%s %s.%s" % (image_set + "_highres", image_id, ext_name)
+          write_log("[replace] %s -> %s" % (fn, dest_fn))
+          shutil.copy(highres_image, os.path.join(folder_path, dest_fn))
+          os.remove(fpath)
+
 def hk_help():
   print "housekeeper.py: helper script to manage my important collections"
   print "usage: housekeeper.py <command>"
@@ -400,6 +454,7 @@ def hk_help():
   print "  lowercase-ext           make sure file extensions are lower case"
   print "  psp-sync-pic            sync images to psp"
   print "  rm-empty-dir            remove empty dir"
+  print "  upgrade-dropbox-pic     update dropbox photos folder, prefer highres pictures"
   print "  write-crc32             write crc32 data in every directory, overwrite old crc32 files"
   print "  write-crc32-new-only    write crc32 data in every directroy, new files only"
   print
@@ -425,6 +480,8 @@ if __name__ == "__main__":
     hk_psp_sync_pic()
   elif sys.argv[1] == "rm-empty-dir":
     hk_rm_empty_dir()
+  elif sys.argv[1] == "upgrade-dropbox-pic":
+    hk_upgrade_dropbox_pic()
   elif sys.argv[1] == "write-crc32":
     hk_write_crc32()
   elif sys.argv[1] == "write-crc32-new-only":
