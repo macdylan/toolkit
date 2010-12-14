@@ -1,8 +1,9 @@
 * moe check-zip: check the contents of zip packages
 * moe: don't create db file when just calling help
-* housekeeper updatechrome: update chrome (only for windows)
+* housekeeper: updatechrome (only for windows)
 * merge helper_scripts into housekeeper
 * merge video_convert into justconvert
 * add grabber: dm.game.mop.com/fengmian/3924.html
 * merge grabbers into grabber
-* housekeeper psp-backup
+* housekeeper: psp-backup
+* housekeeper: aucdtect genuine report
