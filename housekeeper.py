@@ -434,7 +434,7 @@ def hk_upgrade_dropbox_pic():
         continue
       else:
         if os.stat(highres_image).st_size > threshold:
-          print "[skip] image too big: '%s'" % highres_image
+          print "[skip] image too big (%.2fMB): '%s'" % (os.stat(highres_image).st_size / 1024.0 /1024.0, highres_image)
         else:
           dest_fn = "%s %s.%s" % (image_set + "_highres", image_id, ext_name)
           write_log("[replace] %s -> %s" % (fn, dest_fn))
