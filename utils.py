@@ -67,6 +67,13 @@ def is_image(fname):
       return True
   return False
 
+def is_music(fname):
+  fname = fname.lower()
+  for ext in [".mp3", ".m4a", ".ape", ".flac", ".tta"]:
+    if fname.endswith(ext):
+      return True
+  return False
+
 def write_log(text):
   print text
   main_name = os.path.basename(sys.argv[0])
