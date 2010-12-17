@@ -158,10 +158,10 @@ class FfmpegJob:
   
   def get_commandline(self):
     cmd_line = "-y " # say yes to all questions
-    for input in self.input_files:
-      cmd_line += "-i \"%s\" " % input
     for key in self.param.keys():
       cmd_line += "-%s %s " % (key, str(self.param[key]))
+    for input in self.input_files:
+      cmd_line += "-i \"%s\" " % input
     cmd_line += " \"%s\"" % self.output_file
     return cmd_line
 
