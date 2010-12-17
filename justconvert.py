@@ -36,7 +36,11 @@ class FfmpegThread(Thread):
       # do real job here
       job_folder = os.path.split(self.job.get_output_file())[0]
       cmd_split = shlex.split(full_cmd)
-      pipe = Popen(cmd_split, shell=False, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True, cwd=job_folder)
+      if os.name == "nt":
+        # on Windows, close fds is not supported when stdin/stdout/stderr is directed
+        pipe = Popen(cmd_split, shell=False, stdin=PIPE, stdout=PIPE, stderr=STDOUT, cwd=job_folder)
+      else:
+        pipe = Popen(cmd_split, shell=False, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True, cwd=job_folder)
       stdout_output = pipe.stdout.read()
       #print "[done] %s" % full_cmd
       # notify done!
@@ -158,10 +162,10 @@ class FfmpegJob:
   
   def get_commandline(self):
     cmd_line = "-y " # say yes to all questions
-    for key in self.param.keys():
-      cmd_line += "-%s %s " % (key, str(self.param[key]))
     for input in self.input_files:
       cmd_line += "-i \"%s\" " % input
+    for key in self.param.keys():
+      cmd_line += "-%s %s " % (key, str(self.param[key]))
     cmd_line += " \"%s\"" % self.output_file
     return cmd_line
 
@@ -174,7 +178,10 @@ def jc_makedirs(path):
 def jc_get_ffmpeg_info():
   ffmpeg_bin = get_config("ffmpeg_bin")
   info = ''
-  pipe = Popen(ffmpeg_bin, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=True)
+  if os.name == "nt":
+    pipe = Popen(ffmpeg_bin, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+  else:
+    pipe = Popen(ffmpeg_bin, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=True)
   lines = pipe.stderr.read()
   for line in lines.splitlines():
     if line.find("version") >= 0 or line.startswith("  "):
