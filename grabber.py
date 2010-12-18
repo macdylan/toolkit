@@ -240,7 +240,8 @@ def grab_download_manhua178(manga_url, **opt):
           print "download failure!"
           if down_f != None:
             down_f.close()
-          os.remove(fn + u".tmp")
+          if os.path.exists(fn + u".tmp"):
+            os.remove(fn + u".tmp")
           err_log_f = open(error_log_fn, "a")
           try:
             err_log_f.write("failed to download: %s\n" % fn)
