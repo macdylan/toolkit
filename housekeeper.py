@@ -487,7 +487,6 @@ def hk_itunes_genuine_check():
     for row in old_db_reader:
       old_db[row[0]] = [row[1], row[2], row[3]]
     old_db_f.close()
-    print len(old_db)
   itunes_music_folder = os.path.join(itunes_folder, "Music")
   new_db_f = open(report_fn + ".tmp", "wb")
   new_db_writer = csv.writer(new_db_f)
@@ -503,6 +502,7 @@ def hk_itunes_genuine_check():
           print "[new] %s" % strip_fn
           new_db[strip_fn] = [fn, "", ""]
         else:
+          print "[skip] %s" % strip_fn
           new_db[strip_fn] = old_db[strip_fn]
         if new_db[strip_fn][1] == "" or new_db[strip_fn][2] == "":
           new_db[strip_fn][1], new_db[strip_fn][2] = util_aucdtect(aucdtect_bin, ffmpeg_bin, tmp_folder, strip_fn, fpath)
