@@ -293,6 +293,57 @@ def jc_psp_movie_dir(src_dir, dst_dir):
   jc_makedirs(dst_dir)
   print "This shall be done!"
 
+def jc_ssa_from_mkv(mkv_file, ssa_file):
+  ffmpeg_bin = get_config("ffmpeg_bin")
+  os.system(ffmpeg_bin + ' -y -i "' + mkv_file + '" -an -vn -scodec copy -f rawvideo "' + ssa_file + '"')
+
+def util_drop_ssa_effect(line):
+  plain = ""
+  level = 0
+  for c in line:
+    if level == 0:
+      if c == "{":
+        level += 1
+      else:
+        plain += c
+    else:
+      if c == "}":
+        level -= 1
+  plain.replace("\\N", " ")
+  return plain
+
+def util_split_ssa_line(line):
+  comma_to_split = 9
+  lst = []
+  while (comma_to_split > 0):
+    index = line.find(',')
+    seg = line[:index]
+    line = line[index + 1:]
+    lst += seg,
+    comma_to_split -= 1
+  lst += util_drop_ssa_effect(line),
+  return lst
+
+def util_ssa_to_psp_srt_line(ssa):
+  seg = util_split_ssa_line(ssa)
+  if seg[3] != "Context":
+    print "[skip] %s" % ssa.strip()
+  srt = ""
+  srt += seg[4] + "\n"
+  srt += seg[1] + " --> " + seg[2] + "\n"
+  srt += seg[9]
+  return srt
+
+def jc_psp_srt_from_ssa(ssa_file, srt_file):
+  ssa = open(ssa_file)
+  srt = open(srt_file, "w")
+  for l in ssa.readlines():
+    new_line = util_ssa_to_psp_srt_line(l) 
+    if new_line != None:
+      srt.write(new_line + "\n")
+  srt.close()
+  ssa.close()
+
 def jc_print_help():
   print "justconvert.py: convertion tools for video, picture & text files"
   print "usage: justconvert.py <command>"
@@ -303,6 +354,8 @@ def jc_print_help():
   print "  ipod-movie              convert a video to ipod movie (2nd generation)"
   print "  psp-movie               convert a video to psp format"
   print "  psp-movie-dir           convert video in a folder to psp format"
+  print "  psp-srt-from-ssa        convert .ssa subtitle into psp .srt format"
+  print "  ssa-from-mkv            extract .ssa subtitle from .mkv files"
   print "  help                    display this info"
   print
   print "author: Santa Zhang (santa1987@gmail.com)"
@@ -335,6 +388,28 @@ if __name__ == "__main__":
       print "all converted result in <dst_dir> will have .mp4 as extension"
       exit(0)
     jc_psp_movie_dir(sys.argv[2], sys.argv[3])
+  elif sys.argv[1] == "psp-srt-from-ssa":
+    if len(sys.argv) < 3:
+      print "usage: justconvert psp-srt-from-ssa <ssa_file> [srt_file]"
+      print "by default, the srt_file will have same main filename as the ssa_file"
+      exit(0)
+    ssa_file = sys.argv[2]
+    if len(sys.argv) >= 4:
+      srt_file = sys.argv[3]
+    else:
+      srt_file = os.path.splitext(ssa_file)[0] + ".srt"
+    jc_psp_srt_from_ssa(ssa_file, srt_file)
+  elif sys.argv[1] == "ssa-from-mkv":
+    if len(sys.argv) < 3:
+      print "usage: justconvert ssa-from-mkv <mkv_file> [ssa_file]"
+      print "by default, the ssa_file will have same main filename as the mkv_file"
+      exit(0)
+    mkv_file = sys.argv[2]
+    if len(sys.argv) >= 4:
+      ssa_file = sys.argv[3]
+    else:
+      ssa_file = os.path.splitext(mkv_file)[0] + ".ssa"
+    jc_ssa_from_mkv(mkv_file, ssa_file)
   else:
     print "command '%s' not understood, see 'justconvert.py help' for more info" % sys.argv[1]
 
