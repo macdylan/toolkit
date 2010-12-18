@@ -447,24 +447,29 @@ def util_aucdtect(aucdtect_bin, ffmpeg_bin, tmp_folder, strip_fn, fpath):
   print "[aucdtect] %s" % strip_fn
   audio_type = ""
   probability = ""
-  
   tmp_fn = os.path.join(tmp_folder, "itunes-genunie-check-%s.wav" % random_token())
   try:
-    ffmpeg_cmd = "%s -i \"%s\" \"%s\"" % (ffmpeg_bin, fpath, tmp_fn)
-    if os.name == "nt":
-      # on Windows, close fds is not supported when stdin/stdout/stderr is directed
-      pipe = Popen(ffmpeg_cmd, shell=False, stdin=PIPE, stdout=PIPE, stderr=STDOUT)
-    else:
-      pipe = Popen(ffmpeg_cmd, shell=False, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True)
+    ffmpeg_cmd = "%s -y -i \"%s\" \"%s\"" % (ffmpeg_bin, fpath, tmp_fn)
+    # on Windows, close fds is not supported when stdin/stdout/stderr is directed
+    pipe = Popen(ffmpeg_cmd, shell=False, stdin=PIPE, stdout=PIPE, stderr=STDOUT)
     stdout_output = pipe.stdout.read()
-    print stdout_output
+    #print stdout_output
     
     # TODO aucdtect!
-  
+    aucdtect_cmd = "%s \"%s\"" % (aucdtect_bin, tmp_fn)
+    pipe = Popen(aucdtect_cmd, shell=False, stdin=PIPE, stdout=PIPE, stderr=STDOUT)
+    stdout_output = pipe.stdout.read()
+    for line in stdout_output.splitlines():
+      line = line.strip()
+      if line.startswith("This track looks like"):
+        splt = line.split()
+        audio_type = splt[4]
+        probability = splt[7]
+        print "[result] %s %s" % (audio_type, probability)
+        break
   finally:
     if os.path.exists(tmp_fn):
       os.remove(tmp_fn)
-
   return audio_type, probability
 
 def hk_itunes_genuine_check():
@@ -502,9 +507,9 @@ def hk_itunes_genuine_check():
         if new_db[strip_fn][1] == "" or new_db[strip_fn][2] == "":
           new_db[strip_fn][1], new_db[strip_fn][2] = util_aucdtect(aucdtect_bin, ffmpeg_bin, tmp_folder, strip_fn, fpath)
         new_db_writer.writerow([strip_fn, new_db[strip_fn][0], new_db[strip_fn][1], new_db[strip_fn][2]])
+        new_db_f.flush()
   new_db_f.close()
   shutil.move(report_fn + ".tmp", report_fn)
-
 
 def hk_help():
   print "housekeeper.py: helper script to manage my important collections"
