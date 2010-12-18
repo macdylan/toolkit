@@ -275,6 +275,18 @@ def jc_ipod_movie(src_fn, dst_fn):
   print "[cmd] %s" % full_cmd
   os.system(full_cmd)
   
+def jc_ipod_movie_wide(src_fn, dst_fn):
+  jc_makedirs(os.path.split(dst_fn)[0])
+  conv_params = jc_split_ffmpeg_preset(get_config("ipod_movie_wide.preset"))
+  job = FfmpegJob()
+  job.set_params(conv_params)
+  job.set_input_files(src_fn)
+  job.set_output_file(dst_fn)
+  ffmpeg_bin = get_config("ffmpeg_bin")
+  full_cmd = "%s %s" % (ffmpeg_bin, job.get_commandline())
+  print "[cmd] %s" % full_cmd
+  os.system(full_cmd)
+  
 
 def jc_psp_movie(src_fn, dst_fn):
   jc_makedirs(os.path.split(dst_fn)[0])
@@ -352,6 +364,7 @@ def jc_print_help():
   print "  ffmpeg-info             display info about ffmpeg"
   print "  iphone-ringtone         convert m4a and mp3 files into m4r (iphone ringtone)"
   print "  ipod-movie              convert a video to ipod movie (2nd generation)"
+  print "  ipod-movie-wide         convert a video to ipod movie (2nd generation, wide screen)"
   print "  psp-movie               convert a video to psp format"
   print "  psp-movie-dir           convert video in a folder to psp format"
   print "  psp-srt-from-ssa        convert .ssa subtitle into psp .srt format"
@@ -376,6 +389,12 @@ if __name__ == "__main__":
       print "<dst_file> should have .mp4 as extension"
       exit(0)
     jc_ipod_movie(sys.argv[2], sys.argv[3])
+  elif sys.argv[1] == "ipod-movie-wide":
+    if len(sys.argv) < 4:
+      print "usage: justconvert ipod-movie-wide <src_file> <dst_file>"
+      print "<dst_file> should have .mp4 as extension"
+      exit(0)
+    jc_ipod_movie_wide(sys.argv[2], sys.argv[3])
   elif sys.argv[1] == "psp-movie":
     if len(sys.argv) < 4:
       print "usage: justconvert psp-movie <src_file> <dst_file>"
