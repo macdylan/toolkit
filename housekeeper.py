@@ -12,6 +12,8 @@ import time
 import random
 import shutil
 import traceback
+import csv
+from subprocess import Popen, PIPE, STDOUT
 from utils import *
 
 def hk_make_dirs(path):
@@ -441,6 +443,69 @@ def hk_upgrade_dropbox_pic():
           shutil.copy(highres_image, os.path.join(folder_path, dest_fn))
           os.remove(fpath)
 
+def util_aucdtect(aucdtect_bin, ffmpeg_bin, tmp_folder, strip_fn, fpath):
+  print "[aucdtect] %s" % strip_fn
+  audio_type = ""
+  probability = ""
+  
+  tmp_fn = os.path.join(tmp_folder, "itunes-genunie-check-%s.wav" % random_token())
+  try:
+    ffmpeg_cmd = "%s -i \"%s\" \"%s\"" % (ffmpeg_bin, fpath, tmp_fn)
+    if os.name == "nt":
+      # on Windows, close fds is not supported when stdin/stdout/stderr is directed
+      pipe = Popen(ffmpeg_cmd, shell=False, stdin=PIPE, stdout=PIPE, stderr=STDOUT)
+    else:
+      pipe = Popen(ffmpeg_cmd, shell=False, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True)
+    stdout_output = pipe.stdout.read()
+    print stdout_output
+    
+    # TODO aucdtect!
+  
+  finally:
+    if os.path.exists(tmp_fn):
+      os.remove(tmp_fn)
+
+  return audio_type, probability
+
+def hk_itunes_genuine_check():
+  aucdtect_bin = get_config("aucdtect_bin")
+  ffmpeg_bin = get_config("ffmpeg_bin")
+  itunes_folder = get_config("itunes_folder")
+  tmp_folder = get_config("tmp_folder")
+  report_fn = os.path.abspath(os.path.join(itunes_folder, "..", "itunes_genuine_report.csv"))
+  print "[report-file] %s" % report_fn
+  old_db = {}
+  new_db = {}
+  if os.path.exists(report_fn):
+    old_db_f = open(report_fn, "rb")
+    old_db_reader = csv.reader(old_db_f)
+    for row in old_db_reader:
+      old_db[row[0]] = [row[1], row[2], row[3]]
+    old_db_f.close()
+    print len(old_db)
+  itunes_music_folder = os.path.join(itunes_folder, "Music")
+  new_db_f = open(report_fn + ".tmp", "wb")
+  new_db_writer = csv.writer(new_db_f)
+  # the genunie info: (relative_fpath, filename, type, probability)
+  new_db_writer.writerow(["path", "filename", "type", "probability"])
+  for root, dirname, fnames in os.walk(itunes_music_folder):
+    strip_root = root[(len(itunes_music_folder) + 1):]
+    for fn in fnames:
+      if is_music(fn):
+        fpath = os.path.join(root, fn)
+        strip_fn = os.path.join(strip_root, fn)
+        if old_db.has_key(strip_fn) == False:
+          print "[new] %s" % strip_fn
+          new_db[strip_fn] = [fn, "", ""]
+        else:
+          new_db[strip_fn] = old_db[strip_fn]
+        if new_db[strip_fn][1] == "" or new_db[strip_fn][2] == "":
+          new_db[strip_fn][1], new_db[strip_fn][2] = util_aucdtect(aucdtect_bin, ffmpeg_bin, tmp_folder, strip_fn, fpath)
+        new_db_writer.writerow([strip_fn, new_db[strip_fn][0], new_db[strip_fn][1], new_db[strip_fn][2]])
+  new_db_f.close()
+  shutil.move(report_fn + ".tmp", report_fn)
+
+
 def hk_help():
   print "housekeeper.py: helper script to manage my important collections"
   print "usage: housekeeper.py <command>"
@@ -451,6 +516,7 @@ def hk_help():
   print "  check-crc32             check file integrity by crc32"
   print "  clean-eject-usb <name>  cleanly eject usb drives (cleans .Trash, .SpotLight folders)"
   print "  help                    display this info"
+  print "  itunes-genuine-check    check if music in iTunes is genuine"
   print "  lowercase-ext           make sure file extensions are lower case"
   print "  psp-sync-pic            sync images to psp"
   print "  rm-empty-dir            remove empty dir"
@@ -474,6 +540,8 @@ if __name__ == "__main__":
       print "usage: housekeeper.py clean-eject-usb <usb_name>"
       exit(0)
     hk_clean_eject_usb(sys.argv[2])
+  elif sys.argv[1] == "itunes-genuine-check":
+    hk_itunes_genuine_check()
   elif sys.argv[1] == "lowercase-ext":
     hk_lowercase_ext()
   elif sys.argv[1] == "psp-sync-pic":

@@ -8,6 +8,7 @@
 import sys
 import os
 import time
+import random
 
 def get_config(key, default_value=None):
   module_name = os.path.basename(sys.argv[0])
@@ -84,4 +85,11 @@ def write_log(text):
   tm = time.strftime("%Y.%m.%d %H:%M:%S", time.localtime())
   f.write("[%s] %s\n" % (tm, text))
   f.close()
+
+def random_token(size=5):
+  token = ""
+  alphabet = "abcdefghijklmnopqrst0123456789"
+  for i in range(size):
+    token += alphabet[random.randint(0, len(alphabet) - 1)]
+  return token
 
