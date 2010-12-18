@@ -1,10 +1,12 @@
 #!/usr/bin/env python
+# coding=utf-8
 
 # One script to manage my important collections.
 #
 # Author: Santa Zhang (santa1987@gmail.com)
 #
 
+import urllib
 import sys
 import os
 import re
@@ -511,6 +513,104 @@ def hk_itunes_genuine_check():
   new_db_f.close()
   shutil.move(report_fn + ".tmp", report_fn)
 
+def hk_itunes_play_count():
+  itunes_lib_xml_fn = os.path.join(get_config("itunes_folder"), "iTunes Music Library.xml")
+  total_count = 0
+  fp = open(itunes_lib_xml_fn)
+  fcontent = fp.read()
+  fp.close()
+  match = re.findall("Play Count<\/key><integer>[^<]*", fcontent)
+  for m in match:
+    total_count += int(m[25:])
+  print "Total play count is %d" % total_count
+
+def hk_itunes_check_exists():
+  itunes_lib_xml_fn = os.path.join(get_config("itunes_folder"), "iTunes Music Library.xml")
+  fp = open(itunes_lib_xml_fn)
+  fcontent = fp.read()
+  fp.close()
+  match = re.findall("file\:\/\/[^<]+", fcontent)
+  missing_count = 0
+  for m in match:
+    #music_fn = m.replace("\u30fb", ".")
+    music_fn = urllib.unquote(m)[16:]
+    music_fn = music_fn.replace("&#38;", "&")
+    if os.path.exists(music_fn) == False:
+      print music_fn
+      missing_count += 1
+  if missing_count == 0:
+    print "Nothing is missing"
+  else:
+    print "%d items missing" % missing_count
+
+def convert_jpn_path(fpath):
+  fpath = fpath.replace("ダ", "ダ")
+  fpath = fpath.replace("ポ", "ポ")
+  fpath = fpath.replace("グ", "グ")
+  fpath = fpath.replace("ド", "ド")
+  fpath = fpath.replace("ジ", "ジ")
+  fpath = fpath.replace("だ", "だ")
+  fpath = fpath.replace("ば", "ば")
+  fpath = fpath.replace("が", "が")
+  fpath = fpath.replace("で", "で")
+  fpath = fpath.replace("パ", "パ")
+  fpath = fpath.replace("プ", "プ")
+  fpath = fpath.replace("デ", "デ")
+  fpath = fpath.replace("び", "び")
+  fpath = fpath.replace("ず", "ず")
+  fpath = fpath.replace("ベ", "ベ")
+  fpath = fpath.replace("ゼ", "ゼ")
+  fpath = fpath.replace("グ", "グ")
+  fpath = fpath.replace("ピ", "ピ")
+  fpath = fpath.replace("じ", "じ")
+  fpath = fpath.replace("ゲ", "ゲ")
+  fpath = fpath.replace("ブ", "ブ")
+  fpath = fpath.replace("ご", "ご")
+  fpath = fpath.replace("ビ", "ビ")
+  fpath = fpath.replace("ズ", "ズ")
+  fpath = fpath.replace("ボ", "ボ")
+  return fpath
+
+def dbg_print(msg):
+#  if "霜月はるか" in msg:
+    print msg
+
+def hk_itunes_find_ophan():
+  library_map = {}
+  itunes_folder = get_config("itunes_folder")
+  itunes_lib_xml_fn = os.path.join(itunes_folder, "iTunes Music Library.xml")
+  fp = open(itunes_lib_xml_fn)
+  fcontent = fp.read()
+  fp.close()
+  match = re.findall("file\:\/\/[^<]+", fcontent)
+  ophan_count = 0
+  for m in match:
+    #music_fn = m.replace("\u30fb", ".")
+    music_fn = urllib.unquote(m)[16:]
+    music_fn = music_fn.replace("&#38;", "&")
+    music_fn = convert_jpn_path(music_fn)
+    library_map[music_fn] = True
+    dbg_print(music_fn)
+  for root, dirname, fnames in os.walk(os.path.join(itunes_folder, "Music")):
+    for fn in fnames:
+      fpath = os.path.join(root, fn)
+      
+      # TODO change the chars
+      
+      #fpath = fpath.replace("ガ", "カ")
+      fpath = convert_jpn_path(fpath)
+      
+      #dbg_print(fpath)
+      if is_music(fpath):
+        if library_map.has_key(fpath) == False:
+          ophan_count += 1
+          dbg_print(fpath)
+  if ophan_count == 0:
+    print "No ophan found"
+  else:
+    print "Found %d ophan files" % ophan_count
+  print "NOTE: THIS UTILITY IS STILL IN DEVEOPMENT, THE RESULTS MIGHT NOT BE CORRECT!"
+
 def hk_help():
   print "housekeeper.py: helper script to manage my important collections"
   print "usage: housekeeper.py <command>"
@@ -521,7 +621,10 @@ def hk_help():
   print "  check-crc32             check file integrity by crc32"
   print "  clean-eject-usb <name>  cleanly eject usb drives (cleans .Trash, .SpotLight folders)"
   print "  help                    display this info"
+  print "  itunes-check-exists     check if music in iTunes library really exists"
+  print "  itunes-find-ophan       check if music is in music folder but not in iTunes"
   print "  itunes-genuine-check    check if music in iTunes is genuine"
+  print "  itunes-play-count       display the play count of iTunes library"
   print "  lowercase-ext           make sure file extensions are lower case"
   print "  psp-sync-pic            sync images to psp"
   print "  rm-empty-dir            remove empty dir"
@@ -545,8 +648,14 @@ if __name__ == "__main__":
       print "usage: housekeeper.py clean-eject-usb <usb_name>"
       exit(0)
     hk_clean_eject_usb(sys.argv[2])
+  elif sys.argv[1] == "itunes-check-exists":
+    hk_itunes_check_exists()
+  elif sys.argv[1] == "itunes-find-ophan":
+    hk_itunes_find_ophan()
   elif sys.argv[1] == "itunes-genuine-check":
     hk_itunes_genuine_check()
+  elif sys.argv[1] == "itunes-play-count":
+    hk_itunes_play_count()
   elif sys.argv[1] == "lowercase-ext":
     hk_lowercase_ext()
   elif sys.argv[1] == "psp-sync-pic":
