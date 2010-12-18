@@ -227,17 +227,19 @@ def grab_download_manhua178(manga_url, **opt):
         if os.path.exists(down_filename):
           grab_message("[pass] %s" % down_filename)
           continue
-        down_f = open(fn + u".tmp", "wb")
+        down_f = None
         full_pg_unescaped = full_pg.decode("unicode_escape").encode("utf-8")
         full_pg_unescaped = full_pg_unescaped.replace(" ", "%20")
         try:
           down_data = urllib2.urlopen(full_pg_unescaped).read()
+          down_f = open(fn + u".tmp", "wb")
           down_f.write(down_data)
           down_f.close()
           shutil.move(fn + u".tmp", fn)
         except HTTPError, e:
           print "download failure!"
-          down_f.close()
+          if down_f != None:
+            down_f.close()
           os.remove(fn + u".tmp")
           err_log_f = open(error_log_fn, "a")
           try:
@@ -261,7 +263,8 @@ def grab_download_manhua178(manga_url, **opt):
 
 
 def bengou_down_page(page_url, down_dir, page_id):
-  print page_url, down_dir, page_id
+  ok = True
+  print "[down] id=%d, url=%s" % (page_id, page_url)
   page_src = urllib2.urlopen(page_url).read()
 
   # get pic url:
@@ -270,25 +273,46 @@ def bengou_down_page(page_url, down_dir, page_id):
   idx2 = page_src.index('"', idx)
   img_url = page_src[idx:idx2]
   print "[img] %s" % img_url
+  
+  error_log_fn = os.path.join(down_dir, "ERROR")
 
   # download pic:
   img_ext = img_url[img_url.rfind("."):]
   pic_fn = down_dir + os.path.sep + ("%03d" % page_id) + img_ext
   if os.path.exists(pic_fn):
-    print "[skip] %s" % pic_fn
+    try:
+      print "[skip] %s" % pic_fn
+    except:
+      pass
   else:
+    pic_f = None
     try:
       pic_data = urllib2.urlopen(img_url).read()
-      pic_f = open(pic_fn, "wb")
+      pic_f = open(pic_fn + u".tmp", "wb")
       pic_f.write(pic_data)
       pic_f.close()
+      shutil.move(pic_fn + u".tmp", pic_fn)
     except HTTPError, e:
-      print "[failure] %s" % pic_fn
-      f = open(pic_fn + ".failed", "w")
-      f.close()
+      if pic_f != None:
+        pic_f.close()
+      if os.path.exists(pic_fn + u".tmp"):
+        os.remove(pic_fn + u".tmp")
+      print "[failure] %s" % page_url
+      
+      err_log_f = open(error_log_fn, "a")
+      try:
+        err_log_f.write("failed to download: %s\n" % pic_fn)
+      except:
+        err_log_f.write("failed to download from: %s\n" % img_url)
+      finally:
+        err_log_f.close()
+      
+      ok = False
+  return ok
 
 def bengou_down_vol(vol_url, down_dir):
-  print "[vol] %s" % vol_url
+  all_ok = True
+  print "[vol-url] %s" % vol_url
   page_src = urllib2.urlopen(vol_url).read()
   root_url = vol_url[:vol_url.rfind("/")]
 
@@ -299,12 +323,17 @@ def bengou_down_vol(vol_url, down_dir):
   exec "pictree=%s" % pictree_src
   counter = 1
   for pic in pictree:
-    down_page(root_url + "/" + pic, down_dir, counter)
-    counter += 1
-
+    try:
+      ok = bengou_down_page(root_url + "/" + pic, down_dir, counter)
+      all_ok = all_ok and ok
+      counter += 1
+    except HTTPError, e:
+      all_ok = False
+      traceback.print_exc()
+      time.sleep(1)
+  return all_ok
 
 def grab_download_bengou(index_url, **opt):
-  print "This shall be done!"
   page_src = urllib2.urlopen(index_url).read()
   index_root = index_url[:index_url.rfind("/")]
   # find manga name
@@ -312,13 +341,18 @@ def grab_download_bengou(index_url, **opt):
   idx = page_src.index("title=", idx)
   idx2 = page_src.index('"', idx + 7)
   comic_name = page_src[(idx + 7):idx2].decode("utf-8")
-  print comic_name
+  grab_message(comic_name)
+  grab_message("[index-url] %s" % index_url)
+  
+  comic_folder_path = MANGA_FOLDER + os.path.sep + comic_name + "(bengou)"
 
   # find the volumes
   idx = page_src.index("mhlist")
   idx2 = page_src.index("</div>", idx)
   mhlist_src = page_src[idx:idx2]
 
+  
+  manga_list = []
   idx = 0
   idx2 = 0
   while True:
@@ -330,11 +364,50 @@ def grab_download_bengou(index_url, **opt):
     idx = mhlist_src.find("span", idx2)
     idx2 = mhlist_src.index("</span>", idx)
     vol_name = mhlist_src[(idx + 17):(idx2)].decode("utf-8")
-    print "Vol: %s=%s" % (vol_name, vol_url)
-    down_dir = "bengou" + os.path.sep + comic_name + os.path.sep + vol_name
-    print "mkdir: " + down_dir
-    #util_make_dirs(down_dir)
-    #down_vol(vol_url, down_dir)
+    manga_list += (vol_name, vol_url),
+
+  # download new chapters if necessary
+  if opt.has_key("reverse") and opt["reverse"] == True:
+    manga_list.reverse()
+
+  for vol_name, vol_url in manga_list:
+    grab_message(vol_name)
+    grab_message("[vol-page] %s" % vol_url)
+    chapter_folder_path = os.path.join(comic_folder_path, vol_name)
+    chapter_zip_fn = chapter_folder_path + ".zip"
+    
+    if os.path.exists(chapter_zip_fn):
+      print "zip exists, pass chapter"
+      continue
+    else:
+      print "zip not exists!"
+    
+    prepare_folder(chapter_folder_path)
+    
+    error_log_fn = chapter_folder_path + u"/ERROR"
+    not_finished_fn = chapter_folder_path + u"/NOT_FINISHED"
+    if os.path.exists(error_log_fn) == False and os.path.exists(not_finished_fn) == False and folder_contains_images(chapter_folder_path):
+      print "chapter already downloaded, skip"
+      grab_ensure_manga_packed(comic_folder_path)
+      continue
+    else:
+      print "still have to download chapter"
+  
+    # remove possibly existing error log file
+    if os.path.exists(error_log_fn):
+      os.remove(error_log_fn)
+    
+    # create a place holder
+    open(not_finished_fn, "w").close()
+  
+    all_ok = bengou_down_vol(vol_url, chapter_folder_path)
+    
+    # remove the place holder
+    if os.path.exists(not_finished_fn):
+      os.remove(not_finished_fn)
+    
+    # pack the folder if necessary
+    grab_ensure_manga_packed(comic_folder_path)
 
   
 def grab_download_print_help():
