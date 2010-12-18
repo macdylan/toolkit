@@ -31,12 +31,18 @@ from utils import *
 
 # The sqlite3 database which will be used.
 SQLITE3_DB = None
+DB_CONN = None
 
 # read basic config data
 g_image_root = None
 g_tmp_folder = None
 
 def init_db_connection():
+  global SQLITE3_DB
+  global DB_CONN
+  global g_image_root
+  global g_tmp_folder
+  
   SQLITE3_DB = get_config("db_file")
 
   # read basic config data
@@ -1596,7 +1602,6 @@ if __name__ == "__main__":
     init_db_connection()
     moe_list_albums()
   elif sys.argv[1] == "mirror-all":
-    init_db_connection()
     moe_mirror_all()
   elif sys.argv[1] == "mirror-danbooru":
     init_db_connection()
