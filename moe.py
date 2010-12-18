@@ -30,33 +30,41 @@ from utils import *
 # black_list(set_name, start_id, end_id)
 
 # The sqlite3 database which will be used.
-SQLITE3_DB = get_config("db_file")
-if os.path.exists(SQLITE3_DB) == False:
-  print "[warning] database file '%s' not exist, will create new file!" % SQLITE3_DB
-
-# Open the sqlite3 connection.
-DB_CONN = sqlite3.connect(SQLITE3_DB, 100)
-
-# Create tables if necessary.
-DB_CONN.execute("create table if not exists images(id integer primary key, set_name text, id_in_set int, md5 text, rating int, ext text, file_size int)")
-DB_CONN.execute("create table if not exists tags(id integer primary key, name text unique)")
-DB_CONN.execute("create table if not exists images_has_tags(image_id int, tag_id int)")
-DB_CONN.execute("create table if not exists albums(id integer primary key, name text unique)")
-DB_CONN.execute("create table if not exists albums_has_images(album_id int, image_id int)")
-DB_CONN.execute("create table if not exists black_list(set_name text, start_id int, end_id int)")
-DB_CONN.execute("create table if not exists black_list_md5(md5 text)")
-
-# Create indexes if necessary.
-DB_CONN.execute("create index if not exists images_index on images(id, set_name, id_in_set, md5, rating, ext, file_size)")
-DB_CONN.execute("create index if not exists tags_index on tags(id, name)")
-DB_CONN.execute("create index if not exists images_has_tags_index on images_has_tags(image_id, tag_id)")
-DB_CONN.execute("create index if not exists albums_has_imags_index on albums_has_images(album_id, image_id)")
-DB_CONN.execute("create index if not exists black_list_index on black_list(set_name, start_id, end_id)")
-DB_CONN.execute("create index if not exists black_list_md5_index on black_list_md5(md5)")
+SQLITE3_DB = None
 
 # read basic config data
-g_image_root = get_config("image_root")
-g_tmp_folder = get_config("tmp_folder")
+g_image_root = None
+g_tmp_folder = None
+
+def init_db_connection():
+  SQLITE3_DB = get_config("db_file")
+
+  # read basic config data
+  g_image_root = get_config("image_root")
+  g_tmp_folder = get_config("tmp_folder")
+  
+  if os.path.exists(SQLITE3_DB) == False:
+    print "[warning] database file '%s' not exist, will create new file!" % SQLITE3_DB
+  
+  # Open the sqlite3 connection.
+  DB_CONN = sqlite3.connect(SQLITE3_DB, 100)
+
+  # Create tables if necessary.
+  DB_CONN.execute("create table if not exists images(id integer primary key, set_name text, id_in_set int, md5 text, rating int, ext text, file_size int)")
+  DB_CONN.execute("create table if not exists tags(id integer primary key, name text unique)")
+  DB_CONN.execute("create table if not exists images_has_tags(image_id int, tag_id int)")
+  DB_CONN.execute("create table if not exists albums(id integer primary key, name text unique)")
+  DB_CONN.execute("create table if not exists albums_has_images(album_id int, image_id int)")
+  DB_CONN.execute("create table if not exists black_list(set_name text, start_id int, end_id int)")
+  DB_CONN.execute("create table if not exists black_list_md5(md5 text)")
+
+  # Create indexes if necessary.
+  DB_CONN.execute("create index if not exists images_index on images(id, set_name, id_in_set, md5, rating, ext, file_size)")
+  DB_CONN.execute("create index if not exists tags_index on tags(id, name)")
+  DB_CONN.execute("create index if not exists images_has_tags_index on images_has_tags(image_id, tag_id)")
+  DB_CONN.execute("create index if not exists albums_has_imags_index on albums_has_images(album_id, image_id)")
+  DB_CONN.execute("create index if not exists black_list_index on black_list(set_name, start_id, end_id)")
+  DB_CONN.execute("create index if not exists black_list_md5_index on black_list_md5(md5)")
 
 def db_commit():
   DB_CONN.commit()
@@ -1510,76 +1518,112 @@ if __name__ == "__main__":
   if len(sys.argv) == 1 or sys.argv[1] == "help":
     moe_help()
   elif sys.argv[1] == "add":
+    init_db_connection()
     moe_add()
   elif sys.argv[1] == "add-dir":
+    init_db_connection()
     moe_add_dir()
   elif sys.argv[1] == "add-dir-tree":
+    init_db_connection()
     moe_add_dir_tree()
   elif sys.argv[1] == "backup-db":
+    init_db_connection()
     moe_backup_db()
   elif sys.argv[1] == "backup-all":
+    init_db_connection()
     moe_backup_all()
   elif sys.argv[1] == "backup-albums":
+    init_db_connection()
     moe_backup_albums()
   elif sys.argv[1] == "backup-rate-1":
+    init_db_connection()
     moe_backup_by_rating(1)
   elif sys.argv[1] == "backup-rate-2":
+    init_db_connection()
     moe_backup_by_rating(2)
   elif sys.argv[1] == "backup-rate-3":
+    init_db_connection()
     moe_backup_by_rating(3)
   elif sys.argv[1] == "backup-unrated":
+    init_db_connection()
     moe_backup_by_rating(None)
   elif sys.argv[1] == "backup-cleanup":
+    init_db_connection()
     moe_backup_cleanup()
   elif sys.argv[1] == "check-md5":
+    init_db_connection()
     moe_check_md5()
   elif sys.argv[1] == "cleanup":
+    init_db_connection()
     moe_cleanup()
   elif sys.argv[1] == "export":
+    init_db_connection()
     moe_export()
   elif sys.argv[1] == "export-album":
+    init_db_connection()
     moe_export_album()
   elif sys.argv[1] == "export-psp":
+    init_db_connection()
     moe_export_psp()
   elif sys.argv[1] == "find-ophan":
+    init_db_connection()
     moe_find_ophan()
   elif sys.argv[1] == "import":
+    init_db_connection()
     moe_import()
   elif sys.argv[1] == "import-album":
+    init_db_connection()
     moe_import_album()
   elif sys.argv[1] == "import-black-list":
+    init_db_connection()
     moe_import_black_list()
   elif sys.argv[1] == "import-rating":
+    init_db_connection()
     moe_import_rating()
   elif sys.argv[1] == "import-mangameeya-rating":
+    init_db_connection()
     moe_import_mangameeya_rating()
   elif sys.argv[1] == "highres-rating":
+    init_db_connection()
     moe_highres_rating()
   elif sys.argv[1] == "info":
+    init_db_connection()
     moe_info()
   elif sys.argv[1] == "info-album":
+    init_db_connection()
     moe_info_album()
   elif sys.argv[1] == "list-albums":
+    init_db_connection()
     moe_list_albums()
   elif sys.argv[1] == "mirror-all":
+    init_db_connection()
     moe_mirror_all()
   elif sys.argv[1] == "mirror-danbooru":
+    init_db_connection()
     moe_mirror_danbooru()
   elif sys.argv[1] == "mirror-danbooru-1000":
+    init_db_connection()
     moe_mirror_danbooru_1000()
   elif sys.argv[1] == "mirror-danbooru-before":
+    init_db_connection()
     moe_mirror_danbooru_before(int(sys.argv[2]))
   elif sys.argv[1] == "mirror-konachan":
+    init_db_connection()
     moe_mirror_konachan()
   elif sys.argv[1] == "mirror-konachan-html":
+    init_db_connection()
     moe_mirror_konachan_html()
   elif sys.argv[1] == "mirror-moe-imouto":
+    init_db_connection()
     moe_mirror_moe_imouto()
   elif sys.argv[1] == "mirror-moe-imouto-html":
+    init_db_connection()
     moe_mirror_moe_imouto_html()
   elif sys.argv[1] == "mirror-nekobooru":
+    init_db_connection()
     moe_mirror_nekobooru()
   elif sys.argv[1] == "update-file-size":
+    init_db_connection()
     moe_update_file_size()
   else:
     print "command '%s' not understood, see 'moe.py help' for more info" % sys.argv[1]

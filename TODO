@@ -1,5 +1,2 @@
 * moe check-zip: check the contents of zip packages
-* moe: don't create db file when just calling help
-* add grabber: dm.game.mop.com/fengmian/3924.html
-* merge grabbers into grabber
-* housekeeper: psp-backup
+* housekeeper: psp-backup, idsl-backup
