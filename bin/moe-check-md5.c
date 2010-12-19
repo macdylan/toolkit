@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <string.h>
+#ifndef __APPLE__
 #include <malloc.h>
+#endif // __APPLE__
 
 /*
   Copyright (C) 1999, 2002 Aladdin Enterprises.  All rights reserved.

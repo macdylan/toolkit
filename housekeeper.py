@@ -631,26 +631,62 @@ def hk_itunes_find_ophan():
     print "Found %d ophan files" % ophan_count
   print "NOTE: THIS UTILITY IS STILL IN DEVEOPMENT, THE RESULTS MIGHT NOT BE CORRECT!"
 
+def hk_itunes_export_cover():
+  output_dir = "/Users/santa/Desktop/a" #raw_input("Output dir? ")
+  itc2png_bin = get_config("itc2png_bin")
+  itunes_folder = get_config("itunes_folder")
+  for root, dirname, fnames in os.walk(os.path.join(itunes_folder, "Album Artwork")):
+    for fn in fnames:
+      if fn.endswith(".itc2"):
+        fpath = os.path.join(root, fn)
+        print "[itc2] %s" % fpath
+        shutil.copy(fpath, output_dir)
+        os.system("%s %s" % (itc2png_bin, os.path.join(output_dir, fn)))
+
+def hk_itunes_rm_useless_cover():
+  library_map = {}
+  itunes_folder = get_config("itunes_folder")
+  itunes_lib_xml_fn = os.path.join(itunes_folder, "iTunes Music Library.xml")
+  fp = open(itunes_lib_xml_fn)
+  fcontent = fp.read()
+  fp.close()
+  match = re.findall("Persistent ID<\/key><string>[^<]*", fcontent)
+  uuid_lib = {}
+  for m in match:
+    uuid = m.split(">")[-1]
+    uuid_lib[uuid] = True
+  for root, dirname, fnames in os.walk(os.path.join(itunes_folder, "Album Artwork")):
+    for fn in fnames:
+      if fn.endswith(".itc2"):
+        uuid = fn[17:33]
+        if uuid_lib.has_key(uuid) == False:
+          fpath = os.path.join(root, fn)
+          os.remove(fpath)
+          print "[rm] %s" % fpath
+  print "Done!"
+
 def hk_help():
   print "housekeeper.py: helper script to manage my important collections"
   print "usage: housekeeper.py <command>"
   print "available commands:"
   print
-  print "  batch-rename            batch rename files under a folder"
-  print "  check-ascii-fnames      make sure all file has ascii-only name"
-  print "  check-crc32             check file integrity by crc32"
-  print "  clean-eject-usb <name>  cleanly eject usb drives (cleans .Trash, .SpotLight folders)"
-  print "  help                    display this info"
-  print "  itunes-check-exists     check if music in iTunes library really exists"
-  print "  itunes-find-ophan       check if music is in music folder but not in iTunes"
-  print "  itunes-genuine-check    check if music in iTunes is genuine"
-  print "  itunes-play-count       display the play count of iTunes library"
-  print "  lowercase-ext           make sure file extensions are lower case"
-  print "  psp-sync-pic            sync images to psp"
-  print "  rm-empty-dir            remove empty dir"
-  print "  upgrade-dropbox-pic     update dropbox photos folder, prefer highres pictures"
-  print "  write-crc32             write crc32 data in every directory, overwrite old crc32 files"
-  print "  write-crc32-new-only    write crc32 data in every directroy, new files only"
+  print "  batch-rename               batch rename files under a folder"
+  print "  check-ascii-fnames         make sure all file has ascii-only name"
+  print "  check-crc32                check file integrity by crc32"
+  print "  clean-eject-usb <name>     cleanly eject usb drives (cleans .Trash, .SpotLight folders)"
+  print "  help                       display this info"
+  print "  itunes-check-exists        check if music in iTunes library really exists"
+  print "  itunes-export-cover        export covers from iTunes library"
+  print "  itunes-find-ophan          check if music is in music folder but not in iTunes"
+  print "  itunes-genuine-check       check if music in iTunes is genuine"
+  print "  itunes-play-count          display the play count of iTunes library"
+  print "  itunes-rm-useless-cover    remove useless covers from iTunes library"
+  print "  lowercase-ext              make sure file extensions are lower case"
+  print "  psp-sync-pic               sync images to psp"
+  print "  rm-empty-dir               remove empty dir"
+  print "  upgrade-dropbox-pic        update dropbox photos folder, prefer highres pictures"
+  print "  write-crc32                write crc32 data in every directory, overwrite old crc32 files"
+  print "  write-crc32-new-only       write crc32 data in every directroy, new files only"
   print
   print "author: Santa Zhang (santa1987@gmail.com)"
 
@@ -670,12 +706,16 @@ if __name__ == "__main__":
     hk_clean_eject_usb(sys.argv[2])
   elif sys.argv[1] == "itunes-check-exists":
     hk_itunes_check_exists()
+  elif sys.argv[1] == "itunes-export-cover":
+    hk_itunes_export_cover()
   elif sys.argv[1] == "itunes-find-ophan":
     hk_itunes_find_ophan()
   elif sys.argv[1] == "itunes-genuine-check":
     hk_itunes_genuine_check()
   elif sys.argv[1] == "itunes-play-count":
     hk_itunes_play_count()
+  elif sys.argv[1] == "itunes-rm-useless-cover":
+    hk_itunes_rm_useless_cover()
   elif sys.argv[1] == "lowercase-ext":
     hk_lowercase_ext()
   elif sys.argv[1] == "psp-sync-pic":
