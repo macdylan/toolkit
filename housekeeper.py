@@ -16,6 +16,7 @@ import shutil
 import traceback
 import csv
 from subprocess import Popen, PIPE, STDOUT
+from urllib2 import *
 from utils import *
 
 def hk_make_dirs(path):
@@ -700,6 +701,131 @@ def hk_backup_psp():
   shutil.move(tmp_cp_folder + ".zip", bkup_folder)
   print "Done!"
 
+def util_update_chrome_progress(len, percent, timeused, bytesread):
+  try:
+    bar = "\b["
+    for i in range(len):
+      if (i < percent * len):
+        bar += '='
+      else:
+        bar += ' '
+    bar += '] %d%% %db/s ' % (int(percent * 100), int(bytesread / timeused))
+    bar += str(int(timeused / percent * (1 - percent))) + "s # "
+    bar += str(int(timeused)) + "s   "
+    print bar + '\b' * (len + 100),
+  except:
+    pass  # might have division error
+
+def hk_update_chrome():
+  if os.name != "nt":
+    print "Sorry, this function only works in Windows!"
+    exit(0)
+  dlfolder = get_config("tmp_folder")
+  chromefolder = "C:\\Users\\Santa\\AppData\\Local\\Chromium\\Application"
+  last_revision = 0
+  # get last revision from log file
+  try:
+    f = open(chromefolder + os.path.sep + "updatechrome_revision.txt", "r")
+    last_revision = int(f.readline())
+    f.close()
+  except: # file not found
+    print "*** updatechrome_revision.txt not found!"
+
+  while True:
+    try:
+
+      downloaded = False
+      
+      # delete temp download files
+      for fname in os.listdir(dlfolder):
+        try:
+          if fname.startswith("chrome.") and fname.endswith(".zip"):
+            fname_split = fname.split(".")
+            if len(fname_split) != 3:
+              continue
+            elif fname_split[1].isdigit():
+              os.remove(dlfolder + os.path.sep + fname)
+              print "Deleted temp download file: " + fname
+        except:
+          print "*** Error deleting tmp download files"
+        
+
+      while downloaded == False:
+
+        u = urlopen("http://build.chromium.org/buildbot/snapshots/chromium-rel-xp/LATEST")
+        rev = int(u.readline())
+        print "Revision is %d" % rev
+        
+        if (rev != last_revision):
+
+          u = urlopen("http://build.chromium.org/buildbot/snapshots/chromium-rel-xp/%d/chrome-win32.zip" % rev)
+          dlsize = int(u.headers["Content-Length"])
+          dlpath = os.path.join(dlfolder, "chrome.%d.zip" % rev)
+          print "Downloading %d bytes" % dlsize
+          dlfile = open(dlpath, "wb")
+          dlcnt = 0
+          start = time.time()
+          last_time = start
+          last_count = 0
+
+          while (dlcnt < dlsize):
+            binary = u.read(8192)
+            dlfile.write(binary)
+            dlcnt += len(binary)
+            timeused = time.time() - start
+            if last_count == 100:
+              timespan = time.time() - last_time
+              if timespan < 1:  # download failure
+                break
+              last_count = 0
+              last_time = time.time()
+            last_count += 1
+            util_update_chrome_progress(40, 1.0 * dlcnt / dlsize, timeused, dlcnt)
+            
+          dlfile.close()
+          
+          if dlcnt == dlsize:
+            downloaded = True
+            os.remove(chromefolder + os.path.sep + "chrome.exe")
+              # will raise exception when chrome is running, thus the log file will not be written
+            
+            os.system("unzip -o %s -d %s" % (dlpath, dlfolder))
+            os.system("cp %s %s -rf" % (dlfolder + "chrome-win32//*", chromefolder))
+            os.system("rm %s -rf" % (dlfolder + "chrome-win32"))
+            os.system("rm %s" % dlpath)
+            last_revision = rev
+            
+            try:
+              f = open(chromefolder + os.path.sep + "updatechrome_revision.txt", "w")
+              f.write(str(last_revision) + "\n")
+              f.close()
+            except: # file not opened
+              print "*** Failed to write updatechrome_revision.txt"
+              (exc_type, exc_val, exc_tb) = sys.exc_info()
+              print exc_type
+              print exc_val
+              traceback.print_tb(exc_tb)
+            
+          else:
+            print ""
+            print "Oops, download failed. Retry..."
+          
+        else:
+          downloaded = True
+          print "Up to date"
+    
+    except:
+      print "*** Exception during downloading"
+      (exc_type, exc_val, exc_tb) = sys.exc_info()
+      print exc_type
+      print exc_val
+      traceback.print_tb(exc_tb)
+    
+    finally:
+      print "Wait 10 minutes for next update"
+      time.sleep(600)
+
+  
 
 def hk_help():
   print "housekeeper.py: helper script to manage my important collections"
@@ -721,6 +847,7 @@ def hk_help():
   print "  lowercase-ext              make sure file extensions are lower case"
   print "  psp-sync-pic               sync images to psp"
   print "  rm-empty-dir               remove empty dir"
+  print "  update-chrome              update chrome browser (Windows only)"
   print "  upgrade-dropbox-pic        update dropbox photos folder, prefer highres pictures"
   print "  write-crc32                write crc32 data in every directory, overwrite old crc32 files"
   print "  write-crc32-new-only       write crc32 data in every directroy, new files only"
@@ -761,6 +888,8 @@ if __name__ == "__main__":
     hk_psp_sync_pic()
   elif sys.argv[1] == "rm-empty-dir":
     hk_rm_empty_dir()
+  elif sys.argv[1] == "update-chrome":
+    hk_update_chrome()
   elif sys.argv[1] == "upgrade-dropbox-pic":
     hk_upgrade_dropbox_pic()
   elif sys.argv[1] == "write-crc32":
