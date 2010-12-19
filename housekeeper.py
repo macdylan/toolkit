@@ -790,9 +790,9 @@ def hk_update_chrome():
               # will raise exception when chrome is running, thus the log file will not be written
             
             os.system("unzip -o %s -d %s" % (dlpath, dlfolder))
-            os.system("cp %s %s -rf" % (dlfolder + "chrome-win32//*", chromefolder))
-            os.system("rm %s -rf" % (dlfolder + "chrome-win32"))
-            os.system("rm %s" % dlpath)
+            os.system("cp %s %s -rf" % (dlfolder + "//chrome-win32//*", chromefolder))
+            shutil.rmtree(os.path.join(dlfolder, "chrome-win32"))
+            shutil.rmtree(dlpath)
             last_revision = rev
             
             try:
