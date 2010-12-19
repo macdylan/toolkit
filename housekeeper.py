@@ -632,7 +632,7 @@ def hk_itunes_find_ophan():
   print "NOTE: THIS UTILITY IS STILL IN DEVEOPMENT, THE RESULTS MIGHT NOT BE CORRECT!"
 
 def hk_itunes_export_cover():
-  output_dir = "/Users/santa/Desktop/a" #raw_input("Output dir? ")
+  output_dir = raw_input("Output dir? ")
   itc2png_bin = get_config("itc2png_bin")
   itunes_folder = get_config("itunes_folder")
   for root, dirname, fnames in os.walk(os.path.join(itunes_folder, "Album Artwork")):
