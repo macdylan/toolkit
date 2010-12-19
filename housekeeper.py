@@ -525,12 +525,20 @@ def hk_itunes_play_count():
   print "Total play count is %d" % total_count
 
 def hk_itunes_check_exists():
-  itunes_lib_xml_fn = os.path.join(get_config("itunes_folder"), "iTunes Music Library.xml")
+  itunes_folder = get_config("itunes_folder")
+  itunes_lib_xml_fn = os.path.join(itunes_folder, "iTunes Music Library.xml")
   fp = open(itunes_lib_xml_fn)
   fcontent = fp.read()
   fp.close()
   match = re.findall("file\:\/\/[^<]+", fcontent)
   missing_count = 0
+  fpath_dict = {}
+  for root, dirname, fnames in os.walk(os.path.join(itunes_folder, "Music")):
+    for fn in fnames:
+      fpath = os.path.join(root, fn)
+      fpath = convert_jpn_path(fpath)
+      fpath_dict[fpath] = True
+      
   for m in match:
     #music_fn = m.replace("\u30fb", ".")
     music_fn = urllib.unquote(m)[16:]
@@ -544,6 +552,9 @@ def hk_itunes_check_exists():
     print "%d items missing" % missing_count
 
 def convert_jpn_path(fpath):
+  # eg: ?? 
+  # E3 81 B5 E3 82 99 -> E3 81 B6
+  # E3 81 AF B3 82 9A -> E3 82 BD
   fpath = fpath.replace("ダ", "ダ")
   fpath = fpath.replace("ポ", "ポ")
   fpath = fpath.replace("グ", "グ")
@@ -569,10 +580,24 @@ def convert_jpn_path(fpath):
   fpath = fpath.replace("ビ", "ビ")
   fpath = fpath.replace("ズ", "ズ")
   fpath = fpath.replace("ボ", "ボ")
+  fpath = fpath.replace("ぼ", "ぼ")
+  fpath = fpath.replace("ガ", "ガ")
+  fpath = fpath.replace("ど", "ど")
+  fpath = fpath.replace("ぶ", "ぶ")
+  fpath = fpath.replace("バ", "バ")
+  fpath = fpath.replace("ぞ", "ぞ")
+  fpath = fpath.replace("ヴ", "ヴ")
+  fpath = fpath.replace("ぱ", "ぽ")
+  fpath = fpath.replace("ゴ", "ゴ")
+  fpath = fpath.replace("ぎ", "ぎ")
+  fpath = fpath.replace("ペ", "ぺ")
+  fpath = fpath.replace("ざ", "ざ")
+  fpath = fpath.replace("ぴ", "ぴ")
+  fpath = fpath.replace("ゾ", "ゾ")
   return fpath
 
 def dbg_print(msg):
-#  if "霜月はるか" in msg:
+  if "゙" in msg or "゚" in msg or "ハチミツとクローバー" in msg:
     print msg
 
 def hk_itunes_find_ophan():
@@ -594,12 +619,7 @@ def hk_itunes_find_ophan():
   for root, dirname, fnames in os.walk(os.path.join(itunes_folder, "Music")):
     for fn in fnames:
       fpath = os.path.join(root, fn)
-      
-      # TODO change the chars
-      
-      #fpath = fpath.replace("ガ", "カ")
       fpath = convert_jpn_path(fpath)
-      
       #dbg_print(fpath)
       if is_music(fpath):
         if library_map.has_key(fpath) == False:
