@@ -6,7 +6,7 @@
 # Author: Santa Zhang (santa1987@gmail.com)
 #
 
-from __future__ import with_statement
+
 import sys
 import os
 import re
@@ -14,8 +14,6 @@ import time
 import traceback
 import shutil
 import socket
-from contextlib import closing
-from zipfile import ZipFile, ZIP_DEFLATED
 import urllib2
 from urllib2 import HTTPError
 from utils import *
@@ -43,27 +41,6 @@ def prepare_folder(path):
   if os.path.exists(path) == False:
     os.makedirs(path)
     grab_message("[mkdir] %s" % path)
-
-
-def zipdir(basedir, archivename):
-  ok = True
-  assert os.path.isdir(basedir)
-  with closing(ZipFile(archivename, "w", ZIP_DEFLATED)) as z:
-    for root, dirs, files in os.walk(basedir):
-      #NOTE: ignore empty directories
-      for fn in files:
-        # ignore useless files
-        if fn.lower() == ".ds_store" or fn.lower() == "thumbs.db":
-          print "exclude useless file '%s' from zip file" % fn
-          continue
-        try:
-          absfn = os.path.join(root, fn)
-          zfn = absfn[len(basedir)+len(os.sep):] #XXX: relative path
-          z.write(absfn, zfn)
-        except Exception as e:
-          ok = False
-          raise e # re-throw
-  return ok
 
 def grab_print_help():
   print "grabber.py: manage my manga books"

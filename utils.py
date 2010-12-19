@@ -5,10 +5,33 @@
 # Author: Santa Zhang (santa1987@gmail.com)
 #
 
+from __future__ import with_statement
+from contextlib import closing
 import sys
 import os
 import time
 import random
+from zipfile import ZipFile, ZIP_DEFLATED
+
+def zipdir(basedir, archivename):
+  ok = True
+  assert os.path.isdir(basedir)
+  with closing(ZipFile(archivename, "w", ZIP_DEFLATED)) as z:
+    for root, dirs, files in os.walk(basedir):
+      #NOTE: ignore empty directories
+      for fn in files:
+        # ignore useless files
+        if fn.lower() == ".ds_store" or fn.lower() == "thumbs.db":
+          print "exclude useless file '%s' from zip file" % fn
+          continue
+        try:
+          absfn = os.path.join(root, fn)
+          zfn = absfn[len(basedir)+len(os.sep):] #XXX: relative path
+          z.write(absfn, zfn)
+        except Exception as e:
+          ok = False
+          raise e # re-throw
+  return ok
 
 def get_config(key, default_value=None):
   module_name = os.path.basename(sys.argv[0])

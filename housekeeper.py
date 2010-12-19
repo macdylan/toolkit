@@ -665,11 +665,48 @@ def hk_itunes_rm_useless_cover():
           print "[rm] %s" % fpath
   print "Done!"
 
+def get_du_of_folder(folder):
+  du = 0
+  for root, dirnames, fnames in os.walk(folder):
+    for fn in fnames:
+      fpath = os.path.join(root, fn)
+      if os.path.isfile(fpath):
+        du += os.stat(fpath).st_size
+  return du
+
+def hk_backup_psp():
+  tmp_folder = get_config("tmp_folder")
+  psp_root = get_config("psp_root")
+  bkup_folder = os.path.join(get_config("dropbox_folder"), "Backups")
+  bkup_job_name = "psp_backup.%s" % (time.strftime("%y%m%d-%H%M%S", time.localtime()))
+  tmp_cp_folder = os.path.join(tmp_folder, bkup_job_name)
+  hk_make_dirs(tmp_cp_folder)
+  psp_save_root = os.path.join(psp_root, "PSP", "SAVEDATA")
+  bkup_threshold = int(get_config("psp_savedata_backup_threshold_mb")) * 1024 * 1024
+  for fn in os.listdir(psp_save_root):
+    fpath = os.path.join(psp_save_root, fn)
+    if os.path.isdir(fpath) == False:
+      continue
+    folder_du = get_du_of_folder(fpath)
+    if folder_du <= bkup_threshold:
+      print "[backup] %d bytes, '%s'" % (folder_du, fpath)
+      shutil.copytree(fpath, os.path.join(tmp_cp_folder, fn))
+    else:
+      print "[skip] too big: %d bytes, '%s'" % (folder_du, fpath)
+  print "zipping...."
+  zipdir(tmp_cp_folder, tmp_cp_folder + ".zip")
+  print "[rmdir] %s" % tmp_cp_folder
+  shutil.rmtree(tmp_cp_folder)
+  shutil.move(tmp_cp_folder + ".zip", bkup_folder)
+  print "Done!"
+
+
 def hk_help():
   print "housekeeper.py: helper script to manage my important collections"
   print "usage: housekeeper.py <command>"
   print "available commands:"
   print
+  print "  backup-psp                 backup my psp"
   print "  batch-rename               batch rename files under a folder"
   print "  check-ascii-fnames         make sure all file has ascii-only name"
   print "  check-crc32                check file integrity by crc32"
@@ -693,6 +730,8 @@ def hk_help():
 if __name__ == "__main__":
   if len(sys.argv) == 1 or sys.argv[1] == "help":
     hk_help()
+  elif sys.argv[1] == "backup-psp":
+    hk_backup_psp()
   elif sys.argv[1] == "batch-rename":
     hk_batch_rename()
   elif sys.argv[1] == "check-crc32":
