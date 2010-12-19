@@ -793,7 +793,7 @@ def hk_update_chrome():
             os.system("unzip -o %s -d %s" % (dlpath, dlfolder))
             os.system("cp %s %s -rf" % (dlfolder + "//chrome-win32//*", chromefolder))
             shutil.rmtree(os.path.join(dlfolder, "chrome-win32"))
-            shutil.rmtree(dlpath)
+            os.remove(dlpath)
             last_revision = rev
             
             try:
