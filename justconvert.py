@@ -14,6 +14,11 @@ from subprocess import Popen, PIPE, STDOUT
 from utils import *
 from threading import Thread
 
+def jc_exec(cmd):
+  print "[cmd] %s" % cmd
+  os.system(cmd)
+  
+
 class FfmpegThread(Thread):
   
   def __init__(self, manager):
@@ -356,11 +361,26 @@ def jc_psp_srt_from_ssa(ssa_file, srt_file):
   srt.close()
   ssa.close()
 
+
+def jc_convert_pic_folder(folder, type):
+  convert_bin = get_config("convert_bin")
+  for root, folders, fnames in os.walk(folder):
+    for fn in fnames:
+      if is_image(fn) and fn.lower().endswith(type) == False:
+        fpath = os.path.join(root, fn)
+        new_fpath = os.path.join(root, os.path.splitext(fn)[0] + "." + type)
+        if os.path.exists(new_fpath) == False:
+          cmd = "%s %s %s" % (convert_bin, fpath, new_fpath)
+          jc_exec(cmd)
+          
+
 def jc_print_help():
   print "justconvert.py: convertion tools for video, picture & text files"
   print "usage: justconvert.py <command>"
   print
   print "  dos2unix                convert dos text file to unix text file"
+  print "  everything-to-jpg       convert every picture under a folder to jpg"
+  print "  everything-to-png       convert every picture under a folder to png"
   print "  ffmpeg-info             display info about ffmpeg"
   print "  iphone-ringtone         convert m4a and mp3 files into m4r (iphone ringtone)"
   print "  ipod-movie              convert a video to ipod movie (2nd generation)"
@@ -379,6 +399,16 @@ if __name__ == "__main__":
     jc_print_help()
   elif sys.argv[1] == "dos2unix":
     jc_dos2unix()
+  elif sys.argv[1] == "everything-to-jpg":
+    if len(sys.argv) < 3:
+      print "usage: justconvert.py everything-to-jpg <folder>"
+      exit(0)
+    jc_convert_pic_folder(sys.argv[2], "jpg")
+  elif sys.argv[1] == "everything-to-png":
+    if len(sys.argv) < 3:
+      print "usage: justconvert.py everything-to-png <folder>"
+      exit(0)
+    jc_convert_pic_folder(sys.argv[2], "png")
   elif sys.argv[1] == "ffmpeg-info":
     jc_ffmpeg_info()
   elif sys.argv[1] == "iphone-ringtone":
