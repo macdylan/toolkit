@@ -786,13 +786,14 @@ def hk_update_chrome():
           
           if dlcnt == dlsize:
             downloaded = True
-            os.remove(chromefolder + os.path.sep + "chrome.exe")
-              # will raise exception when chrome is running, thus the log file will not be written
+            if os.path.exists(chromefolder + os.path.sep + "chrome.exe"):
+              os.remove(chromefolder + os.path.sep + "chrome.exe")
+            # will raise exception when chrome is running, thus the log file will not be written
             
             os.system("unzip -o %s -d %s" % (dlpath, dlfolder))
-            os.system("cp %s %s -rf" % (dlfolder + "chrome-win32//*", chromefolder))
-            os.system("rm %s -rf" % (dlfolder + "chrome-win32"))
-            os.system("rm %s" % dlpath)
+            os.system("cp %s %s -rf" % (dlfolder + "//chrome-win32//*", chromefolder))
+            shutil.rmtree(os.path.join(dlfolder, "chrome-win32"))
+            os.remove(dlpath)
             last_revision = rev
             
             try:
