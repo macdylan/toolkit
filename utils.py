@@ -86,7 +86,7 @@ def is_ascii(text):
   
 def is_image(fname):
   fname = fname.lower()
-  for ext in [".jpg", ".png", ".gif", ".swf", ".bmp"]:
+  for ext in [".jpg", ".png", ".gif", ".swf", ".bmp", ".pgm"]:
     if fname.endswith(ext):
       return True
   return False
