@@ -304,11 +304,12 @@ def bengou_down_vol(vol_url, down_dir):
     try:
       ok = bengou_down_page(root_url + "/" + pic, down_dir, counter)
       all_ok = all_ok and ok
-      counter += 1
-    except HTTPError, e:
+    except:
       all_ok = False
       traceback.print_exc()
       time.sleep(1)
+    finally:
+      counter += 1
   return all_ok
 
 def grab_download_bengou(index_url, **opt):
