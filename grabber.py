@@ -300,13 +300,16 @@ def bengou_down_vol(vol_url, down_dir):
   pictree_src = page_src[(idx + 14):idx2]
   exec "pictree=%s" % pictree_src
   counter = 1
+  error_log_fn = down_dir + u"/ERROR"
   for pic in pictree:
     try:
       ok = bengou_down_page(root_url + "/" + pic, down_dir, counter)
       all_ok = all_ok and ok
     except:
       all_ok = False
-      traceback.print_exc()
+      traceback.print_exc("failed to download page %d, url=%s" % (counter, root_url + "/" + pic))
+      f = open(error_log_fn, "a")
+      f.write(traceback)
       time.sleep(1)
     finally:
       counter += 1
@@ -380,6 +383,8 @@ def grab_download_bengou(index_url, **opt):
     open(not_finished_fn, "w").close()
   
     all_ok = bengou_down_vol(vol_url, chapter_folder_path)
+    if all_ok == False:
+      open(error_log_fn, "w").close()
     
     # remove the place holder
     if os.path.exists(not_finished_fn):
