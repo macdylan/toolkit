@@ -307,9 +307,9 @@ def bengou_down_vol(vol_url, down_dir):
       all_ok = all_ok and ok
     except:
       all_ok = False
-      traceback.print_exc("failed to download page %d, url=%s" % (counter, root_url + "/" + pic))
+      traceback.print_exc()
       f = open(error_log_fn, "a")
-      f.write(traceback)
+      f.write("failed to download page %d, url=%s" % (counter, root_url + "/" + pic))
       time.sleep(1)
     finally:
       counter += 1
