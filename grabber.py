@@ -271,12 +271,12 @@ def bengou_down_page(page_url, down_dir, page_id):
       pic_f.close()
       shutil.move(pic_fn + u".tmp", pic_fn)
     except HTTPError, e:
+      ok = False
       if pic_f != None:
         pic_f.close()
       if os.path.exists(pic_fn + u".tmp"):
         os.remove(pic_fn + u".tmp")
       print "[failure] %s" % page_url
-      
       err_log_f = open(error_log_fn, "a")
       try:
         err_log_f.write("failed to download: %s\n" % pic_fn)
@@ -284,8 +284,6 @@ def bengou_down_page(page_url, down_dir, page_id):
         err_log_f.write("failed to download from: %s\n" % img_url)
       finally:
         err_log_f.close()
-      
-      ok = False
   return ok
 
 def bengou_down_vol(vol_url, down_dir):
@@ -304,7 +302,8 @@ def bengou_down_vol(vol_url, down_dir):
   for pic in pictree:
     try:
       ok = bengou_down_page(root_url + "/" + pic, down_dir, counter)
-      all_ok = all_ok and ok
+      if ok == False:
+        all_ok = False
     except:
       all_ok = False
       traceback.print_exc()
