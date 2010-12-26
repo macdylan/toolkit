@@ -116,14 +116,15 @@ def grab_download_manhua178(manga_url, **opt):
 
   idx = page_src.index("cartoon_online_border")
   idx = page_src.index("<ul>", idx)
-  idx2 = page_src.index("<!--middleright_mr-->", idx)
+  idx2 = page_src.index("<script type=\"", idx)
   toc_src = page_src[idx:idx2]
   toc_src_split = toc_src.split("\r\n")
   toc_arr = []
   for sp in toc_src_split:
-    idx = sp.find('<li><a title="') + 14
+    idx = sp.find('<li><a title="')
     if idx == -1:
       continue
+    idx += 14
     idx2 = sp.find('" href="', idx)
     title = sp[idx:idx2]
     idx = idx2 + 8
