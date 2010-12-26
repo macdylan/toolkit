@@ -826,7 +826,18 @@ def hk_update_chrome():
       print "Wait 10 minutes for next update"
       time.sleep(600)
 
-  
+
+def hk_zip_sub_dir():
+  root_dir = raw_input("root dir? ")
+  for fn in os.listdir(root_dir):
+    fpath = os.path.join(root_dir, fn)
+    if os.path.isdir(fpath):
+      zip_fn = fpath + ".zip"
+      if os.path.exists(zip_fn):
+        print "[skip] zip exists: '%s'" % zip_fn
+        continue
+      print "[zip-dir] %s" % fpath
+      zipdir(fpath, fpath + ".zip")
 
 def hk_help():
   print "housekeeper.py: helper script to manage my important collections"
@@ -852,6 +863,7 @@ def hk_help():
   print "  upgrade-dropbox-pic        update dropbox photos folder, prefer highres pictures"
   print "  write-crc32                write crc32 data in every directory, overwrite old crc32 files"
   print "  write-crc32-new-only       write crc32 data in every directroy, new files only"
+  print "  zip-sub-dir                pack each sub directory into zip files"
   print
   print "author: Santa Zhang (santa1987@gmail.com)"
 
@@ -897,5 +909,7 @@ if __name__ == "__main__":
     hk_write_crc32()
   elif sys.argv[1] == "write-crc32-new-only":
     hk_write_crc32_new_only()
+  elif sys.argv[1] == "zip-sub-dir":
+    hk_zip_sub_dir()
   else:
     print "command '%s' not understood, see 'housekeeper.py help' for more info" % sys.argv[1]
