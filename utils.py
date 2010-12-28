@@ -91,6 +91,13 @@ def is_image(fname):
       return True
   return False
 
+def is_movie(fname):
+  fname = fname.lower()
+  for ext in [".avi", ".mp4", ".wmv", ".mkv", ".rmvb", ".rm"]:
+    if fname.endswith(ext):
+      return True
+  return False
+
 def is_music(fname):
   fname = fname.lower()
   for ext in [".mp3", ".m4a", ".ape", ".flac", ".tta"]:

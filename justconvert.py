@@ -40,11 +40,11 @@ class FfmpegThread(Thread):
       
       # do real job here
       job_folder = os.path.split(self.job.get_output_file())[0]
-      cmd_split = shlex.split(full_cmd)
       if os.name == "nt":
         # on Windows, close fds is not supported when stdin/stdout/stderr is directed
-        pipe = Popen(cmd_split, shell=False, stdin=PIPE, stdout=PIPE, stderr=STDOUT, cwd=job_folder)
+        pipe = Popen(full_cmd, shell=False, stdin=PIPE, stdout=PIPE, stderr=STDOUT, cwd=job_folder)
       else:
+        cmd_split = shlex.split(full_cmd)
         pipe = Popen(cmd_split, shell=False, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True, cwd=job_folder)
       stdout_output = pipe.stdout.read()
       #print "[done] %s" % full_cmd
@@ -306,9 +306,48 @@ def jc_psp_movie(src_fn, dst_fn):
   os.system(full_cmd)
 
 
+def jc_psp_movie_dir_callback(job):
+  tmp_fn = job.get_output_file()
+  ringtone_fn = os.path.splitext(job.get_input_files()[0])[0] + ".m4r"
+  if os.path.exists(tmp_fn):
+    print "[done] %s" % ringtone_fn
+    os.rename(tmp_fn, ringtone_fn)
+
 def jc_psp_movie_dir(src_dir, dst_dir):
   jc_makedirs(dst_dir)
-  print "This shall be done!"
+  manager = FfmpegJobManager(get_config("ffmpeg_bin"))
+  conv_params = jc_split_ffmpeg_preset(get_config("psp_movie.preset"))
+  for fn in os.listdir(src_dir):
+    fpath = os.path.join(src_dir, fn)
+    if is_movie(fn):
+      out_fpath = os.path.join(dst_dir, os.path.splitext(fn)[0] + ".mp4")
+      job = FfmpegJob()
+      job.set_params(conv_params)
+      job.set_finish_callback(jc_psp_movie_dir_callback)
+      job.set_input_files(fpath)
+      job.set_output_file(out_fpath)
+      manager.add_job(job)
+  manager.start()
+  while manager.is_done() == False:
+    running = manager.get_running_threads()
+    print "[info] %d jobs running now" % len(running)
+    all_jobs = manager.get_jobs()
+    for th in running:
+      print "[info] %d of %d: %s" % (all_jobs.index(th.get_current_job()) + 1, len(all_jobs), th.get_current_job().get_output_file())
+    time.sleep(10)
+  # start coverting subs
+  tmp_folder = get_config("tmp_folder")
+  for fn in os.listdir(src_dir):
+    fpath = os.path.join(src_dir, fn)
+    if is_movie(fn):
+      ssa_fpath = os.path.join(tmp_folder, "justconvert-psp-movie-dir-%s.ssa" % random_token())
+      srt_fpath = os.path.join(dst_dir, os.path.splitext(fn)[0] + ".srt")
+      try:
+        jc_ssa_from_mkv(fpath, ssa_fpath)
+        jc_psp_srt_from_ssa(ssa_fpath, srt_fpath)
+      finally:
+        if os.path.exists(ssa_fpath):
+          os.remove(ssa_fpath)
 
 def jc_ssa_from_mkv(mkv_file, ssa_file):
   ffmpeg_bin = get_config("ffmpeg_bin")
