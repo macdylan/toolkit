@@ -14,6 +14,7 @@ import time
 import random
 import shutil
 import traceback
+import sqlite3
 import csv
 from subprocess import Popen, PIPE, STDOUT
 from urllib2 import *
@@ -826,6 +827,28 @@ def hk_update_chrome():
       print "Wait 10 minutes for next update"
       time.sleep(600)
 
+def hk_papers_find_ophan():
+  papers_folder = get_config("papers_folder")
+  lib_fn = os.path.join(papers_folder, "Library.papers")
+  db_conn = sqlite3.connect(lib_fn, 10)
+  c = db_conn.cursor()
+  c.execute("select ZPATH from ZPAPER")
+  ret = c.fetchall()
+  print "%d papers in library" % len(ret)
+  lib_dict = {}
+  for e in ret:
+    pdfpath = os.path.join(papers_folder, e[0].encode("utf-8"))
+    if os.path.exists(pdfpath) == False:
+      print "[not-exists] %s" % pdfpath
+    else:
+      lib_dict[pdfpath] = True
+  for root, dirnames, fnames in os.walk(papers_folder):
+    for fn in fnames:
+      fpath = os.path.join(root, fn)
+      if fpath.lower().endswith(".pdf"):
+        if lib_dict.has_key(fpath) == False:
+          print "[ophan] %s" % fpath
+        
 
 def hk_zip_sub_dir():
   root_dir = raw_input("root dir? ")
@@ -858,6 +881,7 @@ def hk_help():
   print "  itunes-rm-useless-cover    remove useless covers from iTunes library"
   print "  lowercase-ext              make sure file extensions are lower case"
   print "  psp-sync-pic               sync images to psp"
+  print "  papers-find-ophan          check if pdf is in papers folder but not in Papers library"
   print "  rm-empty-dir               remove empty dir"
   print "  update-chrome              update chrome browser (Windows only)"
   print "  upgrade-dropbox-pic        update dropbox photos folder, prefer highres pictures"
@@ -899,6 +923,8 @@ if __name__ == "__main__":
     hk_lowercase_ext()
   elif sys.argv[1] == "psp-sync-pic":
     hk_psp_sync_pic()
+  elif sys.argv[1] == "papers-find-ophan":
+    hk_papers_find_ophan()
   elif sys.argv[1] == "rm-empty-dir":
     hk_rm_empty_dir()
   elif sys.argv[1] == "update-chrome":
