@@ -307,11 +307,8 @@ def jc_psp_movie(src_fn, dst_fn):
 
 
 def jc_psp_movie_dir_callback(job):
-  tmp_fn = job.get_output_file()
-  ringtone_fn = os.path.splitext(job.get_input_files()[0])[0] + ".m4r"
-  if os.path.exists(tmp_fn):
-    print "[done] %s" % ringtone_fn
-    os.rename(tmp_fn, ringtone_fn)
+  out_fn = job.get_output_file()
+  print "[done] %s" % out_fn
 
 def jc_psp_movie_dir(src_dir, dst_dir):
   jc_makedirs(dst_dir)
