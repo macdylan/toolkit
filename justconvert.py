@@ -418,7 +418,7 @@ def jc_print_help():
   print "  everything-to-jpg       convert every picture under a folder to jpg"
   print "  everything-to-png       convert every picture under a folder to png"
   print "  ffmpeg-info             display info about ffmpeg"
-  print "  iphone-ringtone         convert m4a and mp3 files into m4r (iphone ringtone)"
+  print "  iphone-ringtone         convert music files into m4r (iphone ringtone)"
   print "  ipod-movie              convert a video to ipod movie (2nd generation)"
   print "  ipod-movie-wide         convert a video to ipod movie (2nd generation, wide screen)"
   print "  psp-movie               convert a video to psp format"

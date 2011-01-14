@@ -100,7 +100,7 @@ def is_movie(fname):
 
 def is_music(fname):
   fname = fname.lower()
-  for ext in [".mp3", ".m4a", ".ape", ".flac", ".tta"]:
+  for ext in [".mp3", ".m4a", ".ape", ".flac", ".tta", ".wav"]:
     if fname.endswith(ext):
       return True
   return False
