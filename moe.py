@@ -74,7 +74,7 @@ def init_db_connection():
 
 def db_commit():
   DB_CONN.commit()
-  
+
 def db_image_in_black_list(image_set, id_in_set):
   c = DB_CONN.cursor()
   c.execute("select * from black_list where set_name = '%s' and start_id <= %d and %d <= end_id" % (image_set, id_in_set, id_in_set))

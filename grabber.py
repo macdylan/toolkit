@@ -52,6 +52,7 @@ def grab_print_help():
   print "  download-reverse     download a manga book, in reverse order"
   print "  help                 display this help message"
   print "  list-library         list contents in library"
+  print "  pack-all             packup all manga books"
   print "  update               update specified managed manga books"
   print "  update-all           update all managed manga books"
   print
@@ -70,6 +71,7 @@ def folder_contains_images(dirpath):
 def grab_ensure_manga_packed_walker(arg, dirname, fnames):
   has_image = False
   has_subdir = False
+  archive_name = os.path.abspath(dirname) + ".zip"
   for fn in fnames:
     fpath = dirname + os.path.sep + fn
     if os.path.isdir(fpath):
@@ -80,23 +82,25 @@ def grab_ensure_manga_packed_walker(arg, dirname, fnames):
     if fn == "NOT_FINISHED" or fn == "ERROR":
       # a bad folder
       print "found a bad folder, not zipping it"
+      if os.path.exists(archive_name):
+        print "zip archive already exists, removing folder"
+        shutil.rmtree(dirname)
       return
-  if has_image == False:
-    print "found an empty folder, not zipping it"
-    return
   if has_subdir == True:
     print "has subdir, not zipping it"
     return
-    
+  if has_image == False:
+    print "found an empty folder, skipping it"
+    return
+
   # do zipping
   print "zipping"
-  archive_name = os.path.abspath(dirname) + ".zip"
   if zipdir(dirname, archive_name) == True:
     shutil.rmtree(dirname)
     print "zip done, removing original folder"
   else:
     print "[error] failed to create zip archive!"
-  
+
 def grab_ensure_manga_packed(root_dir=None):
   if root_dir == None:
     return
@@ -104,6 +108,12 @@ def grab_ensure_manga_packed(root_dir=None):
   if ZIP_FILES == True:
     grab_message("packing manga books")
     os.path.walk(root_dir, grab_ensure_manga_packed_walker, None)
+
+def grab_pack_all():
+  for entry in os.listdir(MANGA_FOLDER):
+    fpath = os.path.join(MANGA_FOLDER, entry)
+    if os.path.isdir(fpath):
+      grab_ensure_manga_packed(fpath)
 
 def grab_download_manhua178(manga_url, **opt):
   print "[toc] %s" % manga_url
@@ -490,34 +500,6 @@ def grab_list_library():
   print
   print "%d items in library" % len(library)
 
-def grab_is_cruft_file(fn):
-  if fn.lower() == ".ds_store" or fn.lower() == "thumbs.db":
-    return True
-  return False
-
-def grab_clear_cruft_files():
-  for root, dirs, files in os.walk(MANGA_FOLDER):
-    for fn in files:
-      if not fn.lower().endswith(".zip"):
-        continue
-      fpath = os.path.join(root, fn)
-      should_rm_zf = False
-      zf = ZipFile(fpath)
-      for entry in zf.namelist():
-        if grab_is_cruft_file(entry):
-          print fpath
-          main_fn = os.path.splitext(fn)[0]
-          extract_path = os.path.join(root, main_fn)
-          prepare_folder(extract_path)
-          zf.extractall(extract_path)
-          should_rm_zf = True
-          break
-      zf.close()
-      if should_rm_zf:
-        print "remove original zip"
-        os.remove(fpath)
-
-
 if __name__ == "__main__":
   if len(sys.argv) == 1 or sys.argv[1] == "help":
     grab_print_help()
@@ -529,6 +511,8 @@ if __name__ == "__main__":
     grab_download(reverse=True)
   elif sys.argv[1] == "list-library":
     grab_list_library()
+  elif sys.argv[1] == "pack-all":
+    grab_pack_all()
   elif sys.argv[1] == "update":
     grab_update()
   elif sys.argv[1] == "update-all":

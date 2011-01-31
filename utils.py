@@ -11,6 +11,7 @@ import sys
 import os
 import time
 import random
+import traceback
 from zipfile import ZipFile, ZIP_DEFLATED
 
 def zipdir(basedir, archivename):
