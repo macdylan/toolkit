@@ -17,6 +17,7 @@ import socket
 import urllib2
 from urllib2 import HTTPError
 from utils import *
+import fancycbz
 
 SOCKET_TIMEOUT = 30
 socket.setdefaulttimeout(SOCKET_TIMEOUT)
