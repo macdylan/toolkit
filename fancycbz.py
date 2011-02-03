@@ -51,6 +51,7 @@
 import json
 
 UNKNOWN = ""
+VERSION_TEXT = "fancy cbz 1.0"
 
 class FancyCBZImage(dict):
   pass
@@ -59,9 +60,9 @@ class FancyCBZ(dict):
   
   def __init__(self):
     self["is_fancy_format"] = False
-    self["ver"] = UNKNOWN
-    self["min_ver"] = UNKNOWN
-    self["app_name"] = UNKNOWN
+    self["ver"] = VERSION_TEXT
+    self["min_ver"] = VERSION_TEXT
+    self["app_name"] = "fancycbz.py"
     self["series"] = UNKNOWN
     self["title"] = UNKNOWN
     self["author"] = UNKNOWN
