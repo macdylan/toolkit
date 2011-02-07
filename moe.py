@@ -879,12 +879,114 @@ def moe_mirror_konachan_html():
 def moe_mirror_nekobooru():
   util_mirror_danbooru_site("http://nekobooru.net")
 
+def util_download_tu178_image(page_url, title, id_in_set):
+  init_db_connection()
+  images_root = g_image_root
+  image_set = "tu178"
+  try:
+    page_src = urllib2.urlopen(page_url).read()
+    idx = page_src.find("d-box")
+    idx = page_src.find("href=\"", idx)
+    idx += 6
+    idx2 = page_src.find("\"", idx)
+    image_url = page_src[idx:idx2].split("?")[0]
+    image_ext = image_url[image_url.rfind("."):]
+    
+    if db_image_in_black_list(image_set, id_in_set):
+      print "[skip] '%s %d' is in black list" % (image_set, id_in_set)
+      return
+    
+    dest_image = images_root + os.path.sep + image_set + os.path.sep
+    dest_image += util_get_bucket_name(id_in_set) + os.path.sep + str(id_in_set) + image_ext
+    if os.path.exists(dest_image):
+      db_add_image(dest_image, image_set, id_in_set)
+      print "[skip] '%s %d' already downloaded" % (image_set, id_in_set)
+      return
+    
+    tmp_folder = g_tmp_folder
+    util_make_dirs(tmp_folder + os.path.sep + image_set)
+    try:
+      download_fpath = tmp_folder + os.path.sep + image_set + os.path.sep + str(id_in_set) + image_ext
+      print "[download] '%s %d'" % (image_set, id_in_set)
+      image_data = urllib2.urlopen(image_url).read()
+      download_file = open(download_fpath, "wb")
+      download_file.write(image_data)
+      download_file.close()
+      
+      db_add_image(download_fpath, image_set, id_in_set)
+      tags = title,
+      db_set_image_tags(image_set, id_in_set, tags)
+      db_commit()
+      if os.path.exists(download_fpath):
+        os.remove(download_fpath)
+      
+    except:
+      traceback.print_exc()
+      time.sleep(1)
+    
+  except:
+    traceback.print_exc()
+    time.sleep(1)
+
+
+def moe_mirror_tu178():
+  SOCKET_TIMEOUT = 30
+  socket.setdefaulttimeout(SOCKET_TIMEOUT)
+  tmp_folder = g_tmp_folder
+  print "mirroring tu.178.com!"
+  
+  # Start mirroring from page 1.
+  page_id = 1
+  # Check if need to start downloading from other pages.
+  for i in range(len(sys.argv)):
+    arg = sys.argv[i]
+    if arg.startswith("--page="):
+      page_id = int(arg[7:])
+    elif arg == "-p":
+      if i <= len(sys.argv) - 2:
+        page_id = int(sys.argv[i + 1])
+      else:
+        print "Wrong parameters, please provide page number after '-p'!"
+        return
+  
+  while True:
+    try:
+      query_url = "http://tu.178.com/?_per_page=1&_page_no=%d" % page_id
+      print "working on page %d" % page_id
+      
+      # Go on to next page
+      page_id += 1
+      page_src = "\n".join(urllib2.urlopen(query_url).readlines())
+      idx = 0
+      while True:
+        idx = page_src.find("a-img", idx)
+        if idx == -1:
+          break
+        idx = page_src.find("href='", idx)
+        idx += 6
+        idx2 = page_src.find("' title", idx)
+        sub_url = page_src[idx:idx2]
+        idx2 += 9
+        idx = page_src.find("\"", idx2)
+        title_info = page_src[idx2:idx]
+        idx = page_src.find("data_id='", idx)
+        idx += 9
+        idx2 = page_src.find("'", idx)
+        id_in_set = int(page_src[idx:idx2])
+        util_download_tu178_image(sub_url, title_info, id_in_set)
+        
+    except:
+      traceback.print_exc()
+      time.sleep(1)
+  
+
 def moe_mirror_all():
   if os.name == "nt":
     os.system("start moe.py mirror-danbooru")
     os.system("start moe.py mirror-konachan-html")
     os.system("start moe.py mirror-nekobooru")
     os.system("start moe.py mirror-moe-imouto-html")
+    os.system("start moe.py mirror-tu178")
   else:
     print "This function is not supported in your system."
 
@@ -1516,6 +1618,7 @@ def moe_help():
   print "  mirror-moe-imouto          mirror moe.imouto.org"
   print "  mirror-moe-imouto-html     mirror moe.imouto.org (through html request)"
   print "  mirror-nekobooru           mirror nekobooru.com"
+  print "  mirror-tu178               mirror tu.178.com"
   print "  update-file-size           make sure every images's file_size is read into databse"
   print
   print "author: Santa Zhang (santa1987@gmail.com)"
@@ -1603,6 +1706,8 @@ if __name__ == "__main__":
     moe_list_albums()
   elif sys.argv[1] == "mirror-all":
     moe_mirror_all()
+  elif sys.argv[1] == "mirror-tu178":
+    moe_mirror_tu178()
   elif sys.argv[1] == "mirror-danbooru":
     init_db_connection()
     moe_mirror_danbooru()
@@ -1632,3 +1737,4 @@ if __name__ == "__main__":
     moe_update_file_size()
   else:
     print "command '%s' not understood, see 'moe.py help' for more info" % sys.argv[1]
+

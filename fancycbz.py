@@ -28,24 +28,21 @@
 #   utf8:title -- title in the series
 #   utf8:author -- (optional) author name
 #   utf8:kind -- (optional) "manga" or "comic"?
-#   int:pubish_year -- (optional) publish year
 #   utf8:comment -- (optional) comment on the comic book
 #   utf8:country -- (optional)
 #   utf8:language -- (optional)
-#   pic_meta:front_cover,back_cover -- (optional)
+#   pic_meta:front_cover -- (optional)
 #   [pic_meta]:images -- list of images, including front & back cover
-#   [utf8]:additional_info -- additional information, json format
 # 
 # falling back on bad-formatted .cbz files:
 #   if content.json not found, or version not matched, then fall back to normal cbz files.
 #   fallback values:
 #   is_fancy_format -> false,
 #   ver -> "", min_ver -> "", app_name -> "", series -> "",
-#   title -> zip file name, author -> "", publish_year -> -1,
+#   title -> zip file name, author -> "",
 #   comment -> "", country -> "", language -> "",
-#   front_cover & back_cover -> "",
+#   front_cover -> "",
 #   images -> ascending list of the picture files in zip package,
-#   additional_info -> "",
 #   "" means "Unknown"
 
 import json
@@ -67,14 +64,11 @@ class FancyCBZ(dict):
     self["title"] = UNKNOWN
     self["author"] = UNKNOWN
     self["kind"] = UNKNOWN
-    self["publish_year"] = -1
     self["comment"] = UNKNOWN
     self["country"] = UNKNOWN
     self["language"] = UNKNOWN
     self["front_cover"] = None
-    self["back_cover"] = None
     self["images"] = []
-    self["additional_info"] = UNKNOWN
   
   def loads(self, txt):
     self.__init__()
@@ -90,3 +84,4 @@ if __name__ == "__main__":
   f = open("blah.json", "w")
   json.dump(cbz, f)
   f.close()
+
