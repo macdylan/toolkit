@@ -900,6 +900,8 @@ def util_download_tu178_image(page_url, title, id_in_set):
     dest_image += util_get_bucket_name(id_in_set) + os.path.sep + str(id_in_set) + image_ext
     if os.path.exists(dest_image):
       db_add_image(dest_image, image_set, id_in_set)
+      db_set_image_tags(image_set, id_in_set, tags)
+      db_commit()
       print "[skip] '%s %d' already downloaded" % (image_set, id_in_set)
       return
     
