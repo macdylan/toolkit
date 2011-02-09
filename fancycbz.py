@@ -81,7 +81,4 @@ class FancyCBZ(dict):
 if __name__ == "__main__":
   cbz = FancyCBZ()
   print json.dumps(cbz)
-  f = open("blah.json", "w")
-  json.dump(cbz, f)
-  f.close()
 

@@ -12,7 +12,14 @@ import os
 import time
 import random
 import traceback
+import re
 from zipfile import ZipFile, ZIP_DEFLATED
+
+def is_well_formed_uuid(uuid):
+  uuid = uuid.lower()
+  if re.match("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", uuid) == None:
+    return False
+  return True
 
 def zipdir(basedir, archivename):
   ok = True

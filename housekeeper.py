@@ -862,6 +862,118 @@ def hk_zip_sub_dir():
       print "[zip-dir] %s" % fpath
       zipdir(fpath, fpath + ".zip")
 
+def parse_ics_uid_map(ics_content):
+  uidmap = {}
+  splt = re.split("\n|\r", ics_content)
+  for i in range(len(splt)):
+    line = splt[i]
+    if line.startswith("UID:"):
+      uid = line[4:]
+      if uid[0] == '{':
+        uid = uid[1:-1]
+      uid = uid.lower()
+      if is_well_formed_uuid(uid):
+        begin_line_no = -1
+        end_line_no = -1
+        
+        # search backwards (for BEGIN:), note that there might be several levels of BEGIN-END
+        level = 0
+        j = i
+        while j >= 0:
+          ln = splt[j]
+          if ln.startswith("BEGIN:"):
+            if level > 0:
+              level -= 1
+            else:
+              begin_line_no = j
+              break
+          if ln.startswith("END:"):
+            level += 1
+          j -= 1
+        
+        # search forwards (for END:), note that there might be several levels of BEGIN-END
+        level = 0
+        j = i
+        while j < len(splt):
+          ln = splt[j]
+          if ln.startswith("END:"):
+            if level > 0:
+              level -= 1
+            else:
+              end_line_no = j
+              break
+          if ln.startswith("BEGIN:"):
+            level += 1
+          j += 1
+        
+        if begin_line_no != -1 and end_line_no != -1:
+          content = "\n".join(splt[begin_line_no:end_line_no + 1])
+          uidmap[uid] = content
+          
+  return uidmap
+
+def hk_sync_rainlendar():
+  ical_folder = get_config("ical_folder")
+  rain_ics = get_config("rainlendar2_ics_file")
+  backup_ics = rain_ics + ".bak"
+  print "backup rainlender2 ics file"
+  shutil.copyfile(rain_ics, backup_ics)
+  f = open(rain_ics)
+  rain_content = f.read()
+  rain_ics_map = parse_ics_uid_map(rain_content)
+  f.close()
+  
+  for root, dirnames, fnames in os.walk(ical_folder):
+    for fn in fnames:
+      if fn.lower().endswith(".ics"):
+        fpath = os.path.join(root, fn)
+        f = open(fpath)
+        f_content = f.read()
+        ical_ics_map = parse_ics_uid_map(f_content)
+        f.close()
+        for k in ical_ics_map.keys():
+          if rain_ics_map.has_key(k) == False:
+            print "New item with UID: %s" % k
+            rain_ics_map[k] = ical_ics_map[k]
+  
+  
+  # rewrite new rain_content
+  new_content = ""
+  splt = re.split("\n|\r", rain_content)
+  idx = 0
+  while idx < len(splt):
+    line = splt[idx]
+    new_content += line + "\n"
+    idx += 1
+    if line.startswith("BEGIN:"):
+      # skip the first BEGIN:CAL
+      break
+  merged_written = False
+  level = 0
+  while idx < len(splt):
+    line = splt[idx]
+    if line.startswith("BEGIN:"):
+      level += 1
+      if merged_written == False:
+        for k in rain_ics_map.keys():
+          new_content += rain_ics_map[k] + "\n"
+        merged_written = True
+    if level == 0:
+      new_content += line + "\n"
+    if line.startswith("END:"):
+      level -= 1
+    idx += 1
+  new_content2 = new_content
+  new_content = ""
+  splt = re.split("\n|\r", new_content2)
+  for sp in splt:
+    if len(sp) != 0:
+      new_content += sp + "\n"
+  print new_content
+  f = open(rain_ics, "w")
+  f.write(new_content)
+  f.close()
+
 def hk_help():
   print "housekeeper.py: helper script to manage my important collections"
   print "usage: housekeeper.py <command>"
@@ -883,6 +995,7 @@ def hk_help():
   print "  psp-sync-pic               sync images to psp"
   print "  papers-find-ophan          check if pdf is in papers folder but not in Papers library"
   print "  rm-empty-dir               remove empty dir"
+  print "  sync-rainlendar            sync iCal & rainlendar"
   print "  update-chrome              update chrome browser (Windows only)"
   print "  upgrade-dropbox-pic        update dropbox photos folder, prefer highres pictures"
   print "  write-crc32                write crc32 data in every directory, overwrite old crc32 files"
@@ -927,6 +1040,8 @@ if __name__ == "__main__":
     hk_papers_find_ophan()
   elif sys.argv[1] == "rm-empty-dir":
     hk_rm_empty_dir()
+  elif sys.argv[1] == "sync-rainlendar":
+    hk_sync_rainlendar()
   elif sys.argv[1] == "update-chrome":
     hk_update_chrome()
   elif sys.argv[1] == "upgrade-dropbox-pic":
