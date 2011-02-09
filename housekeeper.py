@@ -969,7 +969,7 @@ def hk_sync_rainlendar():
   for sp in splt:
     if len(sp) != 0:
       new_content += sp + "\n"
-  print new_content
+#  print new_content
   f = open(rain_ics, "w")
   f.write(new_content)
   f.close()
@@ -979,28 +979,28 @@ def hk_help():
   print "usage: housekeeper.py <command>"
   print "available commands:"
   print
-  print "  backup-psp                 backup my psp"
-  print "  batch-rename               batch rename files under a folder"
-  print "  check-ascii-fnames         make sure all file has ascii-only name"
-  print "  check-crc32                check file integrity by crc32"
-  print "  clean-eject-usb <name>     cleanly eject usb drives (cleans .Trash, .SpotLight folders)"
-  print "  help                       display this info"
-  print "  itunes-check-exists        check if music in iTunes library really exists"
-  print "  itunes-export-cover        export covers from iTunes library"
-  print "  itunes-find-ophan          check if music is in music folder but not in iTunes"
-  print "  itunes-genuine-check       check if music in iTunes is genuine"
-  print "  itunes-play-count          display the play count of iTunes library"
-  print "  itunes-rm-useless-cover    remove useless covers from iTunes library"
-  print "  lowercase-ext              make sure file extensions are lower case"
-  print "  psp-sync-pic               sync images to psp"
-  print "  papers-find-ophan          check if pdf is in papers folder but not in Papers library"
-  print "  rm-empty-dir               remove empty dir"
-  print "  sync-rainlendar            sync iCal & rainlendar"
-  print "  update-chrome              update chrome browser (Windows only)"
-  print "  upgrade-dropbox-pic        update dropbox photos folder, prefer highres pictures"
-  print "  write-crc32                write crc32 data in every directory, overwrite old crc32 files"
-  print "  write-crc32-new-only       write crc32 data in every directroy, new files only"
-  print "  zip-sub-dir                pack each sub directory into zip files"
+  print "  backup-psp                         backup my psp"
+  print "  batch-rename                       batch rename files under a folder"
+  print "  check-ascii-fnames                 make sure all file has ascii-only name"
+  print "  check-crc32                        check file integrity by crc32"
+  print "  clean-eject-usb <name>             cleanly eject usb drives (cleans .Trash, .SpotLight folders)"
+  print "  help                               display this info"
+  print "  itunes-check-exists (deprecated)   check if music in iTunes library really exists"
+  print "  itunes-export-cover                export covers from iTunes library"
+  print "  itunes-find-ophan (deprecated)     check if music is in music folder but not in iTunes"
+  print "  itunes-genuine-check               check if music in iTunes is genuine"
+  print "  itunes-play-count                  display the play count of iTunes library"
+  print "  itunes-rm-useless-cover            remove useless covers from iTunes library"
+  print "  lowercase-ext                      make sure file extensions are lower case"
+  print "  psp-sync-pic                       sync images to psp"
+  print "  papers-find-ophan                  check if pdf is in papers folder but not in Papers library"
+  print "  rm-empty-dir                       remove empty dir"
+  print "  sync-rainlendar (deprecated)       sync iCal & rainlendar"
+  print "  update-chrome                      update chrome browser (Windows only)"
+  print "  upgrade-dropbox-pic                update dropbox photos folder, prefer highres pictures"
+  print "  write-crc32                        write crc32 data in every directory, overwrite old crc32 files"
+  print "  write-crc32-new-only               write crc32 data in every directroy, new files only"
+  print "  zip-sub-dir                        pack each sub directory into zip files"
   print
   print "author: Santa Zhang (santa1987@gmail.com)"
 
