@@ -707,7 +707,7 @@ def hk_backup_psp():
         else:
           print "[skip] too big: %d bytes, '%s'" % (f_size, fpath)
     else:
-      if fn.lower() == "registry" or fn.lower() == "seplugins":
+      if fn.lower() == "registry" or fn.lower() == "seplugins" or fn.lower() == "freecheat":
         folder_du = get_du_of_folder(fpath)
         if folder_du <= bkup_threshold:
           print "[backup] %d bytes, '%s'" % (folder_du, fpath)
