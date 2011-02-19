@@ -459,7 +459,6 @@ def util_aucdtect(aucdtect_bin, ffmpeg_bin, tmp_folder, strip_fn, fpath):
     stdout_output = pipe.stdout.read()
     #print stdout_output
     
-    # TODO aucdtect!
     aucdtect_cmd = "%s \"%s\"" % (aucdtect_bin, tmp_fn)
     pipe = Popen(aucdtect_cmd, shell=False, stdin=PIPE, stdout=PIPE, stderr=STDOUT)
     stdout_output = pipe.stdout.read()

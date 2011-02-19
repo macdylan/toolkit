@@ -332,7 +332,7 @@ def jc_psp_movie_dir(src_dir, dst_dir):
     for th in running:
       print "[info] %d of %d: %s" % (all_jobs.index(th.get_current_job()) + 1, len(all_jobs), th.get_current_job().get_output_file())
     time.sleep(10)
-  # start coverting subs
+  # start converting subs
   tmp_folder = get_config("tmp_folder")
   for fn in os.listdir(src_dir):
     fpath = os.path.join(src_dir, fn)
