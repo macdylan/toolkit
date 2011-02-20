@@ -1,0 +1,10 @@
+A collection of tools to manage my stuff.
+Santa Zhang (santa1987@gmail.com)
+
+fancycbz.py     A much better .cbz format spec, with metadata inside the book.
+grabber.py      Downloads and manages my manga books.
+housekeeper.py  Script to manage my files, and provides simple housekeeping work.
+justconvert.py  Convert video, music, pictures.
+moe.py          Subscribes and manages my picture collections.
+utils.py        General utilities for other scripts.
+
