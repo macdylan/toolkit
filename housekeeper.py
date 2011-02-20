@@ -993,6 +993,53 @@ def hk_sync_rainlendar():
   f.write(new_content)
   f.close()
 
+def mac_required():
+  if os.name != 'posix' or os.path.exists("/mach_kernel") == False:
+    raise Exception("Only Mac supported!")
+
+def hk_sys_maint():
+  root_required()
+  mac_required()
+  print "-" * 80
+  print "This script will do system maintenance:"
+  print
+  print "  1: gem update --no-rdoc --no-ri"
+  print "  2: port selfupdate && port list outdated && port upgrade outdated"
+  print "  3: tlmgr update --list && tlmgr update --all"
+  print
+  print "However, the following should be done by you, manually:"
+  print
+  print "  * backup your code, git push to Github, Dropbox"
+  print "  * backup psp"
+  print "  * backup nds"
+  print "  * backup Mac files by Time Machine"
+  print "  * backup your hard disk by SyncToy"
+  print "  * backup your music"
+  print
+  print "Press ENTER to continue, or press CTRL+C to quit."
+  raw_input()
+  try:
+    print
+    print "-" * 80
+    print "phase 1: gem update --no-rdoc --no-ri"
+    hk_exec("gem update --no-rdoc --no-ri")
+  except:
+    traceback.print_exc()
+  try:
+    print
+    print "-" * 80
+    print "phase 2: port selfupdate && port list outdated && port upgrade outdated"
+    hk_exec("port selfupdate && port list outdated && port upgrade outdated")
+  except:
+    traceback.print_exc()
+  try:
+    print
+    print "-" * 80
+    print "phase 3: tlmgr update --list && tlmgr update --all"
+    hk_exec("tlmgr update --list && tlmgr update --all")
+  except:
+    traceback.print_exc()
+
 def hk_help():
   print "housekeeper.py: helper script to manage my important collections"
   print "usage: housekeeper.py <command>"
@@ -1015,6 +1062,7 @@ def hk_help():
   print "  papers-find-ophan                  check if pdf is in papers folder but not in Papers library"
   print "  rm-empty-dir                       remove empty dir"
   print "  sync-rainlendar (deprecated)       sync iCal & rainlendar"
+  print "  sys-maint                          system maintenance (currently Mac only)"
   print "  update-chrome                      update chrome browser (Windows only)"
   print "  upgrade-dropbox-pic                update dropbox photos folder, prefer highres pictures"
   print "  write-crc32                        write crc32 data in every directory, overwrite old crc32 files"
@@ -1061,6 +1109,8 @@ if __name__ == "__main__":
     hk_rm_empty_dir()
   elif sys.argv[1] == "sync-rainlendar":
     hk_sync_rainlendar()
+  elif sys.argv[1] == "sys-maint":
+    hk_sys_maint()
   elif sys.argv[1] == "update-chrome":
     hk_update_chrome()
   elif sys.argv[1] == "upgrade-dropbox-pic":
