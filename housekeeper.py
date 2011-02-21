@@ -1040,6 +1040,24 @@ def hk_sys_maint():
   except:
     traceback.print_exc()
 
+def hk_sys_backup():
+  print "* backup Papers..."
+  os.system("rm -rf /Users/santa/Dropbox/Backups/mac_backup/Papers")
+  hk_make_dirs("/Users/santa/Dropbox/Backups/mac_backup/Papers")
+  os.system("cp -rv /Users/santa/Papers /Users/santa/Dropbox/Backups/mac_backup")
+  
+  print "* backup The Hit List..."
+  os.system("cp -rv \"/Users/santa/Library/Application Support/The Hit List/The Hit List Library.thllibrary\" /Users/santa/Dropbox/Backups/mac_backup")
+  
+  print "* backup Things..."
+  hk_make_dirs("/Users/santa/Dropbox/Backups/mac_backup/Things")
+  os.system("cp -v \"/Users/santa/Library/Application Support/Cultured Code/Things/Database.xml\" /Users/santa/Dropbox/Backups/mac_backup/Things")
+  print "everything done!"
+  
+  print "* backup iTunes library..."
+  hk_make_dirs("/Users/santa/Dropbox/Backups/mac_backup/iTunes")
+  os.system("cp -v /Users/santa/Music/iTunes/iTunes* /Users/santa/Dropbox/Backups/mac_backup/iTunes")
+
 def hk_help():
   print "housekeeper.py: helper script to manage my important collections"
   print "usage: housekeeper.py <command>"
@@ -1062,6 +1080,7 @@ def hk_help():
   print "  papers-find-ophan                  check if pdf is in papers folder but not in Papers library"
   print "  rm-empty-dir                       remove empty dir"
   print "  sync-rainlendar (deprecated)       sync iCal & rainlendar"
+  print "  sys-backup                         system backup (currently Mac only)"
   print "  sys-maint                          system maintenance (currently Mac only)"
   print "  update-chrome                      update chrome browser (Windows only)"
   print "  upgrade-dropbox-pic                update dropbox photos folder, prefer highres pictures"
@@ -1109,6 +1128,8 @@ if __name__ == "__main__":
     hk_rm_empty_dir()
   elif sys.argv[1] == "sync-rainlendar":
     hk_sync_rainlendar()
+  elif sys.argv[1] == "sys-backup":
+    hk_sys_backup()
   elif sys.argv[1] == "sys-maint":
     hk_sys_maint()
   elif sys.argv[1] == "update-chrome":
