@@ -379,6 +379,16 @@ def hk_clean_eject_usb(usb_name):
   if os.path.isdir(mount_folder) == False:
     print "USB drive not found: '%s'" % (mount_folder)
     exit(1)
+  print "Possible cruft files:"
+  print "---"
+  os.system("find \"%s\" -iname \".*\"" % mount_folder)
+  os.system("find \"%s\" -iname \".DS_Store\"" % mount_folder)
+  print "---"
+  print "input 'clean' to remove those cruft files, or just press ENTER to pass along"
+  choice = raw_input().strip()
+  if choice == "clean":
+    hk_exec("find \"%s\" -iname \".*\" -delete" % mount_folder)
+    hk_exec("find \"%s\" -iname \".DS_Store\" -delete" % mount_folder)
   for cruft in [".DS_Store", ".fseventsd", ".Spotlight-V100", ".Trashes"]:
     cruft_path = os.path.join(mount_folder, cruft)
     if os.path.exists(cruft_path):
@@ -392,16 +402,6 @@ def hk_clean_eject_usb(usb_name):
         print "[rm-file] %s" % cruft_path
         os.remove(cruft_path)
   
-  print "Possible cruft files:"
-  print "---"
-  os.system("find \"%s\" -iname \".*\"" % mount_folder)
-  os.system("find \"%s\" -iname \".DS_Store\"" % mount_folder)
-  print "---"
-  print "input 'clean' to remove those cruft files, or just press ENTER to pass along"
-  choice = raw_input().strip()
-  if choice == "clean":
-    hk_exec("find \"%s\" -iname \".*\" -delete" % mount_folder)
-    hk_exec("find \"%s\" -iname \".DS_Store\" -delete" % mount_folder)
   hk_exec("diskutil eject \"%s\"" % usb_name)
 
 
