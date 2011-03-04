@@ -391,6 +391,17 @@ def hk_clean_eject_usb(usb_name):
       else:
         print "[rm-file] %s" % cruft_path
         os.remove(cruft_path)
+  
+  print "Possible cruft files:"
+  print "---"
+  os.system("find \"%s\" -iname \".*\"" % mount_folder)
+  os.system("find \"%s\" -iname \".DS_Store\"" % mount_folder)
+  print "---"
+  print "input 'clean' to remove those cruft files, or just press ENTER to pass along"
+  choice = raw_input().strip()
+  if choice == "clean":
+    hk_exec("find \"%s\" -iname \".*\" -delete" % mount_folder)
+    hk_exec("find \"%s\" -iname \".DS_Store\" -delete" % mount_folder)
   hk_exec("diskutil eject \"%s\"" % usb_name)
 
 
