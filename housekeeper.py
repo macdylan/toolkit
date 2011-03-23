@@ -677,6 +677,72 @@ def hk_itunes_rm_useless_cover():
           print "[rm] %s" % fpath
   print "Done!"
 
+def hk_itunes_stats():
+  itunes_lib_xml_fn = os.path.join(get_config("itunes_folder"), "iTunes Music Library.xml")
+  total_count = 0
+  total_tracks = 0
+  fp = open(itunes_lib_xml_fn)
+  fcontent = fp.read()
+  fp.close()
+  idx = idx2 = idx3 = idx4 = 0
+  album_name_to_play_count = {}
+  while True:
+    idx = fcontent.find("<key>Name</key><string>", idx)
+    if idx < 0:
+      break
+    else:
+      total_tracks += 1
+    idx2 = fcontent.find("</string>", idx)
+    title = fcontent[(idx + 23) : idx2]
+    idx += 1
+    
+    idx3 = fcontent.find("<key>Album</key><string>", idx)
+    if fcontent[idx2:idx3].find("<dict>") >= 0:
+      continue
+    if idx3 < 0:
+      continue
+    idx4 = fcontent.find("</string>", idx3)
+    album_name = fcontent[(idx3 + 24) : idx4]
+    idx = idx3 + 1
+    
+    idx3 = fcontent.find("<key>Play Count</key><integer>", idx)
+    if fcontent[idx2:idx3].find("<dict>") >= 0:
+      play_count = 0
+    else:
+      idx4 = fcontent.find("</integer>", idx3)
+      play_count_str = fcontent[(idx3 + 30) : idx4]
+      play_count = int(play_count_str)
+      idx = idx3 + 1
+    
+    #print "%s, %s, played %d times" % (album_name, title, play_count)
+    if album_name_to_play_count.has_key(album_name):
+      album_name_to_play_count[album_name] += play_count,
+    else:
+      album_name_to_play_count[album_name] = [play_count]
+    #print album_name_to_play_count[album_name]
+  
+  print "Total tracks: %d" % total_tracks
+
+  avg_album_playcount = []
+  for k in album_name_to_play_count.keys():
+    v = album_name_to_play_count[k]
+    album_play_count = sum(v)
+    avg = sum(v) * 1.0 / len(v)
+    #print avg, k
+    avg_album_playcount += (avg, k),
+  avg_album_playcount.sort()
+  
+  n_least = 100;
+  print "%d most less played albums:" % n_least
+  counter = 0
+  for avg, album in avg_album_playcount:
+    print avg, album
+    counter += 1
+    if counter > n_least:
+      break
+  
+  
+
 def get_du_of_folder(folder):
   du = 0
   for root, dirnames, fnames in os.walk(folder):
@@ -1086,6 +1152,7 @@ def hk_help():
   print "  itunes-genuine-check               check if music in iTunes is genuine"
   print "  itunes-play-count                  display the play count of iTunes library"
   print "  itunes-rm-useless-cover            remove useless covers from iTunes library"
+  print "  itunes-stats                       display iTunes library info"
   print "  lowercase-ext                      make sure file extensions are lower case"
   print "  psp-sync-pic                       sync images to psp"
   print "  papers-find-ophan                  check if pdf is in papers folder but not in Papers library"
@@ -1129,6 +1196,8 @@ if __name__ == "__main__":
     hk_itunes_play_count()
   elif sys.argv[1] == "itunes-rm-useless-cover":
     hk_itunes_rm_useless_cover()
+  elif sys.argv[1] == "itunes-stats":
+    hk_itunes_stats();
   elif sys.argv[1] == "lowercase-ext":
     hk_lowercase_ext()
   elif sys.argv[1] == "psp-sync-pic":
