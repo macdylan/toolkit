@@ -1118,9 +1118,11 @@ def hk_sys_maint():
     traceback.print_exc()
 
 def hk_sys_backup():
-  print "* backup Papers..."
+  os.system("rm -rf /Users/santa/Dropbox/Backups/mac_backup/Evernote.zip")
   os.system("rm -rf /Users/santa/Dropbox/Backups/mac_backup/Papers")
-  hk_make_dirs("/Users/santa/Dropbox/Backups/mac_backup/Papers")
+  os.system("rm -rf \"/Users/santa/Dropbox/Backups/mac_backup/The Hit List Library.thllibrary\"")
+  
+  print "* backup Papers..."
   os.system("cp -rv /Users/santa/Papers /Users/santa/Dropbox/Backups/mac_backup")
   
   print "* backup The Hit List..."
@@ -1134,6 +1136,9 @@ def hk_sys_backup():
   print "* backup iTunes library..."
   hk_make_dirs("/Users/santa/Dropbox/Backups/mac_backup/iTunes")
   os.system("cp -v /Users/santa/Music/iTunes/iTunes* /Users/santa/Dropbox/Backups/mac_backup/iTunes")
+  
+  print "* backup Evernote..."
+  zipdir("/Users/santa/Library/Application Support/Evernote", "/Users/santa/Dropbox/Backups/mac_backup/Evernote.zip");
 
 def hk_help():
   print "housekeeper.py: helper script to manage my important collections"
