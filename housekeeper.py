@@ -1120,10 +1120,14 @@ def hk_sys_maint():
 def hk_sys_backup():
   os.system("rm -rf /Users/santa/Dropbox/Backups/mac_backup/Evernote.zip")
   os.system("rm -rf /Users/santa/Dropbox/Backups/mac_backup/Papers")
+  os.system("rm -rf /Users/santa/Dropbox/Backups/mac_backup/Papers2")
   os.system("rm -rf \"/Users/santa/Dropbox/Backups/mac_backup/The Hit List Library.thllibrary\"")
   
   print "* backup Papers..."
   os.system("cp -rv /Users/santa/Papers /Users/santa/Dropbox/Backups/mac_backup")
+  
+  print "* backup Papers2..."
+  os.system("cp -rv /Users/santa/Papers2 /Users/santa/Dropbox/Backups/mac_backup")
   
   print "* backup The Hit List..."
   os.system("cp -rv \"/Users/santa/Library/Application Support/The Hit List/The Hit List Library.thllibrary\" /Users/santa/Dropbox/Backups/mac_backup")
