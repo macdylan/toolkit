@@ -195,8 +195,7 @@ if __name__ == "__main__":
   elif sys.argv[1] == "mirror":
     pgm_mirror(sys.argv[2])
   elif sys.argv[1] == "mirror-doujin-moe":
-#    pgm_mirror("www.doujin-moe.us/phpgraphy/index.php?dir=")
-    pgm_mirror("http://www.doujin-moe.us/phpgraphy/index.php?dir=Baka%20to%20Test%20to%20Shoukanju%2FDoujins%2F")
+    pgm_mirror("www.doujin-moe.us/phpgraphy/index.php?dir=")
   elif sys.argv[1] == "pack-all":
     pgm_pack_all()
   else:
