@@ -1,3 +1,4 @@
 * grabber check-zip: check the contents of zip packages
 * justconvert: auto detect (or ask user) the video/audio bitrate
 * moe: check-md5
+* phpgraphymirror: mirror highres pictures, and zip files
