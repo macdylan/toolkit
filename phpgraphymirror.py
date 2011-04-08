@@ -149,7 +149,7 @@ def pgm_mirror(dir_url):
     print "[remote image] %s" % pic_url
     try:
       fn = os.path.join(local_dir, os.path.split(urlparse(pic_url)[2])[1])
-      if !is_image(fn):
+      if not is_image(fn):
         print "TODO: deal with non-image files (possibly zip)"
       print "[local image] %s" % fn
       if os.path.exists(fn):
