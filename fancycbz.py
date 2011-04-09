@@ -8,77 +8,237 @@
 # /*.{jpg,png} -- images
 # 
 # content.json object:
-# pic_note:
-#   int:x,y,width,height -- location of the note
-#   utf8:text -- the note info
 # 
-# pic_meta:
-#   [utf8]:z_path -- zipped name, including path, relative to the root directory, do not start with '/'
-#   int:crop_x,crop_y,crop_width,crop_hegiht -- (optional) cropped image size
-#   [utf8]:comment -- (optional) picture comment
-#   [utf8]:additional_info -- (optional) additional information on the image
-#   [pic_note]:notes -- (optional) notes on the picture
-# 
-# comic_meta:
-#   bool:is_fancy_format -- flag to indicate if the cbz is in good format, not written into zip package
-#   utf8:ver -- fancy cbz version, currently 'fancy cbz 1.0'
-#   utf8:min_ver -- (optional) minimum version required to open the file, currently 'fancy cbz 1.0'
-#   utf8:app_name -- (optional) the application that created the cbz file
-#   utf8:series -- (optional) the series name
-#   utf8:title -- title in the series
-#   utf8:author -- (optional) author name
-#   utf8:kind -- (optional) "manga" or "comic"?
-#   utf8:comment -- (optional) comment on the comic book
-#   utf8:country -- (optional)
-#   utf8:language -- (optional)
-#   pic_meta:front_cover -- (optional)
-#   [pic_meta]:images -- list of images, including front & back cover
-# 
+# comic_book:
+#   utf8: ver -- fancy cbz format version, "1.0"
+#   utf8: min_ver -- minimum version required to open the file, default "1.0"
+#   utf8: app_name -- (optional) the application that created the cbz file
+#   utf8: series -- (optional) the series name
+#   utf8: title -- the book title
+#   utf8: author -- (optional) author name
+#   utf8: kind -- (optional) "manga", "comic"
+#   utf8: comment -- (optional) comment for the book
+#   utf8: country -- (optional)
+#   utf8: language -- (optional)
+#   utf8: front_cover -- (optional) front cover file name
+#   utf8: padding -- (optional) fill up the file with " "
+#   [utf8]: images
+#
 # falling back on bad-formatted .cbz files:
 #   if content.json not found, or version not matched, then fall back to normal cbz files.
 #   fallback values:
 #   is_fancy_format -> false,
-#   ver -> "", min_ver -> "", app_name -> "", series -> "",
+#   ver -> "", min_ver -> "", series -> "",
 #   title -> zip file name, author -> "",
-#   comment -> "", country -> "", language -> "",
+#   comment -> "",
 #   front_cover -> "",
 #   images -> ascending list of the picture files in zip package,
 #   "" means "Unknown"
 
+import os
 import json
+import zipfile
+import time
+import shutil
+import binascii
+import struct
 
-UNKNOWN = ""
-VERSION_TEXT = "fancy cbz 1.0"
+class CbzFile:
+  
+  UNKNOWN = ""
+  VERSION = "1.0"
+  MIN_CONTENT_SIZE = 1024
+  CONTENT_FNAME = "content.json"
+  
+  def __init__(self, fpath = None):
+    self.meta = {}
+    self.meta["ver"] = CbzFile.VERSION
+    self.meta["min_ver"] = CbzFile.VERSION
+    self.f_meta_sz = -1
+    self.f = None
+    self.fpath = None
+    # list of current files
+    self.cur_f_list = []
+    # list of file to be added
+    self.add_f_list = []  # pair: (local_fpath, cbz_fname)
+    
+    if fpath != None:
+      self.open(fpath)
+  
+  def __str__(self):
+    json_txt = json.dumps(self.meta, sort_keys=True, indent=2)
+    return json_txt
+  
+  def open(self, fpath):
+    if self.f != None:
+      self.close()
 
-class FancyCBZImage(dict):
-  pass
+    if os.path.exists(fpath) == False:
+      # create an empty zip file
+      zipf = zipfile.ZipFile(fpath, "w")
+      info = zipfile.ZipInfo(CbzFile.CONTENT_FNAME)
+      info.date_time = time.localtime(time.time())[:6]
+      info.compress_type = zipfile.ZIP_STORED
+      zipf.writestr(info, " " * CbzFile.MIN_CONTENT_SIZE)
+      zipf.close()
+    
+    # open by zipfile, load file info
+    zipf = zipfile.ZipFile(fpath, "r")
+    namelst = zipf.namelist()
+    if len(namelst) == 0 or namelst[0] != CbzFile.CONTENT_FNAME:
+      raise Exception("%s not found at head of cbz package!" % CbzFile.CONTENT_FNAME)
+    infolst = zipf.infolist()
+    self.f_meta_sz = infolst[0].compress_size
+    zipf.close()
+    self.cur_f_list = namelst
 
-class FancyCBZ(dict):
+    self.fpath = fpath
+    self.f = open(fpath, "r+")
+    
+    # TODO: load json info!
   
-  def __init__(self):
-    self["is_fancy_format"] = False
-    self["ver"] = VERSION_TEXT
-    self["min_ver"] = VERSION_TEXT
-    self["app_name"] = "fancycbz.py"
-    self["series"] = UNKNOWN
-    self["title"] = UNKNOWN
-    self["author"] = UNKNOWN
-    self["kind"] = UNKNOWN
-    self["comment"] = UNKNOWN
-    self["country"] = UNKNOWN
-    self["language"] = UNKNOWN
-    self["front_cover"] = None
-    self["images"] = []
+  def save(self):
+    # determine the size of content_json
+    content_json = str(self) + "\n"
+    content_sz = CbzFile.MIN_CONTENT_SIZE
+    while True:
+      if content_sz >= len(content_json):
+        break
+      else:
+        content_sz *= 2
+    padding_sz = content_sz - len(content_json)
+    padding_row = " " * 80 + "\n"
+    padding_row_n = padding_sz / len(padding_row) + 1
+    content_json += padding_row * padding_row_n
+    content_json = content_json[:content_sz]
+    
+    zip_header_sz = 30 # first 30 bytes not modified
+    if len(content_json) != self.f_meta_sz:
+      # need to re-pack the zip file
+      repack_fn = self.fpath + "~repack~"
+      repack_f = open(repack_fn, "wb")
+      self.f.seek(0, os.SEEK_SET)
+      repack_f.write(self.f.read(zip_header_sz + len(CbzFile.CONTENT_FNAME)))
+      repack_f.write(content_json)
+      self.f.seek(self.f_meta_sz, os.SEEK_CUR)
+      while True:
+        buf = self.f.read(1024 * 1024 * 4)
+        if buf == "":
+          break
+        repack_f.write(buf)
+      repack_f.close()
+      self.f.close()
+      shutil.move(repack_fn, self.fpath)
+      self.f = open(self.fpath, "r+")
+      self.f_meta_sz = len(content_json)
+    else:
+      # in place edit
+      self.f.seek(zip_header_sz + len(CbzFile.CONTENT_FNAME), os.SEEK_SET)
+      self.f.write(content_json)
+    
+    # ENHANCE modify time & date
+    
+    # edit content.json's crc32 value, file size
+    content_crc = binascii.crc32(content_json, 0) & 0xffffffff
+    content_crc_binary = struct.pack("<L", content_crc)
+    self.f.seek(14, os.SEEK_SET)
+    self.f.write(content_crc_binary)
+    fsize_binary = struct.pack("<L", self.f_meta_sz)
+    self.f.write(fsize_binary)
+    self.f.write(fsize_binary)
+    
+    # jump to central directory's first item, that is, "content.json"
+    self.f.seek(0, os.SEEK_SET)
+    start_of_central_dir = -1
+    while True:
+      rec_start = self.f.tell()
+      buf = None
+      buf = self.f.read(4)
+      if buf == "PK\03\04":
+        self.f.seek(rec_start + 18, os.SEEK_SET)
+        compress_size = struct.unpack("i", self.f.read(4))[0]
+        self.f.seek(rec_start + 4, os.SEEK_CUR) # skip one value
+        fname_len = struct.unpack("h", self.f.read(2))[0]
+        extra_filed_len = struct.unpack("h", self.f.read(2))[0]
+        self.f.seek(rec_start + 30 + compress_size + fname_len + extra_filed_len, os.SEEK_SET)
+      elif buf == "PK\01\02":
+        if start_of_central_dir < 0:
+          start_of_central_dir = rec_start
+        # now we could edit the other crc32
+        self.f.seek(rec_start + 16, os.SEEK_SET)
+        self.f.write(content_crc_binary)
+        self.f.write(fsize_binary)
+        self.f.write(fsize_binary)
+        self.f.seek(rec_start + 28, os.SEEK_SET)
+        skip = 0
+        skip += struct.unpack("h", self.f.read(2))[0]
+        skip += struct.unpack("h", self.f.read(2))[0]
+        skip += struct.unpack("h", self.f.read(2))[0]
+        self.f.seek(rec_start + 42 + skip, os.SEEK_SET)
+      else:
+        # end of central directory
+        self.f.seek(rec_start + 20, os.SEEK_SET)
+        self.f.write(struct.pack("<L", start_of_central_dir))
+        break
+    self.f.flush()
+    
+    # now add images
+    zipf = zipfile.ZipFile(self.fpath, "w")
+    for fname_pair in self.add_f_list:
+      local_fpath, cbz_fpath = fname_pair
+      zipf.write(local_fpath, cbz_fpath, zipfile.ZIP_STORED)
+    zipf.close()
+        
+  def close(self):
+    if self.f != None:
+      self.save()
+      self.f.close()
+    
+    # finalize values
+    self.f = None
+    self.fpath = None
+    self.f_meta_sz = -1
+    self.cur_f_list = []
+    self.add_f_list = []
   
-  def loads(self, txt):
-    self.__init__()
-    print "TODO!"
+  def set_title(self, title):
+    self.meta["title"] = title
+
+  def set_author(self, author):
+    self.meta["author"] = author
   
-  def dumps(self):
-    txt = "TODO"
-    return txt
+  def set_comment(self, comment):
+    self.meta["comment"] = comment
+
+  def set_series(self, series):
+    self.meta["series"] = series
+  
+  def set_cover(self, cover):
+    self.meta["cover"] = cover
+
+  def add_image(self, local_fpath, cbz_fname = None):
+    if cbz_fname == None:
+      cbz_fname = os.path.split(local_fpath)[1]
+    if self.meta.has_key("images") == False:
+      self.meta["images"] = []
+    self.meta["images"] += cbz_fname,
+    self.add_f_list += (local_fpath, cbz_fname),
+
 
 if __name__ == "__main__":
-  cbz = FancyCBZ()
-  print json.dumps(cbz)
+  cbz = CbzFile()
+  cbz.open("dummy.cbz")
+  cbz.set_title("title")
+  cbz.set_author("Auqaplus")
+  cbz.set_comment("# NO COMMENT")
+  cbz.set_series("To Heart 2")
+  for root, folders, files in os.walk("/Users/santa/Downloads/t"):
+    for fn in files:
+      if fn.endswith(".jpg") == False:
+        continue
+      #cbz.save()
+      fpath = os.path.join(root, fn)
+      cbz.add_image(fpath)
+  cbz.set_cover("images/a.jpg")
+  cbz.close()
 
