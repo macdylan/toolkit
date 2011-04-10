@@ -42,6 +42,7 @@ import time
 import shutil
 import binascii
 import struct
+import datetime
 
 class CbzFile:
   
@@ -93,13 +94,20 @@ class CbzFile:
       raise Exception("%s not found at head of cbz package!" % CbzFile.CONTENT_FNAME)
     infolst = zipf.infolist()
     self.f_meta_sz = infolst[0].compress_size
+    
+    # load json info!
+    json_txt = zipf.read(CbzFile.CONTENT_FNAME)
+    try:
+      self.meta = json.loads(json_txt.strip())
+    except:
+      pass
+    
     zipf.close()
     self.cur_f_list = namelst
 
     self.fpath = fpath
     self.f = open(fpath, "r+")
     
-    # TODO: load json info!
   
   def save(self):
     if self.dirty == False:
@@ -149,12 +157,19 @@ class CbzFile:
       self.f.seek(zip_header_sz + len(CbzFile.CONTENT_FNAME), os.SEEK_SET)
       self.f.write(content_json)
     
-    # ENHANCE modify time & date
-    
+    # modify time & date
+    mtime = time.localtime()
+    dt = mtime[0:6]
+    dosdate = (dt[0] - 1980) << 9 | dt[1] << 5 | dt[2]
+    dostime = dt[3] << 11 | dt[4] << 5 | (dt[5] // 2)
+
+
     # edit content.json's crc32 value, file size
     content_crc = binascii.crc32(content_json, 0)
     content_crc_binary = struct.pack("i", content_crc)
-    self.f.seek(14, os.SEEK_SET)
+    self.f.seek(10, os.SEEK_SET)
+    self.f.write(struct.pack("H", dostime))
+    self.f.write(struct.pack("H", dosdate))
     self.f.write(content_crc_binary)
     fsize_binary = struct.pack("i", self.f_meta_sz)
     self.f.write(fsize_binary)
@@ -184,8 +199,11 @@ class CbzFile:
         #print "fentry=%s" % self.f.read(fname_len)
         
         if start_of_central_dir < 0:
+          # first central dir -> content.json
           # now we could edit the other crc32
-          self.f.seek(rec_start + 16, os.SEEK_SET)
+          self.f.seek(rec_start + 12, os.SEEK_SET)
+          self.f.write(struct.pack("H", dostime))
+          self.f.write(struct.pack("H", dosdate))
           self.f.write(content_crc_binary)
           self.f.write(fsize_binary)
           self.f.write(fsize_binary)
@@ -195,11 +213,10 @@ class CbzFile:
           
           if self.f.read(fname_len) != CbzFile.CONTENT_FNAME:
             raise Exception("%s not in correct position!" % CbzFile.CONTENT_FNAME)
-        
-        if start_of_central_dir < 0:
-          # first central dir
+          
           start_of_central_dir = rec_start
           #print "start of central dir = %d" % start_of_central_dir
+          
         else:
           # no first central dir
           # update local offset header
@@ -307,6 +324,7 @@ class CbzFile:
 if __name__ == "__main__":
   cbz = CbzFile()
   cbz.open("/Users/santa/Downloads/dummy.cbz")
+  print cbz.get_info("author")
   cbz.set_title("title")
   cbz.set_author("Auqaplus")
   cbz.set_comment("# NO COMMENT")
@@ -319,7 +337,9 @@ if __name__ == "__main__":
       fpath = os.path.join(root, fn)
       cbz.open("/Users/santa/Downloads/dummy.cbz")
       cbz.add_image(fpath)
+      print cbz.get_info("author")
       cbz.set_cover("images/a.jpg")
+      print cbz.get_info("cover")
       cbz.close()
 
 
