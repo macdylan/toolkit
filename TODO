@@ -2,3 +2,6 @@
 * justconvert: auto detect (or ask user) the video/audio bitrate
 * moe: check-md5
 * phpgraphymirror: mirror highres pictures, and zip files
+* phpgraphymirror: zip current folder
+* phpgraphymirror: skip downloading zipped folder contents
+
