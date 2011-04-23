@@ -210,6 +210,23 @@ def hk_lowercase_ext():
         os.rename(fpath, tmp_name)
         os.rename(tmp_name, new_name)
 
+def hk_rm_all_gems():
+  root_required()
+  mac_required()
+  p = os.popen("gem env gempath")
+  gempath = p.read().strip().split(":")
+  p.close()
+  p = os.popen("gem list --no-version")
+  all_gems = p.read().split()
+  p.close()
+  f = open("reinstall-all-gems.sh", "w")
+  f.write("gem install " + (" ").join(all_gems) + "\n")
+  f.close()
+  for gpath in gempath:
+    for gem in all_gems:
+      hk_exec("sudo sh -c 'GEM_HOME=%s gem uninstall -aIx %s'" % (gpath, gem))
+  print "A file 'reinstall-all-gems.sh' is generate in current woring dir."
+
 def hk_rm_empty_dir():
   root_dir = raw_input("The root directory to start with? ")
   ignore_pattern = get_config("rm_empty_dir_ignore_pattern")
@@ -1124,6 +1141,7 @@ def hk_sys_maint():
     traceback.print_exc()
 
 def hk_sys_backup():
+  mac_required()
   os.system("rm -rf /Users/santa/Dropbox/Backups/mac_backup/Evernote.zip")
   os.system("rm -rf /Users/santa/Dropbox/Backups/mac_backup/Papers")
   os.system("rm -rf /Users/santa/Dropbox/Backups/mac_backup/Papers2")
@@ -1171,6 +1189,7 @@ def hk_help():
   print "  lowercase-ext                      make sure file extensions are lower case"
   print "  psp-sync-pic                       sync images to psp"
   print "  papers-find-ophan                  check if pdf is in papers folder but not in Papers library"
+  print "  rm-all-gems                        remove all rubygems (currently Mac only)"
   print "  rm-empty-dir                       remove empty dir"
   print "  sync-rainlendar (deprecated)       sync iCal & rainlendar"
   print "  sys-backup                         system backup (currently Mac only)"
@@ -1219,6 +1238,8 @@ if __name__ == "__main__":
     hk_psp_sync_pic()
   elif sys.argv[1] == "papers-find-ophan":
     hk_papers_find_ophan()
+  elif sys.argv[1] == "rm-all-gems":
+    hk_rm_all_gems()
   elif sys.argv[1] == "rm-empty-dir":
     hk_rm_empty_dir()
   elif sys.argv[1] == "sync-rainlendar":
