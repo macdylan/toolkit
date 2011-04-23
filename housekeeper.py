@@ -1100,6 +1100,8 @@ def hk_sys_maint():
     print "-" * 80
     print "phase 1: gem update --no-rdoc --no-ri"
     hk_exec("gem update --no-rdoc --no-ri")
+    # the macos hack to clean up gems
+    hk_exec("sudo sh -c 'GEM_HOME=/System/Library/Frameworks/Ruby.framework/Versions/1.8/usr/lib/ruby/gems/1.8 gem cleanup'")
   except:
     traceback.print_exc()
   try:
