@@ -815,6 +815,33 @@ def hk_backup_psp():
   shutil.move(tmp_cp_folder + ".zip", bkup_folder)
   print "Done!"
 
+def hk_backup_conf():
+  conf_backup_folder = get_config("config_backup_folder")
+  config_files = []
+  for conf in get_config("config_files").split(";"):
+    if conf != "":
+      config_files += conf,
+  # do backup work
+  hk_make_dirs(conf_backup_folder)
+  for conf in config_files:
+    if os.path.isfile(conf):
+      folder, fname = os.path.split(conf)
+      dest_folder = os.path.join(conf_backup_folder, folder[1:]) # folder[1:] -> strip the leading '/'
+      dest_file = os.path.join(dest_folder, fname)
+      hk_make_dirs(dest_folder)
+      print "[file] %s -> %s" % (conf, dest_file)
+      shutil.copy(conf, dest_file)
+    elif os.path.isdir(conf):
+      parent_folder, main_name = os.path.split(conf)
+      dest_folder = os.path.join(conf_backup_folder, parent_folder[1:])
+      hk_make_dirs(dest_folder)
+      dest_entry = os.path.join(dest_folder, main_name)
+      if os.path.exists(dest_entry):
+        print "[replace] %s" % dest_entry
+        shutil.rmtree(dest_entry)
+      print "[dir] %s -> %s" % (conf, dest_entry)
+      shutil.copytree(conf, dest_entry)
+
 def util_update_chrome_progress(len, percent, timeused, bytesread):
   try:
     bar = "\b["
@@ -1174,6 +1201,7 @@ def hk_help():
   print "available commands:"
   print
   print "  backup-psp                         backup my psp"
+  print "  backup-conf                        backup my config files"
   print "  batch-rename                       batch rename files under a folder"
   print "  check-ascii-fnames                 make sure all file has ascii-only name"
   print "  check-crc32                        check file integrity by crc32"
@@ -1207,6 +1235,8 @@ if __name__ == "__main__":
     hk_help()
   elif sys.argv[1] == "backup-psp":
     hk_backup_psp()
+  elif sys.argv[1] == "backup-conf":
+    hk_backup_conf()
   elif sys.argv[1] == "batch-rename":
     hk_batch_rename()
   elif sys.argv[1] == "check-crc32":
