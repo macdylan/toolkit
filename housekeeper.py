@@ -1183,10 +1183,10 @@ def hk_sys_backup():
   print "* backup The Hit List..."
   os.system("cp -rv \"/Users/santa/Library/Application Support/The Hit List/The Hit List Library.thllibrary\" /Users/santa/Dropbox/Backups/mac_backup")
   
-  print "* backup Things..."
-  hk_make_dirs("/Users/santa/Dropbox/Backups/mac_backup/Things")
-  os.system("cp -v \"/Users/santa/Library/Application Support/Cultured Code/Things/Database.xml\" /Users/santa/Dropbox/Backups/mac_backup/Things")
-  print "everything done!"
+  if os.path.exists("/Users/santa/Library/Application Support/Cultured Code/Things/Database.xml"):
+    print "* backup Things..."
+    hk_make_dirs("/Users/santa/Dropbox/Backups/mac_backup/Things")
+    os.system("cp -v \"/Users/santa/Library/Application Support/Cultured Code/Things/Database.xml\" /Users/santa/Dropbox/Backups/mac_backup/Things")
   
   print "* backup iTunes library..."
   hk_make_dirs("/Users/santa/Dropbox/Backups/mac_backup/iTunes")
@@ -1194,6 +1194,7 @@ def hk_sys_backup():
   
   print "* backup Evernote..."
   zipdir("/Users/santa/Library/Application Support/Evernote", "/Users/santa/Dropbox/Backups/mac_backup/Evernote.zip");
+  print "everything done!"
 
 def hk_help():
   print "housekeeper.py: helper script to manage my important collections"
