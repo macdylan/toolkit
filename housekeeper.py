@@ -1169,6 +1169,7 @@ def hk_sys_maint():
 
 def hk_sys_backup():
   mac_required()
+  hk_backup_conf()  # backup config files
   os.system("rm -rf /Users/santa/Dropbox/Backups/mac_backup/Evernote.zip")
   os.system("rm -rf /Users/santa/Dropbox/Backups/mac_backup/Papers")
   os.system("rm -rf /Users/santa/Dropbox/Backups/mac_backup/Papers2")
