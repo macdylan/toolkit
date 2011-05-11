@@ -8,6 +8,12 @@
 #
 # there is empty lines between manga books
 
+name=xiazhilan
+url=http://manhua.178.com/xiazhilan/
+
+name=yilupingan
+url=http://manhua.178.com/yilupingan/
+
 name=lianaixuanjuslc
 url=http://manhua.178.com/lianaixuanjuslc/
 
