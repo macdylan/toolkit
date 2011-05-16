@@ -8,6 +8,9 @@
 #
 # there is empty lines between manga books
 
+name=manyan
+url=http://manhua.178.com/manyan/
+
 name=sldsp
 url=http://manhua.178.com/sldsp/
 
