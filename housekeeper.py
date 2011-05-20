@@ -1118,6 +1118,19 @@ def mac_required():
   if os.name != 'posix' or os.path.exists("/mach_kernel") == False:
     raise Exception("Only Mac supported!")
 
+def hk_gem_cleanup():
+  try:
+    root_required()
+    mac_required()
+    # the macos hack to clean up gems
+    p = os.popen("gem env gempath")
+    gempath = p.read().strip().split(":")
+    p.close()
+    for gpath in gempath:
+      hk_exec("sudo sh -c 'GEM_HOME=%s gem cleanup'" % gpath)
+  except:
+    traceback.print_exc()
+
 def hk_sys_maint():
   root_required()
   mac_required()
@@ -1144,12 +1157,6 @@ def hk_sys_maint():
     print "-" * 80
     print "phase 1: gem update --no-rdoc --no-ri"
     hk_exec("gem update --no-rdoc --no-ri")
-    # the macos hack to clean up gems
-    p = os.popen("gem env gempath")
-    gempath = p.read().strip().split(":")
-    p.close()
-    for gpath in gempath:
-      hk_exec("sudo sh -c 'GEM_HOME=%s gem cleanup'" % gpath)
   except:
     traceback.print_exc()
   try:
@@ -1208,6 +1215,7 @@ def hk_help():
   print "  check-ascii-fnames                 make sure all file has ascii-only name"
   print "  check-crc32                        check file integrity by crc32"
   print "  clean-eject-usb <name>             cleanly eject usb drives (cleans .Trash, .SpotLight folders)"
+  print "  gem-cleanup                        cleanup gem files"
   print "  help                               display this info"
   print "  itunes-check-exists (deprecated)   check if music in iTunes library really exists"
   print "  itunes-export-cover                export covers from iTunes library"
@@ -1250,6 +1258,8 @@ if __name__ == "__main__":
       print "usage: housekeeper.py clean-eject-usb <usb_name>"
       exit(0)
     hk_clean_eject_usb(sys.argv[2])
+  elif sys.argv[1] == "gem-cleanup":
+    hk_gem_cleanup()
   elif sys.argv[1] == "itunes-check-exists":
     hk_itunes_check_exists()
   elif sys.argv[1] == "itunes-export-cover":
