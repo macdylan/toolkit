@@ -65,12 +65,23 @@ def init_db_connection():
   DB_CONN.execute("create table if not exists black_list_md5(md5 text)")
 
   # Create indexes if necessary.
-  DB_CONN.execute("create index if not exists images_index on images(id, set_name, id_in_set, md5, rating, ext, file_size)")
-  DB_CONN.execute("create index if not exists tags_index on tags(id, name)")
-  DB_CONN.execute("create index if not exists images_has_tags_index on images_has_tags(image_id, tag_id)")
-  DB_CONN.execute("create index if not exists albums_has_imags_index on albums_has_images(album_id, image_id)")
-  DB_CONN.execute("create index if not exists black_list_index on black_list(set_name, start_id, end_id)")
-  DB_CONN.execute("create index if not exists black_list_md5_index on black_list_md5(md5)")
+  DB_CONN.execute("create index if not exists i_images_set_name on images(set_name)")
+  DB_CONN.execute("create index if not exists i_images_id_in_set on images(id_in_set)")
+  DB_CONN.execute("create index if not exists i_images_set_name_and_id_in_set on images(set_name, id_in_set)")
+  DB_CONN.execute("create index if not exists i_images_md5 on images(md5)")
+  DB_CONN.execute("create index if not exists i_images_rating on images(rating)")
+
+  DB_CONN.execute("create index if not exists i_tags_name on tags(name)")
+
+  DB_CONN.execute("create index if not exists i_images_has_tags_image_id on images_has_tags(image_id)")
+  DB_CONN.execute("create index if not exists i_images_has_tags_tag_id on images_has_tags(tag_id)")
+
+  DB_CONN.execute("create index if not exists i_albums_has_images_image_id on albums_has_images(image_id)")
+  DB_CONN.execute("create index if not exists i_albums_has_images_album_id on albums_has_images(album_id)")
+
+  DB_CONN.execute("create index if not exists i_black_list on black_list(set_name, start_id, end_id)")
+
+  DB_CONN.execute("create index if not exists i_black_list_md5_md5 on black_list_md5(md5)")
 
 def db_commit():
   DB_CONN.commit()
