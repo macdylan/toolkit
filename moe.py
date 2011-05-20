@@ -739,6 +739,22 @@ def moe_import_album():
     f.close()
     db_commit()
 
+def moe_create_album():
+  print "WARNING: the images must be well-formed, better be exported images"
+  album_name = raw_input("album name: ")
+  folder = raw_input("image folder: ")
+  db_add_album(album_name)
+  for fn in os.listdir(folder):
+    if not util_is_image(fn):
+      continue
+    main_fn = os.path.splitext(fn)[0]
+    set_name, id_in_set = main_fn.split(" ")
+    id_in_set = int(id_in_set)
+    print set_name, " - ", id_in_set
+    db_add_album_image(album_name, set_name, id_in_set)
+  db_commit()
+    
+
 def moe_import_black_list():
   fpath = raw_input("black list file path: ")
   f = open(fpath)
@@ -1610,6 +1626,7 @@ def moe_help():
   print "  backup-unrated             backup images without rating"
   print "  check-md5                  check all images by md5"
   print "  cleanup                    delete images with rating 0, and compact the black list"
+  print "  create-album               create an album based on a folder of well-formed images"
   print "  export                     export images"
   print "  export-album               export images in an album"
   print "  export-psp                 export images for PSP rating"
@@ -1679,6 +1696,9 @@ if __name__ == "__main__":
   elif sys.argv[1] == "cleanup":
     init_db_connection()
     moe_cleanup()
+  elif sys.argv[1] == "create-album":
+    init_db_connection()
+    moe_create_album()
   elif sys.argv[1] == "export":
     init_db_connection()
     moe_export()
