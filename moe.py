@@ -1223,7 +1223,7 @@ def moe_add_dir_tree():
   c = DB_CONN.cursor()
   c.execute("select max(id_in_set) from images where set_name = '%s'" % image_set)
   ret = c.fetchone()
-  if ret == None:
+  if ret == None or ret[0] == None:
     # First image in a new set.
     id_in_set = 1
   else:
