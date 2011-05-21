@@ -37,6 +37,10 @@ DB_CONN = None
 g_image_root = None
 g_tmp_folder = None
 
+def my_dbexec(DB_CONN, sql):
+  print "[sql] %s" % sql
+  DB_CONN.execute(sql)
+
 def init_db_connection():
   global SQLITE3_DB
   global DB_CONN
@@ -56,32 +60,37 @@ def init_db_connection():
   DB_CONN = sqlite3.connect(SQLITE3_DB, 100)
 
   # Create tables if necessary.
-  DB_CONN.execute("create table if not exists images(id integer primary key, set_name text, id_in_set int, md5 text, rating int, ext text, file_size int)")
-  DB_CONN.execute("create table if not exists tags(id integer primary key, name text unique)")
-  DB_CONN.execute("create table if not exists images_has_tags(image_id int, tag_id int)")
-  DB_CONN.execute("create table if not exists albums(id integer primary key, name text unique)")
-  DB_CONN.execute("create table if not exists albums_has_images(album_id int, image_id int)")
-  DB_CONN.execute("create table if not exists black_list(set_name text, start_id int, end_id int)")
-  DB_CONN.execute("create table if not exists black_list_md5(md5 text)")
+  my_dbexec(DB_CONN, "create table if not exists images(id integer primary key, set_name text, id_in_set int, md5 text, rating int, ext text, file_size int)")
+  my_dbexec(DB_CONN, "create table if not exists tags(id integer primary key, name text unique)")
+  my_dbexec(DB_CONN, "create table if not exists tags_version(set_name text, version int)")
+  my_dbexec(DB_CONN, "create table if not exists images_has_tags(image_id int, tag_id int)")
+  my_dbexec(DB_CONN, "create table if not exists albums(id integer primary key, name text unique)")
+  my_dbexec(DB_CONN, "create table if not exists albums_has_images(album_id int, image_id int)")
+  my_dbexec(DB_CONN, "create table if not exists black_list(set_name text, start_id int, end_id int)")
+  my_dbexec(DB_CONN, "create table if not exists black_list_md5(md5 text)")
 
   # Create indexes if necessary.
-  DB_CONN.execute("create index if not exists i_images_set_name on images(set_name)")
-  DB_CONN.execute("create index if not exists i_images_id_in_set on images(id_in_set)")
-  DB_CONN.execute("create index if not exists i_images_set_name_and_id_in_set on images(set_name, id_in_set)")
-  DB_CONN.execute("create index if not exists i_images_md5 on images(md5)")
-  DB_CONN.execute("create index if not exists i_images_rating on images(rating)")
+  my_dbexec(DB_CONN, "create index if not exists i_images__file_size on images(file_size)")
+  my_dbexec(DB_CONN, "create index if not exists i_images__md5 on images(md5)")
+  my_dbexec(DB_CONN, "create index if not exists i_images__set_name on images(set_name)")
+  my_dbexec(DB_CONN, "create index if not exists i_images__rating on images(rating)")
+  my_dbexec(DB_CONN, "create index if not exists i_images__set_name__id_in_set on images(set_name, id_in_set)")
 
-  DB_CONN.execute("create index if not exists i_tags_name on tags(name)")
+  my_dbexec(DB_CONN, "create index if not exists i_tags__name on tags(name)")
 
-  DB_CONN.execute("create index if not exists i_images_has_tags_image_id on images_has_tags(image_id)")
-  DB_CONN.execute("create index if not exists i_images_has_tags_tag_id on images_has_tags(tag_id)")
+  my_dbexec(DB_CONN, "create index if not exists i_images_has_tags__image_id on images_has_tags(image_id)")
+  my_dbexec(DB_CONN, "create index if not exists i_images_has_tags__tag_id on images_has_tags(tag_id)")
+  my_dbexec(DB_CONN, "create index if not exists i_images_has_tags__tag_id__image_id on images_has_tags(image_id, tag_id)")
+  
+  my_dbexec(DB_CONN, "create index if not exists i_albums__name on albums(name)")
 
-  DB_CONN.execute("create index if not exists i_albums_has_images_image_id on albums_has_images(image_id)")
-  DB_CONN.execute("create index if not exists i_albums_has_images_album_id on albums_has_images(album_id)")
+  my_dbexec(DB_CONN, "create index if not exists i_albums_has_images__album_id__image_id on albums_has_images(album_id, image_id)")
+  my_dbexec(DB_CONN, "create index if not exists i_albums_has_images__image_id on albums_has_images(image_id)")
+  my_dbexec(DB_CONN, "create index if not exists i_albums_has_images__album_id on albums_has_images(album_id)")
 
-  DB_CONN.execute("create index if not exists i_black_list on black_list(set_name, start_id, end_id)")
+  my_dbexec(DB_CONN, "create index if not exists i_black_list__set_name__start_id__end_id on black_list(set_name, start_id, end_id)")
 
-  DB_CONN.execute("create index if not exists i_black_list_md5_md5 on black_list_md5(md5)")
+  my_dbexec(DB_CONN, "create index if not exists i_black_list_md5__md5 on black_list_md5(md5)")
 
 def db_commit():
   DB_CONN.commit()
