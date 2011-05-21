@@ -72,23 +72,19 @@ def init_db_connection():
   # Create indexes if necessary.
   my_dbexec(DB_CONN, "create index if not exists i_images__file_size on images(file_size)")
   my_dbexec(DB_CONN, "create index if not exists i_images__md5 on images(md5)")
-  my_dbexec(DB_CONN, "create index if not exists i_images__set_name on images(set_name)")
   my_dbexec(DB_CONN, "create index if not exists i_images__rating on images(rating)")
   my_dbexec(DB_CONN, "create index if not exists i_images__set_name__id_in_set on images(set_name, id_in_set)")
 
   my_dbexec(DB_CONN, "create index if not exists i_tags__name on tags(name)")
 
-  my_dbexec(DB_CONN, "create index if not exists i_images_has_tags__image_id on images_has_tags(image_id)")
-  my_dbexec(DB_CONN, "create index if not exists i_images_has_tags__tag_id on images_has_tags(tag_id)")
+  my_dbexec(DB_CONN, "create index if not exists i_images_has_tags__image_id__tag_id on images_has_tags(tag_id, image_id)")
   my_dbexec(DB_CONN, "create index if not exists i_images_has_tags__tag_id__image_id on images_has_tags(image_id, tag_id)")
   
   my_dbexec(DB_CONN, "create index if not exists i_albums__name on albums(name)")
 
   my_dbexec(DB_CONN, "create index if not exists i_albums_has_images__album_id__image_id on albums_has_images(album_id, image_id)")
-  my_dbexec(DB_CONN, "create index if not exists i_albums_has_images__image_id on albums_has_images(image_id)")
-  my_dbexec(DB_CONN, "create index if not exists i_albums_has_images__album_id on albums_has_images(album_id)")
 
-  my_dbexec(DB_CONN, "create index if not exists i_black_list__set_name__start_id__end_id on black_list(set_name, start_id, end_id)")
+  my_dbexec(DB_CONN, "create index if not exists i_black_list__set_name__start_id on black_list(set_name, start_id)")
 
   my_dbexec(DB_CONN, "create index if not exists i_black_list_md5__md5 on black_list_md5(md5)")
 
