@@ -77,8 +77,8 @@ def init_db_connection():
 
   my_dbexec(DB_CONN, "create index if not exists i_tags__name on tags(name)")
 
-  my_dbexec(DB_CONN, "create index if not exists i_images_has_tags__image_id__tag_id on images_has_tags(tag_id, image_id)")
-  my_dbexec(DB_CONN, "create index if not exists i_images_has_tags__tag_id__image_id on images_has_tags(image_id, tag_id)")
+  my_dbexec(DB_CONN, "create index if not exists i_images_has_tags__tag_id__image_id on images_has_tags(tag_id, image_id)")
+  my_dbexec(DB_CONN, "create index if not exists i_images_has_tags__image_id__tag_id on images_has_tags(image_id, tag_id)")
   
   my_dbexec(DB_CONN, "create index if not exists i_albums__name on albums(name)")
 
