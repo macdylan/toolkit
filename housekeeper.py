@@ -1204,6 +1204,23 @@ def hk_sys_backup():
   zipdir("/Users/santa/Library/Application Support/Evernote", "/Users/santa/Dropbox/Backups/mac_backup/Evernote.zip");
   print "everything done!"
 
+def hk_timemachine_image():
+  volname = get_config("timemachine.imgvolname")
+  imgpath = get_config("timemachine.imgpath")
+  imgsize = get_config("timemachine.imgsize")
+  uuid = get_config("timemachine.uuid")
+  hk_exec("hdiutil create -size %s -fs HFS+J -volname '%s' -type SPARSEBUNDLE %s" % (imgsize, volname, imgpath))
+  f = open("%s/com.apple.TimeMachine.MachineID.plist" % imgpath, "w")
+  f.write("""<?xml version="1.0" encoding="UTF-8"?>
+  <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+  <plist version="1.0">
+  <dict>
+      <key>com.apple.backupd.HostUUID</key>
+      <string>%s</string>
+  </dict>
+  </plist>""" % uuid)
+  f.close()
+
 def hk_help():
   print "housekeeper.py: helper script to manage my important collections"
   print "usage: housekeeper.py <command>"
@@ -1232,6 +1249,7 @@ def hk_help():
   print "  sync-rainlendar (deprecated)       sync iCal & rainlendar"
   print "  sys-backup                         system backup (currently Mac only)"
   print "  sys-maint                          system maintenance (currently Mac only)"
+  print "  timemachine-image                  create new Time Machine image"
   print "  update-chrome                      update chrome browser (Windows only)"
   print "  upgrade-dropbox-pic                update dropbox photos folder, prefer highres pictures"
   print "  write-crc32                        write crc32 data in every directory, overwrite old crc32 files"
@@ -1290,6 +1308,8 @@ if __name__ == "__main__":
     hk_sys_backup()
   elif sys.argv[1] == "sys-maint":
     hk_sys_maint()
+  elif sys.argv[1] == "timemachine-image":
+    hk_timemachine_image()
   elif sys.argv[1] == "update-chrome":
     hk_update_chrome()
   elif sys.argv[1] == "upgrade-dropbox-pic":
