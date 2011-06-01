@@ -1180,6 +1180,7 @@ def hk_sys_backup():
   os.system("rm -rf /Users/santa/Dropbox/Backups/mac_backup/Evernote.zip")
   os.system("rm -rf /Users/santa/Dropbox/Backups/mac_backup/Papers")
   os.system("rm -rf /Users/santa/Dropbox/Backups/mac_backup/Papers2")
+  os.system("rm -rf /Users/santa/Dropbox/Backups/mac_backup/Savings")
   os.system("rm -rf \"/Users/santa/Dropbox/Backups/mac_backup/The Hit List Library.thllibrary\"")
   
   print "* backup Papers..."
@@ -1200,6 +1201,10 @@ def hk_sys_backup():
   hk_make_dirs("/Users/santa/Dropbox/Backups/mac_backup/iTunes")
   os.system("cp -v /Users/santa/Music/iTunes/iTunes* /Users/santa/Dropbox/Backups/mac_backup/iTunes")
   
+  print "* backup Savings library..."
+  hk_make_dirs("/Users/santa/Dropbox/Backups/mac_backup/Savings")
+  os.system("cp -rv \"/Users/santa/Library/Application Support/Savings\" /Users/santa/Dropbox/Backups/mac_backup")
+
   print "* backup Evernote..."
   zipdir("/Users/santa/Library/Application Support/Evernote", "/Users/santa/Dropbox/Backups/mac_backup/Evernote.zip");
   print "everything done!"
