@@ -187,8 +187,13 @@ def grab_download_manhua178(manga_url, **opt):
       idx = root_page.rfind("/")
       idx = root_page[0:idx].rfind("/")
       base_url = root_page[0:idx]
-      chap_url = base_url + chap_href[2:]
+      if chap_href.startswith("http://"):
+        chap_url = chap_href
+      else:
+        chap_url = base_url + chap_href[2:]
       chap_url = chap_url.replace(" ", "%20")
+      
+      print "[chap url] %s" % chap_url
 
       chap_src = urllib2.urlopen(chap_url).read()
       idx = chap_src.find("var pages") + 13
