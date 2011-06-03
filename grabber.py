@@ -196,7 +196,10 @@ def grab_download_manhua178(manga_url, **opt):
       print "[chap url] %s" % chap_url
 
       chap_src = urllib2.urlopen(chap_url).read()
-      idx = chap_src.find("var pages") + 13
+      idx = chap_src.find("var pages")
+      if idx < 0:
+        raise "'var pages' not found!"
+      idx += 13
       idx2 = chap_src.find("\r\n", idx) - 2
       comic_pages_src = chap_src[idx:idx2].replace("\\/", "/")
       comic_pages_url = eval(comic_pages_src)
