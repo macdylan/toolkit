@@ -912,7 +912,6 @@ def moe_mirror_nekobooru():
   util_mirror_danbooru_site("http://nekobooru.net")
 
 def util_download_tu178_image(page_url, title, id_in_set):
-  init_db_connection()
   images_root = g_image_root
   image_set = "tu178"
   try:
@@ -1746,6 +1745,7 @@ if __name__ == "__main__":
   elif sys.argv[1] == "mirror-all":
     moe_mirror_all()
   elif sys.argv[1] == "mirror-tu178":
+    init_db_connection()
     moe_mirror_tu178()
   elif sys.argv[1] == "mirror-danbooru":
     init_db_connection()
