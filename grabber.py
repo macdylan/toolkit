@@ -198,6 +198,7 @@ def grab_download_manhua178(manga_url, **opt):
       chap_src = urllib2.urlopen(chap_url).read()
       idx = chap_src.find("var pages")
       if idx < 0:
+        print chap_src
         raise "'var pages' not found!"
       idx += 13
       idx2 = chap_src.find("\r\n", idx) - 2
