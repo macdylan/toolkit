@@ -8,6 +8,9 @@
 #
 # there is empty lines between manga books
 
+name=baojian
+url=http://manhua.178.com/baojianlaoshi/
+
 name=yl
 url=http://manhua.178.com/yl/
 
