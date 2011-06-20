@@ -17,18 +17,18 @@ from threading import Thread
 def jc_exec(cmd):
   print "[cmd] %s" % cmd
   os.system(cmd)
-  
+
 
 class FfmpegThread(Thread):
-  
+
   def __init__(self, manager):
     Thread.__init__(self)
     self.manager = manager
     self.job = None
-  
+
   def get_current_job(self):
     return self.job
-  
+
   def run(self):
     while True:
       self.job = self.manager.request_job(self)
@@ -37,7 +37,7 @@ class FfmpegThread(Thread):
 
       full_cmd = self.manager.get_ffmpeg_bin() + " " + self.job.get_commandline()
       #print "[new] %s" % full_cmd
-      
+
       # do real job here
       job_folder = os.path.split(self.job.get_output_file())[0]
       if os.name == "nt":
@@ -55,7 +55,7 @@ class FfmpegThread(Thread):
     self.manager.notify_thread_death(self)
 
 class FfmpegJobManager(Thread):
-  
+
   def __init__(self, ffmpeg_bin):
     Thread.__init__(self)
     self.ffmpeg_bin = ffmpeg_bin
@@ -63,29 +63,29 @@ class FfmpegJobManager(Thread):
     self.n_threads = int(get_config("n_threads"))
     self.jobs_pending = []
     self.running_threads = []
-  
+
   def get_running_threads(self):
     return self.running_threads
-  
+
   def get_ffmpeg_bin(self):
     return self.ffmpeg_bin
-  
+
   def add_job(self, job):
     self.jobs += job,
     self.jobs_pending += job,
-  
+
   def get_jobs(self):
     return self.jobs
-  
+
   def get_n_threads(self):
     return self.n_threads
-  
+
   def set_n_threads(self, n_threads):
     self.n_threads = n_threads
-  
+
   def start(self):
     self.ensure_running_threads()
-  
+
   def ensure_running_threads(self):
     while len(self.running_threads) < self.n_threads and len(self.jobs_pending) > 0:
       new_thread = FfmpegThread(self)
@@ -104,11 +104,11 @@ class FfmpegJobManager(Thread):
       return new_job
     else:
       return None
-  
+
   def notify_thread_death(self, job_thread):
     #print "[info] thread '%s' finished" % str(job_thread)
     self.running_threads.remove(job_thread)
-  
+
   def is_done(self):
     if len(self.jobs_pending) == 0 and len(self.running_threads) == 0:
       return True
@@ -117,54 +117,54 @@ class FfmpegJobManager(Thread):
 
 
 class FfmpegJob:
-  
+
   def __init__(self):
     self.param = {}
     self.input_files = []
     self.output_file = None
     self.status = "new"
     self.finish_callback = None
-  
+
   def set_params(self, params):
     for key in params.keys():
       self.param[key] = params[key]
-  
+
   def set_param(self, key, value=None):
     self.param[key] = str(value)
-  
+
   def get_param(self, key):
     return self.param[key]
-  
+
   def get_params(self):
     return self.param
-    
+
   def set_finish_callback(self, cb):
     self.finish_callback = cb
-  
+
   def get_finish_callback(self):
     return self.finish_callback
-  
+
   def clear_finish_callback(self):
     self.finish_callback = None
-  
+
   def set_status(self, status):
     self.status = status
-  
+
   def get_status(self):
     return self.status
-  
+
   def set_input_files(self, *input_files):
     self.input_files = input_files
-  
+
   def get_input_files(self):
     return self.input_files
-  
+
   def set_output_file(self, output_file):
     self.output_file = output_file
-  
+
   def get_output_file(self):
     return self.output_file
-  
+
   def get_commandline(self):
     cmd_line = "-y " # say yes to all questions
     for input in self.input_files:
@@ -279,7 +279,7 @@ def jc_ipod_movie(src_fn, dst_fn):
   full_cmd = "%s %s" % (ffmpeg_bin, job.get_commandline())
   print "[cmd] %s" % full_cmd
   os.system(full_cmd)
-  
+
 def jc_ipod_movie_wide(src_fn, dst_fn):
   jc_makedirs(os.path.split(dst_fn)[0])
   conv_params = jc_split_ffmpeg_preset(get_config("ipod_movie_wide.preset"))
@@ -291,7 +291,7 @@ def jc_ipod_movie_wide(src_fn, dst_fn):
   full_cmd = "%s %s" % (ffmpeg_bin, job.get_commandline())
   print "[cmd] %s" % full_cmd
   os.system(full_cmd)
-  
+
 
 def jc_psp_movie(src_fn, dst_fn):
   jc_makedirs(os.path.split(dst_fn)[0])
@@ -391,7 +391,7 @@ def jc_psp_srt_from_ssa(ssa_file, srt_file):
   ssa = open(ssa_file)
   srt = open(srt_file, "w")
   for l in ssa.readlines():
-    new_line = util_ssa_to_psp_srt_line(l) 
+    new_line = util_ssa_to_psp_srt_line(l)
     if new_line != None:
       srt.write(new_line + "\n")
   srt.close()
@@ -408,7 +408,7 @@ def jc_convert_pic_folder(folder, type):
         if os.path.exists(new_fpath) == False:
           cmd = "%s %s %s" % (convert_bin, fpath, new_fpath)
           jc_exec(cmd)
-          
+
 
 def jc_print_help():
   print "justconvert.py: convertion tools for video, picture & text files"

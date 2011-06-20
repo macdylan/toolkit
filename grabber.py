@@ -57,7 +57,7 @@ def grab_print_help():
   print "  update-all           update all managed manga books"
   print
   print "author: Santa Zhang (santa1987@gmail.com)"
-  
+
 def grab_is_image(fname):
   return is_image(fname)
 
@@ -143,11 +143,11 @@ def grab_download_manhua178(manga_url, **opt):
     if title.strip() == "":
       continue
     toc_arr += (title, href),
-  
+
   # download new chapters if necessary
   if opt.has_key("reverse") and opt["reverse"] == True:
     toc_arr.reverse()
-  
+
   comic_name = comic_name.replace('/', "~")
   comic_folder_path = MANGA_FOLDER + os.path.sep + comic_name + "(acg178)"
   prepare_folder(comic_folder_path)
@@ -155,7 +155,7 @@ def grab_download_manhua178(manga_url, **opt):
   print "writing download url file"
   link_f.write(manga_url + "\n")
   link_f.close()
-  
+
   # now download chapter
   for chap in toc_arr:
     try:
@@ -174,7 +174,7 @@ def grab_download_manhua178(manga_url, **opt):
         print "zip not exists!"
 
       prepare_folder(chapter_folder_path)
-      
+
       error_log_fn = chapter_folder_path + u"/ERROR"
       not_finished_fn = chapter_folder_path + u"/NOT_FINISHED"
       if os.path.exists(error_log_fn) == False and os.path.exists(not_finished_fn) == False and folder_contains_images(chapter_folder_path):
@@ -183,7 +183,7 @@ def grab_download_manhua178(manga_url, **opt):
         continue
       else:
         print "still have to download chapter"
-      
+
       idx = root_page.rfind("/")
       idx = root_page[0:idx].rfind("/")
       base_url = root_page[0:idx]
@@ -192,7 +192,7 @@ def grab_download_manhua178(manga_url, **opt):
       else:
         chap_url = base_url + chap_href[2:]
       chap_url = chap_url.replace(" ", "%20")
-      
+
       print "[chap url] %s" % chap_url
 
       chap_src = urllib2.urlopen(chap_url).read()
@@ -204,14 +204,14 @@ def grab_download_manhua178(manga_url, **opt):
       idx2 = chap_src.find("\r\n", idx) - 2
       comic_pages_src = chap_src[idx:idx2].replace("\\/", "/")
       comic_pages_url = eval(comic_pages_src)
-      
+
       # remove possibly existing error log file
       if os.path.exists(error_log_fn):
         os.remove(error_log_fn)
-      
+
       # create a place holder
       open(not_finished_fn, "w").close()
-      
+
       chapter_download_ok = True # whether the chapter is successfully downloaded
       for pg in comic_pages_url:
         full_pg = (base_url + "/imgs/" + pg)
@@ -247,14 +247,14 @@ def grab_download_manhua178(manga_url, **opt):
           finally:
             err_log_f.close()
           chapter_download_ok = False
-      
+
       # remove the place holder
       if os.path.exists(not_finished_fn):
         os.remove(not_finished_fn)
-      
+
       # pack the folder if necessary
       grab_ensure_manga_packed(comic_folder_path)
-      
+
     except:
       traceback.print_exc()
       time.sleep(1)
@@ -271,7 +271,7 @@ def bengou_down_page(page_url, down_dir, page_id):
   idx2 = page_src.index('"', idx)
   img_url = page_src[idx:idx2]
   print "[img] %s" % img_url
-  
+
   error_log_fn = os.path.join(down_dir, "ERROR")
 
   # download pic:
@@ -345,7 +345,7 @@ def grab_download_bengou(index_url, **opt):
   comic_name = page_src[(idx + 7):idx2].decode("utf-8")
   grab_message(comic_name)
   grab_message("[index-url] %s" % index_url)
-  
+
   comic_folder_path = MANGA_FOLDER + os.path.sep + comic_name + "(bengou)"
 
   # find the volumes
@@ -353,7 +353,7 @@ def grab_download_bengou(index_url, **opt):
   idx2 = page_src.index("</div>", idx)
   mhlist_src = page_src[idx:idx2]
 
-  
+
   manga_list = []
   idx = 0
   idx2 = 0
@@ -377,15 +377,15 @@ def grab_download_bengou(index_url, **opt):
     grab_message("[vol-page] %s" % vol_url)
     chapter_folder_path = os.path.join(comic_folder_path, vol_name)
     chapter_zip_fn = chapter_folder_path + ".zip"
-    
+
     if os.path.exists(chapter_zip_fn):
       print "zip exists, pass chapter"
       continue
     else:
       print "zip not exists!"
-    
+
     prepare_folder(chapter_folder_path)
-    
+
     error_log_fn = chapter_folder_path + u"/ERROR"
     not_finished_fn = chapter_folder_path + u"/NOT_FINISHED"
     if os.path.exists(error_log_fn) == False and os.path.exists(not_finished_fn) == False and folder_contains_images(chapter_folder_path):
@@ -394,26 +394,26 @@ def grab_download_bengou(index_url, **opt):
       continue
     else:
       print "still have to download chapter"
-  
+
     # remove possibly existing error log file
     if os.path.exists(error_log_fn):
       os.remove(error_log_fn)
-    
+
     # create a place holder
     open(not_finished_fn, "w").close()
-  
+
     all_ok = bengou_down_vol(vol_url, chapter_folder_path)
     if all_ok == False:
       open(error_log_fn, "w").close()
-    
+
     # remove the place holder
     if os.path.exists(not_finished_fn):
       os.remove(not_finished_fn)
-    
+
     # pack the folder if necessary
     grab_ensure_manga_packed(comic_folder_path)
 
-  
+
 def grab_download_print_help():
   print "download a manga book"
   print "usage: grabber.py download <url>"
@@ -425,10 +425,10 @@ def grab_download_real(url, **opt):
   if url.find("manhua.178.com") >= 0:
     grab_download_manhua178(url, **opt)
   elif url.find("bengou.com") >= 0:
-    grab_download_bengou(url, **opt)    
+    grab_download_bengou(url, **opt)
   else:
     print "sorry, the manga book site is not supported!"
-  
+
 
 def grab_download(**opt):
   if len(sys.argv) <= 2:
@@ -436,7 +436,7 @@ def grab_download(**opt):
     exit()
   url = sys.argv[2]
   grab_download_real(url, **opt)
-  
+
 
 def grab_load_library():
   library_fn = os.path.join(os.path.split(__file__)[0], "grabber.library")
@@ -498,7 +498,7 @@ def grab_update():
       url = library[manga_name]
       print "downloading '%s' from '%s'" % (manga_name, url)
       grab_download_real(url)
-    
+
 
 def grab_list_library():
   library = grab_load_library()

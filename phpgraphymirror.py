@@ -101,7 +101,7 @@ def parse_image_list_slideshows(page_src, dir_url, pic_list):
       idx = idx2
 
 def parse_image_page_by_page(first_page_src, dir_url, pic_list):
-  
+
   pass
 
 def parse_image_list(page_src, dir_url):
@@ -121,17 +121,17 @@ def pgm_mirror(dir_url):
   local_dir = os.path.join(get_config("local_root"), url[1], params["dir"])
   print "[local dir] %s" % local_dir
   prepare_folder(local_dir)
-  
+
   dir_finished_fn = os.path.join(local_dir, "FINISHED")
   if os.path.exists(dir_finished_fn):
     print "[pass] %s" % local_dir
     return
-  
+
   # create dir not finished flag file
   dir_finished = True
   dir_not_finished_fn = os.path.join(local_dir, "NOT_FINISHED")
   open(dir_not_finished_fn, "w").close()
-  
+
   # check for sub folders
   page_src = urllib2.urlopen(dir_url).read()
   subdir_list = parse_subdir_list(page_src, dir_url)
@@ -142,7 +142,7 @@ def pgm_mirror(dir_url):
       dir_finished = False
       traceback.print_exc()
       time.sleep(1)
-  
+
   # check for pictures
   pic_list = parse_image_list(page_src, dir_url)
   for pic_url in pic_list:
@@ -164,7 +164,7 @@ def pgm_mirror(dir_url):
       dir_finished = False
       traceback.print_exc()
       time.sleep(1)
-  
+
   # remove dir not finished flag file, if successful
   if dir_finished == True:
     os.remove(dir_not_finished_fn)

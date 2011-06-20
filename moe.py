@@ -46,16 +46,16 @@ def init_db_connection():
   global DB_CONN
   global g_image_root
   global g_tmp_folder
-  
+
   SQLITE3_DB = get_config("db_file")
 
   # read basic config data
   g_image_root = get_config("image_root")
   g_tmp_folder = get_config("tmp_folder")
-  
+
   if os.path.exists(SQLITE3_DB) == False:
     print "[warning] database file '%s' not exist, will create new file!" % SQLITE3_DB
-  
+
   # Open the sqlite3 connection.
   DB_CONN = sqlite3.connect(SQLITE3_DB, 100)
 
@@ -79,7 +79,7 @@ def init_db_connection():
 
   my_dbexec(DB_CONN, "create index if not exists i_images_has_tags__tag_id__image_id on images_has_tags(tag_id, image_id)")
   my_dbexec(DB_CONN, "create index if not exists i_images_has_tags__image_id__tag_id on images_has_tags(image_id, tag_id)")
-  
+
   my_dbexec(DB_CONN, "create index if not exists i_albums__name on albums(name)")
 
   my_dbexec(DB_CONN, "create index if not exists i_albums_has_images__album_id__image_id on albums_has_images(album_id, image_id)")
@@ -107,9 +107,16 @@ def db_image_in_black_list_md5(md5):
   else:
     return False
 
+def db_add_image(fpath, image_set, id_in_set, final_id_list = None):
+  try:
+    db_add_image_real(fpath, image_set, id_in_set, final_id_list)
+  except:
+    print "[fatal] exception when adding image '%s'!" % fpath
+    return False
+
 # add an image into the database
 # if final_id_list is provided as an list, the added image's ('image_set', id_in_set) (or the duplicated image's) will be appended to the list
-def db_add_image(fpath, image_set, id_in_set, final_id_list = None):
+def db_add_image_real(fpath, image_set, id_in_set, final_id_list = None):
   print "[db.add] %s" % fpath
   bucket_name = util_get_bucket_name(id_in_set)
   dest_folder = g_image_root + os.path.sep + image_set + os.path.sep + bucket_name
@@ -231,7 +238,7 @@ def db_get_album_images(album_name):
       c.execute("select * from images where id = %d" % ret[0])
       img = c.fetchone()
       if img != None:
-        img_list += img, 
+        img_list += img,
     return img_list
 
 def db_add_album_image(album_name, image_set, id_in_set):
@@ -316,17 +323,17 @@ def util_download_danbooru_image(image_set, id_in_set, image_url, image_size = 0
     download_file = open(download_fpath, "wb")
     download_file.write(image_data)
     download_file.close()
-    
+
     if image_size != 0 and os.stat(download_fpath).st_size != image_size:
       print "[failure] downloaded '%s %d' has wrong size, discarded" % (image_set, id_in_set)
       os.remove(download_fpath)
       return False
-    
+
     if image_md5 != None and image_md5 != util_md5_of_file(download_fpath):
       print "[failure] downloaded '%s %d' has wrong md5 sum, discarded" % (image_set, id_in_set)
       os.remove(download_fpath)
       return False
-    
+
     return True
   except:
     traceback.print_exc()
@@ -401,7 +408,7 @@ def util_mirror_danbooru_site_html(site_url):
   else:
     print "site '%s' not supported yet!"
     return
-  
+
   # Start mirroring from page 1.
   page_id = 1
   # Check if need to start downloading from other pages.
@@ -415,24 +422,24 @@ def util_mirror_danbooru_site_html(site_url):
       else:
         print "Wrong parameters, please provide page number after '-p'!"
         return
-  
+
   while True:
     try:
       query_url = site_url + ("/post?page=%d" % page_id)
       print "working on page %d (through html request)" % page_id
-      
+
       # Go on to next page
       page_id += 1
-      
+
       # After page 1000, the danbooru site only has html access, with prev/next links on each page
       if image_set_base == "danbooru" and page_id >= 1000:
         util_mirror_danbooru_site_ex(site_url)
         return
-      
+
       try:
         page_src = "\n".join(urllib2.urlopen(query_url).readlines())
         json_matches = []
-        
+
         idx = 0
         idx2 = 0
         while True:
@@ -442,11 +449,11 @@ def util_mirror_danbooru_site_html(site_url):
           idx2 = page_src.find("})", idx)
           one_match = page_src[(idx + 14):(idx2 + 1)]
           json_matches += one_match,
-        
+
         query_reply = "[" + ",".join(json_matches) + "]"
       except HTTPError, e:
         print "server response code: " + str(e.code)
-      
+
       info_list = []
       try:
         info_list.extend(json.loads(query_reply))
@@ -458,16 +465,16 @@ def util_mirror_danbooru_site_html(site_url):
         time.sleep(120) # wait 2 minutes
         page_id = 1
         continue
-      
+
       if len(info_list) == 0:
         print "no more images"
         print "restart downloading from page 1 in 2 minutes (through html request)"
         page_id = 1
         time.sleep(120) # wait 2 minutes
         continue
-      
+
       util_mirrro_danbooru_site_down_image(info_list, image_set_base, image_set_highres, tmp_folder)
-      
+
     except:
       traceback.print_exc()
       time.sleep(1)
@@ -477,7 +484,7 @@ def util_mirror_danbooru_site(site_url):
   socket.setdefaulttimeout(SOCKET_TIMEOUT)
   tmp_folder = g_tmp_folder
   print "mirroring danbooru-like site: %s" % site_url
-  
+
   if site_url.find("danbooru") != -1:
     image_set_base = "danbooru"
     image_set_highres = "danbooru_highres"
@@ -493,7 +500,7 @@ def util_mirror_danbooru_site(site_url):
   else:
     print "site '%s' not supported yet!"
     return
-  
+
   # Start mirroring from page 1.
   page_id = 1
   # Check if need to start downloading from other pages.
@@ -511,20 +518,20 @@ def util_mirror_danbooru_site(site_url):
     try:
       query_url = site_url + ("/post/index.json?page=%d" % page_id)
       print "working on page %d" % page_id
-      
+
       # Go on to next page
       page_id += 1
-      
+
       # After page 1000, the danbooru site only has html access, with prev/next links on each page
       if image_set_base == "danbooru" and page_id >= 1000:
         util_mirror_danbooru_site_ex(site_url)
         return
-      
+
       try:
         query_reply = "\n".join(urllib2.urlopen(query_url).readlines())
       except HTTPError, e:
         print "server response code: " + str(e.code)
-      
+
       info_list = []
       try:
         info_list.extend(json.loads(query_reply))
@@ -536,16 +543,16 @@ def util_mirror_danbooru_site(site_url):
         time.sleep(120) # wait 2 minutes
         page_id = 1
         continue
-      
+
       if len(info_list) == 0:
         print "no more images"
         print "restart downloading from page 1 in 2 minutes"
         page_id = 1
         time.sleep(120) # wait 2 minutes
         continue
-      
+
       util_mirrro_danbooru_site_down_image(info_list, image_set_base, image_set_highres, tmp_folder)
-      
+
     except:
       traceback.print_exc()
       time.sleep(1)
@@ -555,7 +562,7 @@ def util_mirror_danbooru_site_ex(site_url, before_id = None):
   SOCKET_TIMEOUT = 30
   socket.setdefaulttimeout(SOCKET_TIMEOUT)
   tmp_folder = g_tmp_folder
-  
+
   if site_url.find("danbooru") != -1:
     image_set_base = "danbooru"
     image_set_highres = "danbooru_highres"
@@ -571,13 +578,13 @@ def util_mirror_danbooru_site_ex(site_url, before_id = None):
   else:
     print "site '%s' not supported yet!"
     return
-  
+
   tmp_folder = g_tmp_folder
   print "mirroring danbooru main site, after page 1000: %s" % site_url
   page_url = None
   while True:
     try:
-      
+
       if page_url == None:
         if before_id == None:
           # by default, start from page 1000
@@ -586,7 +593,7 @@ def util_mirror_danbooru_site_ex(site_url, before_id = None):
           page_url = site_url + "/post/index.html?before_id=%d" % before_id
       else:
         print "[page] %s" % page_url
-      
+
       page_src = urllib2.urlopen(page_url).read()
       idx = 0
       idx2 = 0
@@ -599,7 +606,7 @@ def util_mirror_danbooru_site_ex(site_url, before_id = None):
           break
         json_data = page_src[(idx + 14):idx2]
         idx = idx2
-        
+
         info_list = []
         try:
           info_list = [json.loads(json_data)]
@@ -610,11 +617,11 @@ def util_mirror_danbooru_site_ex(site_url, before_id = None):
           print "when resumed, will restart current page"
           time.sleep(120) # wait 2 minutes
           continue
-        
+
         util_mirrro_danbooru_site_down_image(info_list, image_set_base, image_set_highres, tmp_folder)
-      
+
       new_page_url = None
-      
+
       idx = page_src.find("/post?before_id=")
       if idx <= 0:
         print "[done] last page mirrored! restart job!"
@@ -625,14 +632,14 @@ def util_mirror_danbooru_site_ex(site_url, before_id = None):
         print "[done] last page mirrored! restart job!"
         page_url = None
         continue
-        
+
       new_page_url = site_url + page_src[idx:idx2]
       if new_page_url == page_url:
         print "[fatal] failed to find next page! restart job!"
         page_url = None
         continue
       page_url = new_page_url
-      
+
     except:
       traceback.print_exc()
       time.sleep(1)
@@ -647,7 +654,7 @@ def moe_import():
   image_set = raw_input("image set name: ")
   image_folder = raw_input("image folder: ")
   info_folder = raw_input("info folder: ")
-  
+
   def import_walker(info_folder, dir, files):
     for file in files:
       fpath = dir + os.path.sep + file
@@ -666,7 +673,7 @@ def moe_import():
         traceback.print_exc()
         time.sleep(1)
     db_commit()
-    
+
   os.path.walk(image_folder, import_walker, info_folder)
 
 def moe_info():
@@ -679,7 +686,7 @@ def moe_info():
       print "        %s" % tag
     for album in info["albums"]:
       print "        %s" % album
-      
+
   if len(sys.argv) == 4:
     info = util_get_image_info(sys.argv[2], int(sys.argv[3]))
     if info == None:
@@ -758,7 +765,7 @@ def moe_create_album():
     print set_name, " - ", id_in_set
     db_add_album_image(album_name, set_name, id_in_set)
   db_commit()
-    
+
 
 def moe_import_black_list():
   fpath = raw_input("black list file path: ")
@@ -784,14 +791,14 @@ def moe_import_black_list():
 def moe_import_rating():
   image_set = raw_input("image set name: ")
   rating_folder = raw_input("ratings folder: ")
-  
+
   has_highres = False
   c = DB_CONN.cursor()
   c.execute("select * from images where set_name = \"%s_highres\" limit 1" % image_set)
   ret_all = c.fetchall()
   if len(ret_all) != 0:
     has_highres = True
-  
+
   def import_walker(arg, dir, files):
     print "working on dir: %s" % dir
     for file in files:
@@ -825,7 +832,7 @@ def moe_import_rating():
       if has_highres:
         c.execute("update images set rating = %d where set_name = '%s_highres' and id_in_set = %d" % (rating_value, image_set, image_id))
     db_commit()
-    
+
   os.path.walk(rating_folder, import_walker, None)
 
 def moe_import_mangameeya_rating():
@@ -922,11 +929,11 @@ def util_download_tu178_image(page_url, title, id_in_set):
     idx2 = page_src.find("\"", idx)
     image_url = page_src[idx:idx2].split("?")[0]
     image_ext = image_url[image_url.rfind("."):]
-    
+
     if db_image_in_black_list(image_set, id_in_set):
       print "[skip] '%s %d' is in black list" % (image_set, id_in_set)
       return
-    
+
     dest_image = images_root + os.path.sep + image_set + os.path.sep
     dest_image += util_get_bucket_name(id_in_set) + os.path.sep + str(id_in_set) + image_ext
     if os.path.exists(dest_image):
@@ -936,7 +943,7 @@ def util_download_tu178_image(page_url, title, id_in_set):
       db_commit()
       print "[skip] '%s %d' already downloaded" % (image_set, id_in_set)
       return
-    
+
     tmp_folder = g_tmp_folder
     util_make_dirs(tmp_folder + os.path.sep + image_set)
     try:
@@ -946,18 +953,18 @@ def util_download_tu178_image(page_url, title, id_in_set):
       download_file = open(download_fpath, "wb")
       download_file.write(image_data)
       download_file.close()
-      
+
       db_add_image(download_fpath, image_set, id_in_set)
       tags = title,
       db_set_image_tags(image_set, id_in_set, tags)
       db_commit()
       if os.path.exists(download_fpath):
         os.remove(download_fpath)
-      
+
     except:
       traceback.print_exc()
       time.sleep(1)
-    
+
   except:
     traceback.print_exc()
     time.sleep(1)
@@ -968,7 +975,7 @@ def moe_mirror_tu178():
   socket.setdefaulttimeout(SOCKET_TIMEOUT)
   tmp_folder = g_tmp_folder
   print "mirroring tu.178.com!"
-  
+
   # Start mirroring from page 1.
   page_id = 1
   # Check if need to start downloading from other pages.
@@ -982,12 +989,12 @@ def moe_mirror_tu178():
       else:
         print "Wrong parameters, please provide page number after '-p'!"
         return
-  
+
   while True:
     try:
       query_url = "http://tu.178.com/?_per_page=1&_page_no=%d" % page_id
       print "working on page %d" % page_id
-      
+
       # Go on to next page
       page_id += 1
       page_src = "\n".join(urllib2.urlopen(query_url).readlines())
@@ -1008,11 +1015,9 @@ def moe_mirror_tu178():
         idx2 = page_src.find("'", idx)
         id_in_set = int(page_src[idx:idx2])
         util_download_tu178_image(sub_url, title_info, id_in_set)
-        
     except:
       traceback.print_exc()
       time.sleep(1)
-  
 
 def moe_mirror_all():
   if os.name == "nt":
@@ -1022,7 +1027,15 @@ def moe_mirror_all():
     os.system("start moe.py mirror-moe-imouto-html")
     os.system("start moe.py mirror-tu178")
   else:
-    print "This function is not supported in your system."
+    print "Your download job will be running in 5 detached screen session"
+    print "run `screen -r` to show them"
+    print
+    os.system("screen -dm ./moe.py mirror-danbooru")
+    os.system("screen -dm ./moe.py mirror-konachan-html")
+    os.system("screen -dm ./moe.py mirror-nekobooru")
+    os.system("screen -dm ./moe.py mirror-moe-imouto-html")
+    os.system("screen -dm ./moe.py mirror-tu178")
+    os.system("screen -r")
 
 def moe_cleanup():
   c = DB_CONN.cursor()
@@ -1120,7 +1133,7 @@ def moe_find_ophan():
     image_set = sys.argv[2]
   else:
     image_set = raw_input("image set: ")
-  
+
   ophan_list = []
   def find_ophan_walker(ophan_list, dir, files):
     print "working in dir: %s" % dir
@@ -1130,7 +1143,7 @@ def moe_find_ophan():
       id_in_set = int(os.path.splitext(os.path.split(file)[1])[0])
       if db_get_image_by_id_in_set(image_set, id_in_set) == None:
         ophan_list += dir + os.path.sep + file,
-  
+
   os.path.walk(images_root + os.path.sep + image_set, find_ophan_walker, ophan_list)
   for ophan in ophan_list:
     print ophan
@@ -1363,7 +1376,7 @@ def util_cleanup_image_set(image_root, backup_to, set_name):
     if os.path.isdir(fpath) and os.path.isdir(dst_fpath):
       print "checking level 2 folder: %s\\%s" % (set_name, fn)
       util_cleanup_backup_folder(fpath, dst_fpath)
-  
+
 def moe_backup_cleanup():
   image_root = g_image_root
   backup_to = get_config("backup_to")
@@ -1406,7 +1419,7 @@ def moe_backup_by_rating(rating):
   else:
     print "[backup-rate-%d] %d entries to backup" % (rating, len(ret))
     util_backup_images(ret, "rate-%d" % rating)
-  
+
 
 def moe_backup_all():
   print "Phase 1: backup db"

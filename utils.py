@@ -51,12 +51,12 @@ def get_config(key, default_value=None):
     module_name = os.path.splitext(module_name)[0]
   conf_fn = os.path.join(os.path.split(__file__)[0], "toolkit.conf")
   value = None
-  
+
   if key.startswith(module_name):
     full_key = key
   else:
     full_key = module_name + "." + key
-  
+
   f = None
   try:
     f = open(conf_fn)
@@ -73,7 +73,7 @@ def get_config(key, default_value=None):
   finally:
     if f != None:
       f.close()
-  
+
   if default_value != None and value == None:
     value = default_value
   if value == None:
@@ -95,7 +95,7 @@ def is_ascii(text):
     if ord(c) >= 128 or ord(c) < 0:
       return False
   return True
-  
+
 def is_image(fname):
   fname = fname.lower()
   for ext in [".jpg", ".png", ".gif", ".swf", ".bmp", ".pgm"]:
