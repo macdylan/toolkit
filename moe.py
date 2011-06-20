@@ -111,7 +111,9 @@ def db_add_image(fpath, image_set, id_in_set, final_id_list = None):
   try:
     db_add_image_real(fpath, image_set, id_in_set, final_id_list)
   except:
-    print "[fatal] exception when adding image '%s'!" % fpath
+    print "[error] exception when adding image '%s'!" % fpath
+    traceback.print_exc()
+    time.sleep(1)
     return False
 
 # add an image into the database
