@@ -10,3 +10,6 @@ itc2png.exe: itc2png.c
 
 moe-check-md5.exe: moe-check-md5.c
 	gcc -O3 moe-check-md5.c -o moe-check-md5.exe
+
+clean:
+	rm -rf crc32.exe moe-check-md5.exe itc2png.exe
