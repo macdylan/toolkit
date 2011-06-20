@@ -205,7 +205,10 @@ def db_del_image(image_set, id_in_set):
   # Delete file after commit.
   fpath = g_image_root + os.path.sep + img[1] + os.path.sep + util_get_bucket_name(img[2]) + os.path.sep + str(img[2]) + img[5]
   print "[del] %s" % fpath
-  os.remove(fpath)
+  try:
+    os.remove(fpath)
+  except:
+    print "warning: file '%s' not found!" % fpath
 
 def db_add_tag(tag_name):
   c = DB_CONN.cursor()
