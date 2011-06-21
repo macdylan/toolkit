@@ -1310,8 +1310,9 @@ def moe_backup_db():
   backup_to = get_config("backup_to")
   db_main_fn, db_ext_fn = os.path.splitext(os.path.basename(db_file))
   tm_str = time.strftime("%y%m%d-%H%M%S", time.localtime())
-  cmd = "copy \"%s\" \"%s\\%s.backup.%s%s\"" % (db_file, backup_to, db_main_fn, tm_str, db_ext_fn)
-  util_execute(cmd)
+  db_backup_file = os.path.join(backup_to, "%s.backup.%s%s" % (db_main_fn, tm_str, db_ext_fn))
+  print "copying '%s' -> '%s'" % (db_file, db_backup_file)
+  shutil.copyfile(db_file, db_backup_file)
   backup_counter = 0
   for fn in os.listdir(backup_to):
     if fn.startswith("%s.backup." % db_main_fn) and fn.endswith(db_ext_fn):
