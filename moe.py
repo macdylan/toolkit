@@ -1478,7 +1478,7 @@ def util_check_image_set_md5(image_root, md5_bin, set_name):
       print "%d passed, %d failed" % (n_pass, n_fail)
 
 def moe_check_md5():
-  print "This shall be done!"
+  print "usage: moe.py check-md5 [set_name]"
   image_root = g_image_root
   image_sets = [
     "danbooru",
@@ -1495,8 +1495,12 @@ def moe_check_md5():
   if os.path.exists(md5_bin) == False:
     print "md5 check helper is not found: %s" % md5_bin
     return
-  for set_name in image_sets:
+  if len(sys.argv) > 2:
+    set_name = sys.argv[2]
     util_check_image_set_md5(image_root, md5_bin, set_name)
+  else:
+    for set_name in image_sets:
+      util_check_image_set_md5(image_root, md5_bin, set_name)
 
 def moe_export():
   image_set = raw_input("image set: ")
