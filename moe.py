@@ -38,7 +38,7 @@ g_image_root = None
 g_tmp_folder = None
 
 def my_dbexec(DB_CONN, sql):
-  print "[sql] %s" % sql
+  #print "[sql] %s" % sql
   DB_CONN.execute(sql)
 
 def init_db_connection():
