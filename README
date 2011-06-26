@@ -7,6 +7,5 @@ grabber.py          Downloads and manages my manga books.
 housekeeper.py      Script to manage my files, and provides simple housekeeping work.
 justconvert.py      Convert video, music, pictures.
 moe.py              Subscribes and manages my picture collections.
-phpgraphymirror.py  A mirroring script for phpgraphy sites.
 utils.py            General utilities for other scripts.
 
