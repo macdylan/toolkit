@@ -8,6 +8,9 @@
 #
 # there is empty lines between manga books
 
+name=rec
+url=http://manhua.178.com/tmsyrec/
+
 name=xiuluochang
 url=http://manhua.178.com/jzwnyhqmzmjdxlc/
 
