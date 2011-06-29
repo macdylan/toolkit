@@ -8,6 +8,9 @@
 #
 # there is empty lines between manga books
 
+name=fsn
+url=http://manhua.178.com/fatestaynight/
+
 name=chuban
 url=http://manhua.178.com/chuban/
 
