@@ -47,7 +47,6 @@ def grab_print_help():
   print "usage: grabber.py <command>"
   print "available commands:"
   print
-  print "  clear-cruft-files    clear cruft files in zip packages"
   print "  download             download a manga book"
   print "  download-reverse     download a manga book, in reverse order"
   print "  help                 display this help message"
@@ -512,8 +511,6 @@ def grab_list_library():
 if __name__ == "__main__":
   if len(sys.argv) == 1 or sys.argv[1] == "help":
     grab_print_help()
-  elif sys.argv[1] == "clear-cruft-files":
-    grab_clear_cruft_files()
   elif sys.argv[1] == "download":
     grab_download()
   elif sys.argv[1] == "download-reverse":
