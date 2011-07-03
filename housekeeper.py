@@ -196,6 +196,18 @@ def hk_util_append_tmp_ext(fpath):
       break
   return tmp_fpath
 
+def hk_jpeg2jpg():
+  root_dir = raw_input("The root directory to start with? ")
+  for root, folders, files in os.walk(root_dir):
+    for fn in files:
+      fpath = os.path.join(root, fn)
+      splt = os.path.splitext(fpath)
+      if splt[1].lower() == ".jpeg":
+        # rename to a tmp file and rename back
+        new_name = splt[0] + ".jpg"
+        print "[rename] %s ==> %s" % (fpath, new_name)
+        os.rename(fpath, new_name)
+
 def hk_lowercase_ext():
   root_dir = raw_input("The root directory to start with? ")
   for root, folders, files in os.walk(root_dir):
@@ -1246,6 +1258,7 @@ def hk_help():
   print "  itunes-play-count                  display the play count of iTunes library"
   print "  itunes-rm-useless-cover            remove useless covers from iTunes library"
   print "  itunes-stats                       display iTunes library info"
+  print "  jpeg2jpg                           convert .jpeg ext name to .jpg"
   print "  lowercase-ext                      make sure file extensions are lower case"
   print "  psp-sync-pic                       sync images to psp"
   print "  papers-find-ophan                  check if pdf is in papers folder but not in Papers library"
@@ -1297,6 +1310,8 @@ if __name__ == "__main__":
     hk_itunes_rm_useless_cover()
   elif sys.argv[1] == "itunes-stats":
     hk_itunes_stats();
+  elif sys.argv[1] == "jpeg2jpg":
+    hk_jpeg2jpg()
   elif sys.argv[1] == "lowercase-ext":
     hk_lowercase_ext()
   elif sys.argv[1] == "psp-sync-pic":
