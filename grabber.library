@@ -8,6 +8,12 @@
 #
 # there is empty lines between manga books
 
+name=barefoot_meteor
+url=http://manhua.178.com/chizudeyunshi/
+
+
+name=touch
+url=http://manhua.178.com/touch/
 
 name=mowangyongzhe
 url=http://manhua.178.com/mowangyongzhejujue/
