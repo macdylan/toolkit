@@ -8,6 +8,9 @@
 #
 # there is empty lines between manga books
 
+name=mirror_world
+url=http://manhua.178.com/jingzhiguodzxc/
+
 name=luoqiushe
 url=http://manhua.178.com/luoqiushe/
 
