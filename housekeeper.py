@@ -296,7 +296,10 @@ def hk_psp_sync_pic():
         from_f_path = os.path.join(from_dir, from_f)
         to_f_path = os.path.join(to_dir, from_f)
         write_log("[add] %s" % from_f)
-        hk_exec("%s \"%s\" -resize 1280x800 \"%s\"" % (convert_bin, from_f_path, to_f_path))
+        if os.stat(from_f_path).st_size > 1024 * 1024:
+          hk_exec("%s \"%s\" -resize 1280x800 \"%s\"" % (convert_bin, from_f_path, to_f_path))
+        else:
+          hk_exec("cp \"%s\" \"%s\"" % (from_f_path, to_f_path))
 
 def hk_batch_rename():
   path = raw_input("Path?\n")
