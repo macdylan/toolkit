@@ -1214,7 +1214,7 @@ def hk_sys_maint():
     print
     print "-" * 80
     print "phase 2: port selfupdate && port list outdated && port upgrade outdated && port uninstall inactive"
-    hk_exec("port selfupdate && port list outdated && port upgrade outdated")
+    hk_exec("port selfupdate && port list outdated && port upgrade outdated && port uninstall inactive")
   except:
     traceback.print_exc()
   try:
