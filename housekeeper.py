@@ -518,6 +518,9 @@ def util_aucdtect(aucdtect_bin, ffmpeg_bin, tmp_folder, strip_fn, fpath):
       os.remove(tmp_fn)
   return audio_type, probability
 
+def hk_itunes_backup():
+  hk_exec("cp -v /Users/santa/Music/iTunes/iTunes* /Users/santa/Dropbox/Backups/mac_backup/iTunes")
+
 def hk_itunes_genuine_check():
   aucdtect_bin = get_config("aucdtect_bin")
   ffmpeg_bin = get_config("ffmpeg_bin")
@@ -1189,6 +1192,9 @@ def hk_sys_maint():
   except:
     traceback.print_exc()
 
+def hk_mac_kill_mouse():
+  hk_exec("/Users/santa/Workspace/toolkit/bin/killmouseaccel mouse")
+
 def hk_sys_backup():
   mac_required()
   hk_backup_conf()  # backup config files
@@ -1254,6 +1260,7 @@ def hk_help():
   print "  clean-eject-usb <name>             cleanly eject usb drives (cleans .Trash, .SpotLight folders)"
   print "  gem-cleanup                        cleanup gem files"
   print "  help                               display this info"
+  print "  ituens-backup                      backup iTunes library"
   print "  itunes-check-exists (deprecated)   check if music in iTunes library really exists"
   print "  itunes-export-cover                export covers from iTunes library"
   print "  itunes-find-ophan (deprecated)     check if music is in music folder but not in iTunes"
@@ -1263,6 +1270,7 @@ def hk_help():
   print "  itunes-stats                       display iTunes library info"
   print "  jpeg2jpg                           convert .jpeg ext name to .jpg"
   print "  lowercase-ext                      make sure file extensions are lower case"
+  print "  mac-kill-mouse-accel               disable mouse acceleration in Mac"
   print "  psp-sync-pic                       sync images to psp"
   print "  papers-find-ophan                  check if pdf is in papers folder but not in Papers library"
   print "  rm-all-gems                        remove all rubygems (currently Mac only)"
@@ -1299,6 +1307,8 @@ if __name__ == "__main__":
     hk_clean_eject_usb(sys.argv[2])
   elif sys.argv[1] == "gem-cleanup":
     hk_gem_cleanup()
+  elif sys.argv[1] == "itunes-backup":
+    hk_itunes_backup()
   elif sys.argv[1] == "itunes-check-exists":
     hk_itunes_check_exists()
   elif sys.argv[1] == "itunes-export-cover":
@@ -1317,6 +1327,8 @@ if __name__ == "__main__":
     hk_jpeg2jpg()
   elif sys.argv[1] == "lowercase-ext":
     hk_lowercase_ext()
+  elif sys.argv[1] == "mac-kill-mouse-accel":
+    hk_mac_kill_mouse()
   elif sys.argv[1] == "psp-sync-pic":
     hk_psp_sync_pic()
   elif sys.argv[1] == "papers-find-ophan":
