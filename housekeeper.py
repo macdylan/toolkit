@@ -680,6 +680,7 @@ def hk_itunes_find_ophan():
 
 def hk_itunes_export_cover():
   output_dir = raw_input("Output dir? ")
+  hk_make_dirs(output_dir)
   itc2png_bin = get_config("itc2png_bin")
   itunes_folder = get_config("itunes_folder")
   for root, dirname, fnames in os.walk(os.path.join(itunes_folder, "Album Artwork")):
@@ -689,6 +690,38 @@ def hk_itunes_export_cover():
         print "[itc2] %s" % fpath
         shutil.copy(fpath, output_dir)
         os.system("%s %s" % (itc2png_bin, os.path.join(output_dir, fn)))
+  return output_dir
+
+def hk_itunes_bad_cover():
+  bad_uuid = set()
+  output_dir = hk_itunes_export_cover()
+  for fn in os.listdir(output_dir):
+    if fn.startswith("."):
+      continue
+    if fn.lower().endswith(".itc2"):
+      fpath = os.path.join(output_dir, fn)
+      os.remove(fpath)
+    if fn.lower().endswith(".png"):
+      fpath = os.path.join(output_dir, fn)
+      pipe = os.popen("file \"%s\"" % fpath)
+      output = pipe.read()
+      splt = output.split()
+      #print splt
+      pic_uuid = os.path.split(splt[0][:-1])[1][17:33]
+      pic_w = int(splt[4])
+      pic_h = int(splt[6][:-1])
+      ratio = 1 - pic_w * 1.0 / pic_h
+      if ratio < 0.0:
+        ratio = -ratio
+      ratio_threshold = 0.1 # the ratio we can bare
+      if ratio > ratio_threshold and pic_uuid not in bad_uuid:
+        print pic_uuid, pic_w, pic_h, ratio
+        bad_uuid.add(pic_uuid)
+      else:
+        fpath = os.path.join(output_dir, fn)
+        os.remove(fpath)
+      pipe.close()
+
 
 def hk_itunes_rm_useless_cover():
   library_map = {}
@@ -1260,7 +1293,8 @@ def hk_help():
   print "  clean-eject-usb <name>             cleanly eject usb drives (cleans .Trash, .SpotLight folders)"
   print "  gem-cleanup                        cleanup gem files"
   print "  help                               display this info"
-  print "  ituens-backup                      backup iTunes library"
+  print "  itunes-backup                      backup iTunes library"
+  print "  itunes-bad-cover                   list cd covers with bad ratio"
   print "  itunes-check-exists (deprecated)   check if music in iTunes library really exists"
   print "  itunes-export-cover                export covers from iTunes library"
   print "  itunes-find-ophan (deprecated)     check if music is in music folder but not in iTunes"
@@ -1309,6 +1343,8 @@ if __name__ == "__main__":
     hk_gem_cleanup()
   elif sys.argv[1] == "itunes-backup":
     hk_itunes_backup()
+  elif sys.argv[1] == "itunes-bad-cover":
+    hk_itunes_bad_cover()
   elif sys.argv[1] == "itunes-check-exists":
     hk_itunes_check_exists()
   elif sys.argv[1] == "itunes-export-cover":
