@@ -1231,6 +1231,7 @@ def hk_mac_kill_mouse():
 def hk_sys_backup():
   mac_required()
   hk_backup_conf()  # backup config files
+  hk_itunes_backup() # backup itunes files
   os.system("rm -rf /Users/santa/Dropbox/Backups/mac_backup/Evernote.zip")
   os.system("rm -rf /Users/santa/Dropbox/Backups/mac_backup/Papers")
   os.system("rm -rf /Users/santa/Dropbox/Backups/mac_backup/Papers2")
