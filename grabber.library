@@ -32,7 +32,6 @@ url=http://manhua.178.com/luoqiushe/
 name=barefoot_meteor
 url=http://manhua.178.com/chizudeyunshi/
 
-
 name=touch
 url=http://manhua.178.com/touch/
 
@@ -327,19 +326,11 @@ url=http://www.bengou.com/080820/xsjfyzseva008082003/index.html
 name=xiangjuyike_bengou
 url=http://www.bengou.com/080819/xjyk008081919/index.html
 
-
-name=is
-url=http://manhua.178.com/i/is.shtml
-
-
 name=koikaze
 url=http://manhua.178.com/l/lf.shtml
 
 name=yesterdaysong
 url=http://manhua.178.com/z/zrzg.shtml
-
-name=yangzhige
-url=http://manhua.178.com/g/gyzg.shtml
 
 name=bloodalone
 url=http://manhua.178.com/b/bloodalone.shtml
@@ -451,8 +442,6 @@ url=http://manhua.178.com/b/bihaideaion.shtml
 name=crossgame
 url=http://manhua.178.com/x/xysyc.shtml
 
-
-
 name=karin
 url=http://manhua.178.com/z/zxgkarin.shtml
 
@@ -464,10 +453,6 @@ url=http://manhua.178.com/c/clxd.shtml
 
 name=ichigo100
 url=http://manhua.178.com/c/cm100.shtml
-
-name=aneko
-url=http://manhua.178.com/y/yujiejinxingshi.shtml
-
 
 name=alive
 url=http://manhua.178.com/a/alivezzjhsn.shtml
@@ -593,9 +578,8 @@ name=eden_comic
 url=http://manhua.178.com/e/eden.shtml
 
 
-name=wierd_syster
+name=wierd_sister
 url=http://manhua.178.com/z/zjwdmmydg.shtml
-
 
 name=heartful_days
 url=http://manhua.178.com/w/wmdxj.shtml
@@ -614,8 +598,4 @@ url=http://manhua.178.com/k/kenan.shtml
 
 name=shukufuku_no_campella
 url=http://manhua.178.com/z/zhufuzhizhong.shtml
-
-
-
-
 
