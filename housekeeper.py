@@ -1281,6 +1281,16 @@ def hk_timemachine_image():
   </plist>""" % uuid)
   f.close()
 
+def hk_rsync_to_labpc():
+  if os.path.exists("/Volumes/Takaramono$"):
+    print "Backing up to /Volumes/Takaramono$"
+    hk_exec("rsync -avx -delete /Users/santa/Archive /Volumes/Takaramono$/backup/archive")
+    hk_exec("rsync -avx -delete /Users/santa/Music /Volumes/Takaramono$/backup/music")
+    hk_exec("rsync -avx -delete /Users/santa/Movies /Volumes/Takaramono$/backup/video")
+    hk_exec("rsync -avx -delete /Users/santa/Manga /Volumes/Takaramono$/manga")
+  else:
+    print "Backup folder /Volumes/Takaramono$ not mounted!"
+
 def hk_help():
   print "housekeeper.py: helper script to manage my important collections"
   print "usage: housekeeper.py <command>"
@@ -1310,6 +1320,7 @@ def hk_help():
   print "  papers-find-ophan                  check if pdf is in papers folder but not in Papers library"
   print "  rm-all-gems                        remove all rubygems (currently Mac only)"
   print "  rm-empty-dir                       remove empty dir"
+  print "  rsync-to-labpc                     use rsync to backup my craps onto LabPC"
   print "  sync-rainlendar (deprecated)       sync iCal & rainlendar"
   print "  sys-backup                         system backup (currently Mac only)"
   print "  sys-maint                          system maintenance (currently Mac only)"
@@ -1374,6 +1385,8 @@ if __name__ == "__main__":
     hk_rm_all_gems()
   elif sys.argv[1] == "rm-empty-dir":
     hk_rm_empty_dir()
+  elif sys.argv[1] == "rsync-to-labpc":
+    hk_rsync_to_labpc()
   elif sys.argv[1] == "sync-rainlendar":
     hk_sync_rainlendar()
   elif sys.argv[1] == "sys-backup":
