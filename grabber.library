@@ -8,6 +8,11 @@
 #
 # there is empty lines between manga books
 
+name=gantz_178
+url=http://manhua.178.com/sldsgantz/
+
+name=mayochiki
+url=http://manhua.178.com/mmgjynrdw/
 
 name=inukami
 url=http://manhua.178.com/qs/
@@ -195,8 +200,8 @@ url=http://manhua.178.com/l/lhdhj.shtml
 name=yosuga_no_sora
 url=http://manhua.178.com/y/yuanzhikong.shtml
 
-name=gantz
-url=http://www.bengou.com/080819/slds008081914/index.html
+#name=gantz
+#url=http://www.bengou.com/080819/slds008081914/index.html
 
 name=hayate
 url=http://manhua.178.com/x/xfgj.shtml
@@ -328,8 +333,8 @@ url=http://manhua.178.com/y/youzairichangdawang.shtml
 name=eva
 url=http://manhua.178.com/x/xsjfyzseva.shtml
 
-name=eva_bengou
-url=http://www.bengou.com/080820/xsjfyzseva008082003/index.html
+#name=eva_bengou
+#url=http://www.bengou.com/080820/xsjfyzseva008082003/index.html
 
 name=xiangjuyike_bengou
 url=http://www.bengou.com/080819/xjyk008081919/index.html
