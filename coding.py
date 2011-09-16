@@ -10,7 +10,7 @@ import os
 import time
 
 # matched by "lowercase(), then endswith()"
-g_code_files = [".c", ".cc", ".rb", ".py", "Rakefile"]
+g_code_files = [".c", ".cc", ".rb", ".py", "Rakefile", ".mm"]
 
 # if filter == [], then all files are matched
 def check_filter_match(fname, filter = []):
