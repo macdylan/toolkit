@@ -1492,7 +1492,7 @@ def moe_check_md5():
     "nekobooru",
     "nekobooru_highres"
   ]
-  md5_bin = os.path.join(os.path.split(__file__)[0], "bin", "moe-check-md5.exe")
+  md5_bin = os.path.join(os.path.split(__file__)[0], "libexec", "moe-check-md5.exe")
   if os.path.exists(md5_bin) == False:
     print "md5 check helper is not found: %s" % md5_bin
     return
