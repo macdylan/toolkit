@@ -1188,7 +1188,7 @@ def hk_sys_maint():
   print "-" * 80
   print "This script will do system maintenance:"
   print
-  print "  1: gem update --no-rdoc --no-ri && rvm get latest"
+  print "  1: gem update --no-rdoc --no-ri"
   print "  2: port selfupdate && port list outdated && port upgrade outdated"
   print "  3: tlmgr update --list && tlmgr update --all"
   print
@@ -1208,7 +1208,6 @@ def hk_sys_maint():
     print "-" * 80
     print "phase 1: gem update --no-rdoc --no-ri"
     hk_exec("gem update --no-rdoc --no-ri")
-    hk_exec("rvm get latest")
   except:
     traceback.print_exc()
   try:
