@@ -1225,6 +1225,16 @@ def hk_sys_maint():
   except:
     traceback.print_exc()
 
+def hk_backup_evernote():
+  print "Running backup for Evernote..."
+  os.chdir("/Users/santa/Library/Application Support/Evernote/data")
+  os.system("git ls-files -d -z | xargs -0 git rm")
+  os.system('git add . ; git commit -am "backup on %s"' % time.asctime())
+  os.system("git gc --aggressive --prune; git push --all")
+  os.chdir("/Users/santa/Dropbox/Backups/mac_backup/evernote_git")
+  os.system("git gc --aggressive --prune")
+  print "done backup for Evernote"
+
 def hk_sys_backup():
   mac_required()
   hk_backup_conf()  # backup config files
@@ -1257,8 +1267,10 @@ def hk_sys_backup():
   hk_make_dirs("/Users/santa/Dropbox/Backups/mac_backup/Savings")
   os.system("cp -rv \"/Users/santa/Library/Application Support/Savings\" /Users/santa/Dropbox/Backups/mac_backup")
 
-  print "* backup Evernote..."
-  zipdir("/Users/santa/Library/Application Support/Evernote", "/Users/santa/Dropbox/Backups/mac_backup/Evernote.zip");
+  hk_backup_evernote()
+#  print "* backup Evernote..."
+#  zipdir("/Users/santa/Library/Application Support/Evernote", "/Users/santa/Dropbox/Backups/mac_backup/Evernote.zip");
+
   print "everything done!"
 
 def hk_timemachine_image():
@@ -1293,8 +1305,9 @@ def hk_help():
   print "usage: housekeeper.py <command>"
   print "available commands:"
   print
-  print "  backup-psp                         backup my psp"
   print "  backup-conf                        backup my config files"
+  print "  backup-evernote                    bakcup evernote documents"
+  print "  backup-psp                         backup my psp"
   print "  batch-rename                       batch rename files under a folder"
   print "  check-ascii-fnames                 make sure all file has ascii-only name"
   print "  check-crc32                        check file integrity by crc32"
@@ -1332,10 +1345,12 @@ def hk_help():
 if __name__ == "__main__":
   if len(sys.argv) == 1 or sys.argv[1] == "help":
     hk_help()
-  elif sys.argv[1] == "backup-psp":
-    hk_backup_psp()
   elif sys.argv[1] == "backup-conf":
     hk_backup_conf()
+  elif sys.argv[1] == "backup-evernote":
+    hk_backup_evernote()
+  elif sys.argv[1] == "backup-psp":
+    hk_backup_psp()
   elif sys.argv[1] == "batch-rename":
     hk_batch_rename()
   elif sys.argv[1] == "check-crc32":
