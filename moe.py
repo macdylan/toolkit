@@ -793,7 +793,7 @@ def moe_import_black_list():
       c.execute("insert into black_list(set_name, start_id, end_id) values('%s', %d, %d)" % (image_set, start_id, end_id))
   db_commit()
 
-def moe_import_rating():
+def moe_import_rating_psp():
   image_set = raw_input("image set name: ")
   rating_folder = raw_input("ratings folder: ")
 
@@ -840,46 +840,30 @@ def moe_import_rating():
 
   os.path.walk(rating_folder, import_walker, None)
 
-def moe_import_mangameeya_rating():
-  txt_fn = raw_input("Rating file path: ")
-  with open(txt_fn) as f:
-    img_fn = None
-    img_rating = None
-    for line in f.readlines():
-      line = line.strip()
-      if line == "" or line.startswith("#"):
-        continue
-      if img_fn == None:
-        img_fn = line
-      else:
-        img_rating = int(line)
-        try:
-          # check if is valid image
-          folder, main_img_fn = os.path.split(img_fn)
-          id_in_set = int(os.path.splitext(main_img_fn)[0])
-          folder, tmp = os.path.split(folder)
-          folder, img_set = os.path.split(folder)
-          if img_rating == 1:
-            rating_txt = "so-so"
-            db_rating = 1
-          elif img_rating == 2:
-            rating_txt = "good"
-            db_rating = 2
-          elif img_rating == 3:
-            rating_txt = "excellent"
-            db_rating = 3
-          elif img_rating == 4:
-            rating_txt = "delete!"
-            db_rating = 0
-          print "%s %d --> %s" % (img_set, id_in_set, rating_txt)
-          c = DB_CONN.cursor()
-          c.execute("update images set rating = %d where set_name = '%s' and id_in_set = %d" % (db_rating, img_set, id_in_set))
-        except:
-          print "[warning] not valid image: %s" % img_fn
-          continue
-        img_fn = None
-        img_rating = None
-    db_commit()
+def moe_import_rating_dir():
+  print "You need to run `find` in the rating directory exported by `export-big-unrated`,"
+  print "and generated the output into a text file."
+  print
+  rating_txt = raw_input("fpath of the rating txt? ")
+  f = open(rating_txt, "r")
+  c = DB_CONN.cursor()
+  for line in f.readlines():
+    line = line.strip()
+    if not is_image(line):
+      continue
+    splt = line.split(os.path.sep)
+    rating, fname = splt[len(splt) - 2], splt[len(splt) - 1]
+    fname = os.path.splitext(fname)[0]
+    splt = fname.split(" ")
+    if rating == "unrated":
+      rating = "null"
+    set_name, id_in_set = splt[0], int(splt[1])
+    print set_name, id_in_set, "--> rating", rating
+    query = "update images set rating = '%s' where set_name = '%s' and id_in_set = %d;" % (rating, set_name, id_in_set)
+    c.execute(query)
+  db_commit()
+  f.close()
+
 
 def moe_highres_rating():
   normal_set = raw_input("The normal res image set:")
@@ -1624,6 +1608,39 @@ def moe_export_album():
       print "%d images done" % counter
   print "%d images done" % counter
 
+def moe_export_big_unrated():
+  n_images = raw_input("How many images to be exported? [default 1000] ")
+  if n_images == "":
+    n_images = 1000
+  else:
+    n_images = int(n_images)
+  c = DB_CONN.cursor()
+  query_sql = "select set_name, id_in_set, ext, file_size from images where rating is null order by file_size desc limit %d" % n_images
+  c.execute(query_sql)
+  ret_all = c.fetchall()
+  total_sz = 0
+  for ret in ret_all:
+    image_set, id_in_set, ext, fsize = ret[0], ret[1], ret[2], ret[3]
+    total_sz += fsize
+  print "%d images, total size %s" % (len(ret_all), pretty_fsize(total_sz))
+  outdir = raw_input("Output dir? ")
+  util_make_dirs(os.path.join(outdir, "unrated"))
+  util_make_dirs(os.path.join(outdir, "0"))
+  util_make_dirs(os.path.join(outdir, "1"))
+  util_make_dirs(os.path.join(outdir, "2"))
+  util_make_dirs(os.path.join(outdir, "3"))
+  done_sz = 0
+  counter = 0
+  images_root = g_image_root
+  for ret in ret_all:
+    counter += 1
+    image_set, id_in_set, ext, fsize = ret[0], ret[1], ret[2], ret[3]
+    img_path = images_root + os.path.sep + image_set + os.path.sep + util_get_bucket_name(id_in_set) + os.path.sep + str(id_in_set) + ext
+    dest_file = os.path.join(outdir, "unrated", image_set + " " + str(id_in_set) + ext)
+    done_sz += fsize
+    print "(%d/%d, %s/%s) %s --> %s" % (counter, len(ret_all), pretty_fsize(done_sz), pretty_fsize(total_sz), img_path, dest_file)
+    shutil.copyfile(img_path, dest_file)
+
 def moe_list_albums():
   print "Loading data..."
   c = DB_CONN.cursor()
@@ -1656,6 +1673,7 @@ def moe_help():
   print "  create-album               create an album based on a folder of well-formed images"
   print "  export                     export images"
   print "  export-album               export images in an album"
+  print "  export-big-unrated         export big and unrated images for rating, see import-rating-by-find"
   print "  export-psp                 export images for PSP rating"
   print "  find-ophan                 find images that are in images root, but not in database"
   print "  help                       display this info"
@@ -1663,8 +1681,8 @@ def moe_help():
   print "  import                     batch import pictures"
   print "  import-album               import existing album"
   print "  import-black-list          import existing black list file"
-  print "  import-mangameeya-rating   import rating from my MangaMeeya rating_helper.py"
-  print "  import-rating              import existing rating"
+  print "  import-rating-dir          import existing rating result from `find` output"
+  print "  import-rating-psp          import existing rating from my PSP lua application"
   print "  info                       display info about an image"
   print "  info-album                 display info about an album"
   print "  list-albums                list all the albums and their size"
@@ -1732,6 +1750,9 @@ if __name__ == "__main__":
   elif sys.argv[1] == "export-album":
     init_db_connection()
     moe_export_album()
+  elif sys.argv[1] == "export-big-unrated":
+    init_db_connection()
+    moe_export_big_unrated()
   elif sys.argv[1] == "export-psp":
     init_db_connection()
     moe_export_psp()
@@ -1747,12 +1768,12 @@ if __name__ == "__main__":
   elif sys.argv[1] == "import-black-list":
     init_db_connection()
     moe_import_black_list()
-  elif sys.argv[1] == "import-rating":
+  elif sys.argv[1] == "import-rating-dir":
     init_db_connection()
-    moe_import_rating()
-  elif sys.argv[1] == "import-mangameeya-rating":
+    moe_import_rating_dir()
+  elif sys.argv[1] == "import-rating-psp":
     init_db_connection()
-    moe_import_mangameeya_rating()
+    moe_import_rating_psp()
   elif sys.argv[1] == "highres-rating":
     init_db_connection()
     moe_highres_rating()
@@ -1799,4 +1820,3 @@ if __name__ == "__main__":
     moe_update_file_size()
   else:
     print "command '%s' not understood, see 'moe.py help' for more info" % sys.argv[1]
-

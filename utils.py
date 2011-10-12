@@ -15,6 +15,22 @@ import traceback
 import re
 from zipfile import ZipFile, ZIP_DEFLATED
 
+def pretty_fsize(fsize):
+  unit = "B"
+  if fsize > 1024:
+    fsize = fsize / 1024.
+    unit = "KB"
+  if fsize > 1024:
+    fsize = fsize / 1024.
+    unit = "MB"
+  if fsize > 1024:
+    fsize = fsize / 1024.
+    unit = "GB"
+  if fsize > 1024:
+    fsize = fsize / 1024.
+    unit = "TB"
+  return "%.2f%s" % (fsize, unit)
+
 def root_required():
   if os.getuid() != 0:
     raise Exception("root required! please run with 'sudo'!")
