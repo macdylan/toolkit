@@ -851,7 +851,10 @@ def moe_import_rating_dir():
     line = line.strip()
     if not is_image(line):
       continue
-    splt = line.split(os.path.sep)
+    if "/" in line:
+      splt = line.split("/")
+    else:
+      splt = line.split("\\")
     rating, fname = splt[len(splt) - 2], splt[len(splt) - 1]
     fname = os.path.splitext(fname)[0]
     splt = fname.split(" ")
