@@ -10,7 +10,7 @@ import os
 import time
 
 # matched by "lowercase(), then endswith()"
-g_code_files = [".c", ".cc", ".rb", ".py", "Rakefile", ".mm"]
+g_code_files = [".c", ".cc", ".rb", ".py", "Rakefile", ".mm", ".html", ".htm", ".tex"]
 
 # if filter == [], then all files are matched
 def check_filter_match(fname, filter = []):
@@ -58,7 +58,7 @@ def kd_clear_ws():
 # replace leading tabs in a line
 def line_replace_tab(line):
   if line.startswith("\t"):
-    line = "  " + line_replace_tab(line[1:])
+    line = "    " + line_replace_tab(line[1:])
   return line
 
 # replace leading tabs in a file
