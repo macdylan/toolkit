@@ -1251,9 +1251,6 @@ def hk_sys_backup():
   os.system("rm -rf /Users/santa/Dropbox/Backups/mac_backup/Savings")
   os.system("rm -rf \"/Users/santa/Dropbox/Backups/mac_backup/The Hit List Library.thllibrary\"")
 
-  print "* backup Papers..."
-  os.system("cp -rv /Users/santa/Papers /Users/santa/Dropbox/Backups/mac_backup")
-
   print "* backup Papers2..."
   os.system("cp -rv /Users/santa/Papers2 /Users/santa/Dropbox/Backups/mac_backup")
 
@@ -1274,10 +1271,6 @@ def hk_sys_backup():
   os.system("cp -rv \"/Users/santa/Library/Application Support/Savings\" /Users/santa/Dropbox/Backups/mac_backup")
 
   hk_backup_evernote()
-#  print "* backup Evernote..."
-#  zipdir("/Users/santa/Library/Application Support/Evernote", "/Users/santa/Dropbox/Backups/mac_backup/Evernote.zip");
-
-  # backup address book
   hk_backup_addr_book();
 
   print "everything done!"
