@@ -866,6 +866,16 @@ def hk_backup_psp():
   shutil.move(tmp_cp_folder + ".zip", bkup_folder)
   print "Done!"
 
+def hk_backup_addr_book():
+  mac_required()
+  print "Doing AddressBook backup..."
+  addr_src_dir = "/Users/santa/Library/Application Support/AddressBook"
+  addr_dest_file = "/Users/santa/Dropbox/Backups/mac_backup/AddressBook.zip"
+  if os.path.exists(addr_dest_file):
+    os.remove(addr_dest_file)
+  zipdir(addr_src_dir, addr_dest_file)
+  print "AddressBook backup done!"
+
 def hk_backup_conf():
   conf_backup_folder = get_config("config_backup_folder")
   config_files = []
@@ -1165,10 +1175,6 @@ def hk_sync_rainlendar():
   f.write(new_content)
   f.close()
 
-def mac_required():
-  if os.name != 'posix' or os.path.exists("/mach_kernel") == False:
-    raise Exception("Only Mac supported!")
-
 def hk_gem_cleanup():
   try:
     root_required()
@@ -1271,6 +1277,9 @@ def hk_sys_backup():
 #  print "* backup Evernote..."
 #  zipdir("/Users/santa/Library/Application Support/Evernote", "/Users/santa/Dropbox/Backups/mac_backup/Evernote.zip");
 
+  # backup address book
+  hk_backup_addr_book();
+
   print "everything done!"
 
 def hk_timemachine_image():
@@ -1305,6 +1314,7 @@ def hk_help():
   print "usage: housekeeper.py <command>"
   print "available commands:"
   print
+  print "  backup-addr-book                   backup my Address Book"
   print "  backup-conf                        backup my config files"
   print "  backup-evernote                    bakcup evernote documents"
   print "  backup-psp                         backup my psp"
@@ -1345,6 +1355,8 @@ def hk_help():
 if __name__ == "__main__":
   if len(sys.argv) == 1 or sys.argv[1] == "help":
     hk_help()
+  elif sys.argv[1] == "backup-addr-book":
+    hk_backup_addr_book()
   elif sys.argv[1] == "backup-conf":
     hk_backup_conf()
   elif sys.argv[1] == "backup-evernote":

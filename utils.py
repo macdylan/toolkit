@@ -35,6 +35,14 @@ def root_required():
   if os.getuid() != 0:
     raise Exception("root required! please run with 'sudo'!")
 
+
+def is_mac():
+  return (os.name == 'posix' and os.path.exists("/mach_kernel"))
+
+def mac_required():
+  if not is_mac():
+    raise Exception("Only Mac supported!")
+
 def is_well_formed_uuid(uuid):
   uuid = uuid.lower()
   if re.match("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", uuid) == None:
