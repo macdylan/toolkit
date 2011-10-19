@@ -867,6 +867,61 @@ def moe_import_rating_dir():
   db_commit()
   f.close()
 
+def moe_sync_rating_helper(set1, set2):
+  c = DB_CONN.cursor()
+  query = "select id_in_set, rating from images where set_name == '%s' and rating is not null;" % set1
+  c.execute(query)
+  ret_all = c.fetchall()
+  set1_rating = {}
+  for ret in ret_all:
+    id_in_set, rating = ret
+    set1_rating[id_in_set] = rating
+  query = "select id_in_set, rating from images where set_name == '%s' and rating is not null;" % set2
+  c.execute(query)
+  ret_all = c.fetchall()
+  set2_rating = {}
+  for ret in ret_all:
+    id_in_set, rating = ret
+    set2_rating[id_in_set] = rating
+  update_cnt = 0
+  conflict_cnt = 0
+  images_root = g_image_root
+  for set1_id in set1_rating:
+    set1_rt = set1_rating[set1_id]
+    if set2_rating.has_key(set1_id) == False:
+      query = "select * from images where set_name = '%s' and id_in_set = %d;" % (set2, set1_id)
+      c.execute(query)
+      if len(c.fetchall()) == 0:
+        continue
+      write_log("sync: %s: %d -> %s" % (set2, set1_id, set1_rt))
+      # mirror rating from set1 to set2
+      query = "update images set rating = '%s' where set_name = '%s' and id_in_set = %d;" % (set1_rt, set2, set1_id)
+      c.execute(query)
+      update_cnt += 1
+    else:
+      set2_rt = set2_rating[set1_id]
+      if set2_rt < set1_rt:
+        write_log("conflict: down rate %s: %d -> %s" % (set1, set1_id, set2_rt))
+        conflict_cnt += 1
+        query = "update images set rating = '%s' where set_name = '%s' and id_in_set = %d;" % (set2_rt, set1, set1_id)
+        c.execute(query)
+      elif set1_rt < set2_rt:
+        write_log("conflict: down rate %s: %d -> %s" % (set2, set1_id, set1_rt))
+        conflict_cnt += 1
+        query = "update images set rating = '%s' where set_name = '%s' and id_in_set = %d;" % (set1_rt, set2, set1_id)
+        c.execute(query)
+  db_commit()
+  print "done sync %s -> %s, %d updates, %d conflict" % (set1, set2, update_cnt, conflict_cnt)
+
+def moe_sync_rating():
+  moe_sync_rating_helper("nekobooru", "nekobooru_highres")
+  moe_sync_rating_helper("nekobooru_highres", "nekobooru")
+  moe_sync_rating_helper("konachan", "konachan_highres")
+  moe_sync_rating_helper("konachan_highres", "konachan")
+  moe_sync_rating_helper("moe_imouto", "moe_imouto_highres")
+  moe_sync_rating_helper("moe_imouto_highres", "moe_imouto")
+  moe_sync_rating_helper("danbooru", "danbooru_highres")
+  moe_sync_rating_helper("danbooru_highres", "danbooru")
 
 def moe_highres_rating():
   normal_set = raw_input("The normal res image set:")
@@ -1645,7 +1700,7 @@ def moe_export_big_unrated():
     shutil.copyfile(img_path, dest_file)
 
 def moe_export_sql():
-  query_sql = raw_input("your sql query? ")
+  query_sql = raw_input("your sql query? (no trailing ';') ")
   query_sql = "select set_name, id_in_set, ext, file_size from (%s)" % query_sql
   c = DB_CONN.cursor()
   c.execute(query_sql)
@@ -1710,7 +1765,7 @@ def moe_help():
   print "  export-sql                 export images based on sql query result"
   print "  find-ophan                 find images that are in images root, but not in database"
   print "  help                       display this info"
-  print "  highres-rating             mirror rating of normal res image set to highres image set"
+  print "  highres-rating             mirror rating of normal res image set to highres image set (deprecated)"
   print "  import                     batch import pictures"
   print "  import-album               import existing album"
   print "  import-black-list          import existing black list file"
@@ -1728,6 +1783,7 @@ def moe_help():
   print "  mirror-moe-imouto-html     mirror moe.imouto.org (through html request)"
   print "  mirror-nekobooru           mirror nekobooru.com"
   print "  mirror-tu178               mirror tu.178.com"
+  print "  sync-rating                sync rating for images"
   print "  update-file-size           make sure every images's file_size is read into databse"
   print
   print "author: Santa Zhang (santa1987@gmail.com)"
@@ -1824,9 +1880,6 @@ if __name__ == "__main__":
     moe_list_albums()
   elif sys.argv[1] == "mirror-all":
     moe_mirror_all()
-  elif sys.argv[1] == "mirror-tu178":
-    init_db_connection()
-    moe_mirror_tu178()
   elif sys.argv[1] == "mirror-danbooru":
     init_db_connection()
     moe_mirror_danbooru()
@@ -1851,6 +1904,12 @@ if __name__ == "__main__":
   elif sys.argv[1] == "mirror-nekobooru":
     init_db_connection()
     moe_mirror_nekobooru()
+  elif sys.argv[1] == "mirror-tu178":
+    init_db_connection()
+    moe_mirror_tu178()
+  elif sys.argv[1] == "sync-rating":
+    init_db_connection()
+    moe_sync_rating()
   elif sys.argv[1] == "update-file-size":
     init_db_connection()
     moe_update_file_size()
