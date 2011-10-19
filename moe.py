@@ -1644,6 +1644,35 @@ def moe_export_big_unrated():
     print "(%d/%d, %s/%s) %s --> %s" % (counter, len(ret_all), pretty_fsize(done_sz), pretty_fsize(total_sz), img_path, dest_file)
     shutil.copyfile(img_path, dest_file)
 
+def moe_export_sql():
+  query_sql = raw_input("your sql query? ")
+  query_sql = "select set_name, id_in_set, ext, file_size from (%s)" % query_sql
+  c = DB_CONN.cursor()
+  c.execute(query_sql)
+  ret_all = c.fetchall()
+  total_sz = 0
+  for ret in ret_all:
+    image_set, id_in_set, ext, fsize = ret[0], ret[1], ret[2], ret[3]
+    total_sz += fsize
+  print "%d images, total size %s" % (len(ret_all), pretty_fsize(total_sz))
+  outdir = raw_input("Output dir? ")
+  util_make_dirs(os.path.join(outdir, "unrated"))
+  util_make_dirs(os.path.join(outdir, "0"))
+  util_make_dirs(os.path.join(outdir, "1"))
+  util_make_dirs(os.path.join(outdir, "2"))
+  util_make_dirs(os.path.join(outdir, "3"))
+  done_sz = 0
+  counter = 0
+  images_root = g_image_root
+  for ret in ret_all:
+    counter += 1
+    image_set, id_in_set, ext, fsize = ret[0], ret[1], ret[2], ret[3]
+    img_path = images_root + os.path.sep + image_set + os.path.sep + util_get_bucket_name(id_in_set) + os.path.sep + str(id_in_set) + ext
+    dest_file = os.path.join(outdir, "unrated", image_set + " " + str(id_in_set) + ext)
+    done_sz += fsize
+    print "(%d/%d, %s/%s) %s --> %s" % (counter, len(ret_all), pretty_fsize(done_sz), pretty_fsize(total_sz), img_path, dest_file)
+    shutil.copyfile(img_path, dest_file)
+
 def moe_list_albums():
   print "Loading data..."
   c = DB_CONN.cursor()
@@ -1678,6 +1707,7 @@ def moe_help():
   print "  export-album               export images in an album"
   print "  export-big-unrated         export big and unrated images for rating, see import-rating-by-find"
   print "  export-psp                 export images for PSP rating"
+  print "  export-sql                 export images based on sql query result"
   print "  find-ophan                 find images that are in images root, but not in database"
   print "  help                       display this info"
   print "  highres-rating             mirror rating of normal res image set to highres image set"
@@ -1759,6 +1789,9 @@ if __name__ == "__main__":
   elif sys.argv[1] == "export-psp":
     init_db_connection()
     moe_export_psp()
+  elif sys.argv[1] == "export-sql":
+    init_db_connection()
+    moe_export_sql()
   elif sys.argv[1] == "find-ophan":
     init_db_connection()
     moe_find_ophan()
