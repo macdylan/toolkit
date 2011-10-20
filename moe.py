@@ -861,7 +861,9 @@ def moe_import_rating_dir():
         rating = "null"
       set_name, id_in_set = splt[0], int(splt[1])
       print set_name, id_in_set, "--> rating", rating
-      query = "update images set rating = '%s' where set_name = '%s' and id_in_set = %d;" % (rating, set_name, id_in_set)
+      if rating != "null":
+        rating = "'%s'" % rating
+      query = "update images set rating = %s where set_name = '%s' and id_in_set = %d;" % (rating, set_name, id_in_set)
       c.execute(query)
     except:
       traceback.print_exc()
