@@ -848,22 +848,23 @@ def moe_import_rating_dir():
   f = open(rating_txt, "r")
   c = DB_CONN.cursor()
   for line in f.readlines():
-    line = line.strip()
-    if not is_image(line):
-      continue
-    if "/" in line:
-      splt = line.split("/")
-    else:
-      splt = line.split("\\")
-    rating, fname = splt[len(splt) - 2], splt[len(splt) - 1]
-    fname = os.path.splitext(fname)[0]
-    splt = fname.split(" ")
-    if rating == "unrated":
-      rating = "null"
-    set_name, id_in_set = splt[0], int(splt[1])
-    print set_name, id_in_set, "--> rating", rating
-    query = "update images set rating = '%s' where set_name = '%s' and id_in_set = %d;" % (rating, set_name, id_in_set)
-    c.execute(query)
+    try:
+      line = line.strip()
+      if "/" in line:
+        splt = line.split("/")
+      else:
+        splt = line.split("\\")
+      rating, fname = splt[len(splt) - 2], splt[len(splt) - 1]
+      fname = os.path.splitext(fname)[0]
+      splt = fname.split(" ")
+      if rating == "unrated":
+        rating = "null"
+      set_name, id_in_set = splt[0], int(splt[1])
+      print set_name, id_in_set, "--> rating", rating
+      query = "update images set rating = '%s' where set_name = '%s' and id_in_set = %d;" % (rating, set_name, id_in_set)
+      c.execute(query)
+    except:
+      traceback.print_exc()
   db_commit()
   f.close()
 
