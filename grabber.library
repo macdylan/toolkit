@@ -8,6 +8,9 @@
 #
 # there is empty lines between manga books
 
+name=future_diary
+url=http://manhua.178.com/wlrj/
+
 name=gantz_178
 url=http://manhua.178.com/sldsgantz/
 
