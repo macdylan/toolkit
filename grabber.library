@@ -8,6 +8,9 @@
 #
 # there is empty lines between manga books
 
+name=bigorder
+url=http://manhua.178.com/bigorder/
+
 name=future_diary
 url=http://manhua.178.com/wlrj/
 
