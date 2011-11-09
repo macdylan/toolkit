@@ -1700,7 +1700,12 @@ def moe_export_big_unrated():
     dest_file = os.path.join(outdir, "unrated", image_set + " " + str(id_in_set) + ext)
     done_sz += fsize
     print "(%d/%d, %s/%s) %s --> %s" % (counter, len(ret_all), pretty_fsize(done_sz), pretty_fsize(total_sz), img_path, dest_file)
-    shutil.copyfile(img_path, dest_file)
+    try:
+      shutil.copyfile(img_path, dest_file)
+    except:
+      traceback.print_exc()
+      if os.path.exists(img_path) == False:
+        db_del_image(image_set, id_in_set)
 
 def moe_export_sql():
   query_sql = raw_input("your sql query? (no trailing ';') ")
