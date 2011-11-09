@@ -8,6 +8,9 @@
 #
 # there is empty lines between manga books
 
+name=bigorder
+url=http://manhua.178.com/bigorder/
+
 name=future_diary
 url=http://manhua.178.com/wlrj/
 
@@ -53,6 +56,12 @@ url=http://manhua.178.com/chizudeyunshi/
 
 name=mowangyongzhe
 url=http://manhua.178.com/mowangyongzhejujue/
+
+name=mowangyongzhe2
+url=http://manhua.178.com/mowangyongzhenew/
+
+name=mowangyongzhe_4ge
+url=http://manhua.178.com/mwyzsg/
 
 name=zhongshenhuigui
 url=http://manhua.178.com/zhongshenhuigui/
@@ -320,8 +329,8 @@ url=http://manhua.178.com/z/zrzg.shtml
 name=qihun
 url=http://manhua.178.com/q/qh.shtml
 
-name=fullmetal
-url=http://manhua.178.com/g/gzljss.shtml
+#name=fullmetal
+#url=http://manhua.178.com/g/gzljss.shtml
 
 #name=inuyasha
 #url=http://manhua.178.com/q/qycinuyasha.shtml

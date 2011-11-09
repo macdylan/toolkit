@@ -1302,6 +1302,23 @@ def hk_rsync_to_labpc():
   else:
     print "Backup folder /Volumes/Takaramono$ not mounted!"
 
+def hk_size_ftp_ls_lr():
+  fpath = raw_input("Please provide the path of ls-lR file: ")
+  f = open(fpath)
+  total_sz = 0
+  for l in f.readlines():
+    sp = l.split()
+    if len(sp) > 5 and len(sp[0]) == len("drwxrwxrwx"):
+      try:
+        sz = int(sp[4])
+        total_sz += sz
+      except:
+        print "Error parsing: %s" % l.strip()
+        traceback.print_exc()
+  f.close()
+  print "%d bytes, or %s" % (total_sz, pretty_fsize(total_sz))
+
+
 def hk_help():
   print "housekeeper.py: helper script to manage my important collections"
   print "usage: housekeeper.py <command>"
@@ -1333,6 +1350,7 @@ def hk_help():
   print "  rm-all-gems                        remove all rubygems (currently Mac only)"
   print "  rm-empty-dir                       remove empty dir"
   print "  rsync-to-labpc                     use rsync to backup my craps onto LabPC"
+  print "  size-ftp-ls-lr                     get the total size of an FTP site by its ls-lR file"
   print "  sync-rainlendar (deprecated)       sync iCal & rainlendar"
   print "  sys-backup                         system backup (currently Mac only)"
   print "  sys-maint                          system maintenance (currently Mac only)"
@@ -1401,6 +1419,8 @@ if __name__ == "__main__":
     hk_rm_empty_dir()
   elif sys.argv[1] == "rsync-to-labpc":
     hk_rsync_to_labpc()
+  elif sys.argv[1] == "size-ftp-ls-lr":
+    hk_size_ftp_ls_lr()
   elif sys.argv[1] == "sync-rainlendar":
     hk_sync_rainlendar()
   elif sys.argv[1] == "sys-backup":
