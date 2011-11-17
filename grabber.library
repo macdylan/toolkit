@@ -8,6 +8,12 @@
 #
 # there is empty lines between manga books
 
+name=ta_zhai
+url=http://manhua.178.com/tahetadezhai2/
+
+#name=hunter
+#url=http://manhua.178.com/lieren/
+
 name=bigorder
 url=http://manhua.178.com/bigorder/
 
