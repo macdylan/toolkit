@@ -69,6 +69,18 @@ def zipdir(basedir, archivename):
           raise e # re-throw
   return ok
 
+def zipfile(fpath, archivepath):
+  ok = True
+  assert os.path.isfile(fpath)
+  with closing(ZipFile(archivepath, "w", ZIP_DEFLATED)) as z:
+    try:
+      zfn = os.path.split(fpath)[1]
+      z.write(fpath, zfn)
+    except Exception as e:
+      ok = False
+      raise e # re-threow
+  return ok
+
 def get_config(key, default_value=None):
   module_name = os.path.basename(sys.argv[0])
   if "." in module_name:

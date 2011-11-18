@@ -1358,12 +1358,28 @@ def moe_backup_db():
   db_backup_file = os.path.join(backup_to, "%s.backup.%s%s" % (db_main_fn, tm_str, db_ext_fn))
   print "copying '%s' -> '%s'" % (db_file, db_backup_file)
   shutil.copyfile(db_file, db_backup_file)
+  
+  db_dump_file = os.path.join(backup_to, "%s.dump.%s.sql" % (db_main_fn, tm_str))
+  print "dumping '%s' -> '%s'" % (db_file, db_dump_file)
+  sqlite_bin = os.path.join(os.path.split(__file__)[0], "libexec", "sqlite3.exe")
+  cmd = "%s \"%s\" .dump  > \"%s\"" % (sqlite_bin, db_file, db_dump_file)
+  os.system(cmd)
+  
+  print "archiving..."
+  db_dump_archive = os.path.join(backup_to, "%s.dump.%s.zip" % (db_main_fn, tm_str))
+  if zipfile(db_dump_file, db_dump_archive) == True:
+    os.remove(db_dump_file)
+  
   backup_counter = 0
+  dump_counter = 0
   for fn in os.listdir(backup_to):
     if fn.startswith("%s.backup." % db_main_fn) and fn.endswith(db_ext_fn):
       print fn
       backup_counter += 1
-  print "There is %d backup(s) of database file" % backup_counter
+    if fn.startswith("%s.dump." % db_main_fn) and (fn.endswith(".zip") or fn.endswith(".sql")):
+      print fn
+      dump_counter += 1
+  print "There are %d backup(s) and %d dump(s) of database file" % (backup_counter, dump_counter)
 
 def util_backup_images(images, backup_type):
   image_root = get_config("image_root")
