@@ -8,6 +8,13 @@
 #
 # there is empty lines between manga books
 
+name=kobato_drop
+url=http://manhua.178.com/xjdrop/
+
+name=silver_spoon
+url=http://manhua.178.com/baiyinzhiyao/
+
+
 name=few_friends
 url=http://manhua.178.com/wodepengyouhenshao/
 
