@@ -117,7 +117,7 @@ diff_result.sort()
 #print diff_result
 
 diff_limit = 1000
-diff_threshold = 0.5
+diff_threshold = 0.6
 
 if diff_limit > len(diff_result):
     diff_limit = len(diff_result)
