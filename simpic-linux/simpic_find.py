@@ -12,15 +12,53 @@ def is_image(fn):
     fn = fn.lower()
     return fn.endswith(".jpg") or fn.endswith(".jpeg") or fn.endswith(".png") or fn.endswith(".bmp") or fn.endswith(".gif")
 
+g_fp_cache = None
+def read_fp_cache(imgfpath):
+    global g_fp_cache
+    if g_fp_cache == None:
+        g_fp_cache = {}
+        if os.path.exists("fp_cache.txt"):
+            f = open("fp_cache.txt")
+            while True:
+                line = f.readline()
+                if line == "":
+                    break
+                img_fpath = line.strip()
+                line = f.readline()
+                sp = line.split()
+                imgfp = map(int, sp)
+                g_fp_cache[img_fpath] = imgfp
+                line = f.readline()
+            f.close()
+    if imgfpath in g_fp_cache.keys():
+        return g_fp_cache[imgfpath]
+
+def write_fp_cache(imgfpath, imgfp):
+    global g_fp_cache
+    g_fp_cache[imgfpath] = imgfp
+    f = open("fp_cache.txt", "w")
+    for k in g_fp_cache:
+        f.write("%s\n" % k)
+        for v in g_fp_cache[k]:
+            f.write("%d " % v)
+        f.write("\n\n")
+    f.close()
+
 def calc_fp(fpath):
-    # TODO revert to thumbnail on failure
-    # TODO load from local library
-    p = os.popen("./calc_fp \"%s\"" % fpath, "r")
+    imgfp = read_fp_cache(fpath)
+    if imgfp != None:
+        return imgfp
+
+    os.system("convert -resize 250x150 '%s' tmp.png" % fpath)
+    p = os.popen("./calc_fp 'tmp.png'", "r")
     out = p.read()
     p.close()
+    os.remove("tmp.png")
     sp = out.split()
     if len(sp) == 544:
-        return map(int, sp)
+        imgfp = map(int, sp)
+        write_fp_cache(fpath, imgfp)
+        return imgfp
 
 image_folders = sys.argv[1:]
 
