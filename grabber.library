@@ -8,8 +8,8 @@
 #
 # there is empty lines between manga books
 
-name=akasaka
-url=http://manhua.178.com/xyrhdpd/
+#name=akasaka
+#url=http://manhua.178.com/xyrhdpd/
 
 name=xiuluochang_h
 url=http://manhua.178.com/jzwnyhqmzmjdgzxlch/
@@ -79,11 +79,11 @@ url=http://manhua.178.com/chizudeyunshi/
 name=mowangyongzhe
 url=http://manhua.178.com/mowangyongzhejujue/
 
-name=mowangyongzhe2
-url=http://manhua.178.com/mowangyongzhenew/
+#name=mowangyongzhe2
+#url=http://manhua.178.com/mowangyongzhenew/
 
-name=mowangyongzhe_4ge
-url=http://manhua.178.com/mwyzsg/
+#name=mowangyongzhe_4ge
+#url=http://manhua.178.com/mwyzsg/
 
 name=zhongshenhuigui
 url=http://manhua.178.com/zhongshenhuigui/
@@ -156,8 +156,8 @@ url=http://manhua.178.com/jimengbianshen/
 #name=dreamclub_manga
 #url=http://manhua.178.com/meimengjulebu/
 
-name=oxdsbreak
-url=http://manhua.178.com/oxdsbreak/
+#name=oxdsbreak
+#url=http://manhua.178.com/oxdsbreak/
 
 
 name=narcissu
@@ -182,8 +182,8 @@ url=http://manhua.178.com/yilupingan/
 name=btwzhbxm
 url=http://manhua.178.com/btwzhbxm/
 
-name=after_eva
-url=http://manhua.178.com/zhihoudeevangelion/
+#name=after_eva
+#url=http://manhua.178.com/zhihoudeevangelion/
 
 name=hjmsn
 url=http://manhua.178.com/hjmsn/
@@ -411,8 +411,8 @@ url=http://manhua.178.com/s/schoolrumblez.shtml
 #name=schooldays
 #url=http://manhua.178.com/s/school%20days.shtml
 
-name=xiangnanchunai
-url=http://manhua.178.com/x/xncaz.shtml
+#name=xiangnanchunai
+#url=http://manhua.178.com/x/xncaz.shtml
 
 name=gto
 url=http://manhua.178.com/g/gto.shtml
@@ -491,11 +491,11 @@ url=http://manhua.178.com/z/zzbqsnwz.shtml
 #url=http://manhua.178.com/y/ymqdlls.shtml
 
 
-name=kobato
-url=http://manhua.178.com/q/qjsnkobato.shtml
+#name=kobato
+#url=http://manhua.178.com/q/qjsnkobato.shtml
 
-name=kobatodrop
-url=http://manhua.178.com/x/xjdrop.shtml
+#name=kobatodrop
+#url=http://manhua.178.com/x/xjdrop.shtml
 
 #name=magicknight
 #url=http://manhua.178.com/m/mofaqishi.shtml
