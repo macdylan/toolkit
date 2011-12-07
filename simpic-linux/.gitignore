@@ -1,5 +1,5 @@
 calc_fp
 result.html
-fp_cache.txt
+fp_cache.*
 *.o
 tmp.*

@@ -36,13 +36,14 @@ def read_fp_cache(imgfpath):
 def write_fp_cache(imgfpath, imgfp):
     global g_fp_cache
     g_fp_cache[imgfpath] = imgfp
-    f = open("fp_cache.txt", "w")
+    f = open("fp_cache.txt~", "w")
     for k in g_fp_cache:
         f.write("%s\n" % k)
         for v in g_fp_cache[k]:
             f.write("%d " % v)
         f.write("\n\n")
     f.close()
+    os.rename("fp_cache.txt~", "fp_cache.txt")
 
 def calc_fp(fpath):
     imgfp = read_fp_cache(fpath)
