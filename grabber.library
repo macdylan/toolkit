@@ -70,8 +70,8 @@ url=http://manhua.178.com/jingzhiguodzxc/
 name=luoqiushe
 url=http://manhua.178.com/luoqiushe/
 
-name=barefoot_meteor
-url=http://manhua.178.com/chizudeyunshi/
+#name=barefoot_meteor
+#url=http://manhua.178.com/chizudeyunshi/
 
 #name=touch
 #url=http://manhua.178.com/touch/
@@ -100,8 +100,8 @@ url=http://manhua.178.com/womendouhaihuozhe/
 name=goodending
 url=http://manhua.178.com/ge-good-ending/
 
-name=kaminote
-url=http://manhua.178.com/shendejishiben/
+#name=kaminote
+#url=http://manhua.178.com/shendejishiben/
 
 #name=seeyousonata
 #url=http://manhua.178.com/lbdgqzmq/
@@ -141,11 +141,11 @@ url=http://manhua.178.com/twmhyaopian/
 #url=http://manhua.178.com/sdzwlovegoeson/
 
 
-name=rewrite
-url=http://manhua.178.com/rewrite/
+#name=rewrite
+#url=http://manhua.178.com/rewrite/
 
-name=golf_girl
-url=http://manhua.178.com/jimengbianshen/
+#name=golf_girl
+#url=http://manhua.178.com/jimengbianshen/
 
 #name=shuilian
 #url=http://manhua.178.com/s/suilian.shtml
@@ -195,8 +195,8 @@ url=http://manhua.178.com/hjmsn/
 #url=http://manhua.178.com/mingyunshizhimen/
 
 
-name=gpoint
-url=http://manhua.178.com/gdiandazuozhan/
+#name=gpoint
+#url=http://manhua.178.com/gdiandazuozhan/
 
 name=deathevolution
 url=http://manhua.178.com/swjh/
@@ -289,8 +289,8 @@ name=mowangnaiba
 url=http://manhua.178.com/m/mowangnaiba.shtml
 
 
-name=ytshaonv
-url=http://manhua.178.com/y/ytsn.shtml
+#name=ytshaonv
+#url=http://manhua.178.com/y/ytsn.shtml
 
 name=railgun
 url=http://manhua.178.com/m/mkxdcdcp.shtml
