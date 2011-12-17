@@ -8,6 +8,15 @@
 #
 # there is empty lines between manga books
 
+name=yunzbd
+url=http://manhua.178.com/yunzbd/
+
+name=hoshi_no_koe
+url=http://manhua.178.com/xzs/
+
+name=xingshouquan
+url=http://manhua.178.com/xingshouquan/
+
 #name=akasaka
 #url=http://manhua.178.com/xyrhdpd/
 
