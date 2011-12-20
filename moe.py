@@ -344,7 +344,7 @@ def util_download_danbooru_image(image_set, id_in_set, image_url, image_size = 0
     traceback.print_exc()
     time.sleep(1)
 
-def util_mirrro_danbooru_site_down_image(info_list, image_set_base, image_set_highres, tmp_folder):
+def util_mirror_danbooru_site_down_image(info_list, image_set_base, image_set_highres, tmp_folder):
   for info in info_list:
     try:
       id_in_set = int(info[u"id"])
@@ -478,7 +478,7 @@ def util_mirror_danbooru_site_html(site_url):
         time.sleep(120) # wait 2 minutes
         continue
 
-      util_mirrro_danbooru_site_down_image(info_list, image_set_base, image_set_highres, tmp_folder)
+      util_mirror_danbooru_site_down_image(info_list, image_set_base, image_set_highres, tmp_folder)
 
     except:
       traceback.print_exc()
@@ -556,7 +556,7 @@ def util_mirror_danbooru_site(site_url):
         time.sleep(120) # wait 2 minutes
         continue
 
-      util_mirrro_danbooru_site_down_image(info_list, image_set_base, image_set_highres, tmp_folder)
+      util_mirror_danbooru_site_down_image(info_list, image_set_base, image_set_highres, tmp_folder)
 
     except:
       traceback.print_exc()
@@ -623,7 +623,7 @@ def util_mirror_danbooru_site_ex(site_url, before_id = None):
           time.sleep(120) # wait 2 minutes
           continue
 
-        util_mirrro_danbooru_site_down_image(info_list, image_set_base, image_set_highres, tmp_folder)
+        util_mirror_danbooru_site_down_image(info_list, image_set_base, image_set_highres, tmp_folder)
 
       new_page_url = None
 
