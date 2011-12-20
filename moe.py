@@ -171,17 +171,18 @@ def db_set_image_tags(image_set, id_in_set, tags):
     db_add_image_tags(img[0], tags)
 
 def db_get_image_tags(image_set, id_in_set):
-  img = db_get_image_by_id_in_set(image_set, id_in_set)
-  if img == None:
-    return None
-  image_id = img[0]
-  c.execute("select tags.name from tags, images_has_tags where tags.id = images_has_tags.tag_id and images_has_tags.image_id = %d" % image_id)
-  ret_all = c.fetchall()
-  tags = []
-  for ret in ret_all:
-    tags += ret[0],
-  tags.sort()
-  return tags
+    img = db_get_image_by_id_in_set(image_set, id_in_set)
+    if img == None:
+        return None
+    image_id = img[0]
+    c = DB_CONN.cursor()
+    c.execute("select tags.name from tags, images_has_tags where tags.id = images_has_tags.tag_id and images_has_tags.image_id = %d" % image_id)
+    ret_all = c.fetchall()
+    tags = []
+    for ret in ret_all:
+        tags += ret[0],
+    tags.sort()
+    return tags
 
 def db_add_image_tags(image_id, tags):
     for tag in tags:
@@ -719,7 +720,7 @@ def moe_info():
     print "input empty line to quit"
     image_set = None
     while True:
-      input = raw_input("image set or image id in set: ")
+      input = raw_input("image set or image id in set (empty to quit): ")
       if input == "":
         break
       if " " in input:
@@ -1851,16 +1852,16 @@ def moe_help():
   print "  export                     export images"
   print "  export-album               export images in an album"
   print "  export-big-unrated         export big and unrated images for rating, see import-rating-by-find"
-  print "  export-psp                 export images for PSP rating"
+  print "  export-psp                 (depracated) export images for PSP rating"
   print "  export-sql                 export images based on sql query result"
   print "  find-ophan                 find images that are in images root, but not in database"
   print "  help                       display this info"
-  print "  highres-rating             mirror rating of normal res image set to highres image set (deprecated)"
+  print "  highres-rating             (depracated) mirror rating of normal res image set to highres image set"
   print "  import                     batch import pictures"
   print "  import-album               import existing album"
   print "  import-black-list          import existing black list file"
   print "  import-rating-dir          import existing rating result from `find` output"
-  print "  import-rating-psp          import existing rating from my PSP lua application"
+  print "  import-rating-psp          (depracated) import existing rating from my PSP lua application"
   print "  info                       display info about an image"
   print "  info-album                 display info about an album"
   print "  list-albums                list all the albums and their size"
@@ -1874,7 +1875,7 @@ def moe_help():
   print "  mirror-nekobooru           mirror nekobooru.com"
   print "  mirror-tu178               mirror tu.178.com"
   print "  sync-rating                sync rating for images"
-  print "  update-file-size           make sure every images's file_size is read into databse"
+  print "  update-file-size           (depreated) make sure every images's file_size is read into databse"
   print
   print "author: Santa Zhang (santa1987@gmail.com)"
 
