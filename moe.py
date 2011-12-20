@@ -21,6 +21,7 @@ import urlparse
 from urllib2 import HTTPError
 from select import *
 from utils import *
+from xml.etree import ElementTree
 
 # Database models:
 #
@@ -228,22 +229,41 @@ def db_get_tag_by_name(tag_name):
     ret = c.fetchone()
     return ret
 
-def db_add_album(album_name):
+
+def util_html_escape(text):
+    html_escape_table = {
+        '"' : "&quot;",
+        "'" : "&apos;",
+    }
+    return "".join(html_escape_table.get(c, c) for c in text)
+
+
+def db_add_album(album_name, desc = None):
     c = DB_CONN.cursor()
     c.execute("select * from albums where name = '%s'" % album_name)
     if c.fetchone() == None:
         write_log("[info] adding new album: %s" % album_name)
-        c.execute("insert into albums(name) values('%s')" % album_name)
+        if desc == None:
+            c.execute("insert into albums(name) values('%s')" % album_name)
+        else:
+            c.execute("insert into albums(name, description) values('%s', \"%s\")" % (album_name, util_html_escape(desc)))
+        db_commit()
 
 
 def db_del_album(album_name):
     c = DB_CONN.cursor()
     try:
         c.execute("select id from albums where name = '%s'" % album_name)
-        album_id = int(c.fetchone()[0])
+        query_ret = c.fetchone()
+        if query_ret == None:
+            return
+        album_id = int(query_ret[0])
         write_log("[info] removing album: %s, id = %d" % (album_name, album_id))
         c.execute("delete from albums_has_images where album_id = %d" % album_id)
         c.execute("delete from albums where name = '%s'" % album_name)
+    except:
+        traceback.print_exc()
+        time.sleep(1)
     finally:
         db_commit()
 
@@ -1891,9 +1911,45 @@ def util_pool_get_max_page(pool_api):
 
 
 def util_pool_mirror(pool_index, set_name, pool_name, pool_size):
-    # TODO escape pool_name?
-    print "TODO: mirror pool '%s' from '%s' (set=%s), size=%d" % (pool_name, pool_index, set_name, pool_size)
-    # TODO really mirror the pool
+    print "mirror pool '%s' from '%s' (set=%s), size=%d" % (pool_name, pool_index, set_name, pool_size)
+    # first remove the album, then add the album
+    album_name = util_html_escape("[pool_%s] %s" % (set_name, pool_name))
+    print "album_name = %s" % album_name
+    db_del_album(album_name)
+    page_id = 1
+    desc = None
+    while True:
+        try:
+            query_url = pool_index + (".xml?page=%d" % page_id)
+            print "querying xml page: %s" % query_url
+            page_src = "\n".join(map(str.strip, urllib2.urlopen(query_url).readlines()))
+            xml = ElementTree.XML(page_src)
+            if desc == None:
+                desc = xml.find("description").text
+                print "---- begin description ----"
+                print desc
+                print "---- end description ----"
+
+            db_add_album(album_name, desc)
+            posts = xml.findall("posts/post")
+
+            for post in posts:
+                id_in_set = int(post.attrib["id"])
+                ret1 = db_add_album_image(album_name, set_name, id_in_set)
+                # also add highres image
+                ret2 = db_add_album_image(album_name, set_name + "_highres", id_in_set)
+                if ret1 or ret2:
+                    print "post = %s %d, add success" % (set_name, id_in_set)
+                else:
+                    print "post = %s %d, add failure!" % (set_name, id_in_set)
+            db_commit()
+            if len(posts) == 0:
+                break
+            page_id += 1
+        except:
+            traceback.print_exc()
+            time.sleep(1)
+            break
 
 
 def util_pool_fetch_page_directory(query_url, set_name):
