@@ -742,17 +742,26 @@ def moe_info():
         print "changed active image set to '%s'" % image_set
 
 def moe_info_album():
-  if len(sys.argv) == 3:
-    img_list = db_get_album_images(sys.argv[2])
-    for img in img_list:
-      if img[4] == None:
-        rating = "?"
-      else:
-        rating = str(img[4])
-      print "%-10s %6d%s %s %s" % (img[1], img[2], img[5], rating, img[3])
-    print "<%d images>" % len(img_list)
-  else:
-    print "usage: moe info-album <album-name>"
+    if len(sys.argv) == 3:
+        album_name = sys.argv[2]
+        img_list = db_get_album_images(album_name)
+        c = DB_CONN.cursor()
+        c.execute("select description from albums where name = '%s'" % album_name)
+        description = c.fetchone()[0]
+        if description == None:
+            print "no description available for album '%s'" % album_name
+        else:
+            print description
+        print "----"
+        for img in img_list:
+            if img[4] == None:
+                rating = "?"
+            else:
+                rating = str(img[4])
+            print "%-18s %8d%s %s %s" % (img[1], img[2], img[5], rating, img[3])
+        print "<%d images>" % len(img_list)
+    else:
+        print "usage: moe info-album <album-name>"
 
 def moe_import_album():
   print "input an empty line to quit"
