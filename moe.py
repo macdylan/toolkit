@@ -1867,53 +1867,53 @@ def moe_list_albums():
     print "%s  (id=%d, count=%d)" % (name, id, count)
 
 def moe_help():
-  print "moe.py: manage all my acg pictures"
-  print "usage: moe.py <command>"
-  print "available commands:"
-  print
-  print "  add                        add a new image to library"
-  print "  add-dir                    add all images in a directory to the library"
-  print "  add-dir-tree               add all images in a directory tree to the library"
-  print "  backup-albums              backup albums"
-  print "  backup-all                 backup everything"
-  print "  backup-cleanup             cleanup backup repository"
-  print "  backup-db                  backup database"
-  print "  backup-rate-1              backup images with rating 1"
-  print "  backup-rate-2              backup images with rating 2"
-  print "  backup-rate-3              backup images with rating 3"
-  print "  backup-unrated             backup images without rating"
-  print "  check-md5                  check all images by their md5, need to build binaries under libexec first"
-  print "  cleanup                    delete images with rating 0, empty albums, and compact the black list"
-  print "  create-album               create an album based on a folder of well-formed images"
-  print "  export                     export images"
-  print "  export-album               export images in an album"
-  print "  export-big-unrated         export big and unrated images for rating, see import-rating-by-find"
-  print "  export-psp                 (depracated) export images for PSP rating"
-  print "  export-sql                 export images based on sql query result"
-  print "  find-ophan                 find images that are in images root, but not in database"
-  print "  help                       display this info"
-  print "  highres-rating             (depracated) mirror rating of normal res image set to highres image set"
-  print "  import                     batch import pictures"
-  print "  import-album               import existing album"
-  print "  import-black-list          import existing black list file"
-  print "  import-rating-dir          import existing rating result from `find` output"
-  print "  import-rating-psp          (depracated) import existing rating from my PSP lua application"
-  print "  info                       display info about an image"
-  print "  info-album                 display info about an album"
-  print "  list-albums                list all the albums and their size"
-  print "  mirror-all                 mirror all known sites"
-  print "  mirror-danbooru            mirror danbooru.donmai.us"
-  print "  mirror-danbooru-1000       mirror danbooru.donmai.us from 1000th page"
-  print "  mirror-danbooru-before     mirror danbooru.donmai.us before a certain picture id"
-  print "  mirror-konachan            mirror konachan.com"
-  print "  mirror-moe-imouto          mirror moe.imouto.org"
-  print "  mirror-moe-imouto-html     mirror moe.imouto.org (through html request)"
-  print "  mirror-nekobooru           mirror nekobooru.com"
-  print "  mirror-tu178               mirror tu.178.com"
-  print "  sync-rating                sync rating for images"
-  print "  update-file-size           (depreated) make sure every images's file_size is read into databse"
-  print
-  print "author: Santa Zhang (santa1987@gmail.com)"
+    print """moe.py: manage all my acg pictures"
+usage: moe.py <command>"
+available commands:"
+
+    add                        add a new image to library
+    add-dir                    add all images in a directory to the library
+    add-dir-tree               add all images in a directory tree to the library
+    backup-albums              backup albums
+    backup-all                 backup everything
+    backup-cleanup             cleanup backup repository
+    backup-db                  backup database
+    backup-rate-1              backup images with rating 1
+    backup-rate-2              backup images with rating 2
+    backup-rate-3              backup images with rating 3
+    backup-unrated             backup images without rating
+    check-md5                  check all images by their md5, need to build binaries under libexec first
+    cleanup                    delete images with rating 0, empty albums, and compact the black list
+    create-album               create an album based on a folder of well-formed images
+    export                     export images
+    export-album               export images in an album
+    export-big-unrated         export big and unrated images for rating, see import-rating-by-find
+    export-psp                 (depracated) export images for PSP rating
+    export-sql                 export images based on sql query result
+    find-ophan                 find images that are in images root, but not in database
+    help                       display this info
+    highres-rating             (depracated) mirror rating of normal res image set to highres image set
+    import                     batch import pictures
+    import-album               import existing album
+    import-black-list          import existing black list file
+    import-rating-dir          import existing rating result from `find` output
+    import-rating-psp          (depracated) import existing rating from my PSP lua application
+    info                       display info about an image
+    info-album                 display info about an album
+    list-albums                list all the albums and their size
+    mirror-all                 mirror all known sites
+    mirror-danbooru            mirror danbooru.donmai.us
+    mirror-danbooru-1000       mirror danbooru.donmai.us from 1000th page
+    mirror-danbooru-before     mirror danbooru.donmai.us before a certain picture id
+    mirror-konachan            mirror konachan.com
+    mirror-moe-imouto          mirror moe.imouto.org
+    mirror-moe-imouto-html     mirror moe.imouto.org (through html request)
+    mirror-nekobooru           mirror nekobooru.com
+    mirror-tu178               mirror tu.178.com
+    sync-rating                sync rating for images
+    update-file-size           (depreated) make sure every images's file_size is read into databse
+
+author: Santa Zhang (santa1987@gmail.com)"""
 
 if __name__ == "__main__":
   if len(sys.argv) == 1 or sys.argv[1] == "help":
