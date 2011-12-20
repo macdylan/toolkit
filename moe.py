@@ -335,7 +335,6 @@ def util_time_to_int(time_str):
         time_str = time_str.replace("Nov", "11")
         time_str = time_str.replace("Dec", "12")
         tm_val = datetime.datetime.strptime(time_str, "%m %d %Y, %H:%M")
-        pass
     elif "-" in time_str:
         # danbooru, nekobooru style
         tm_val = datetime.datetime.strptime(time_str, "%Y-%m-%d %H:%M")
@@ -343,7 +342,7 @@ def util_time_to_int(time_str):
         # exception! don't know how to handle
         raise ValueError("don't know how to parse: '%s'" % time_str)
     int_val = int(time.mktime(tm_val.timetuple()))
-    return tm_val
+    return int_val
 
 
 def util_int_to_time(time_int):
@@ -1999,56 +1998,128 @@ def moe_update_pool(pool_api, set_name):
             time.sleep(1)
 
 
+def util_tag_history_get_max_page_type1(query_url):
+    max_page = 1
+    page_src = "\n".join(map(str.strip, urllib2.urlopen(query_url).readlines()))
+    idx = page_src.find("<div class=\"pagination\">")
+    idx2 = page_src.find("</div>", idx)
+    paging_code = page_src[idx:idx2]
+    idx = 0
+    while True:
+        idx = paging_code.find("?page=", idx)
+        if idx < 0:
+            break
+        idx2 = paging_code.find('&', idx)
+        page_id = int(paging_code[idx + 6:idx2])
+        if page_id > max_page:
+            max_page = page_id
+        idx = idx2
+    return max_page
+
+def util_tag_history_parse_page_type1(page_src):
+    update_list = [] # a list of tuples (id_in_set, update_time_int)
+
+    idx = 0
+    while True:
+        idx = page_src.find('<td class="id"><a href="/post/show/', idx)
+        if idx < 0:
+            break
+        idx += 35
+        idx2 = page_src.find('"', idx)
+        id_in_set = int(page_src[idx:idx2])
+
+        idx = page_src.find("<td>", idx2)
+        idx2 = page_src.find("</td>", idx)
+        time_str = page_src[idx + 4:idx2]
+        time_val_int = util_time_to_int(time_str)
+
+        idx = idx2
+
+        update_list += (id_in_set, time_val_int),
+
+    return update_list
+
+def util_tag_history_get_page_time_range_type1(query_api, page_id):
+    # TODO
+    query_url = query_api + ("&page=%d" % page_id)
+    page_src = "\n".join(map(str.strip, urllib2.urlopen(query_url).readlines()))
+    update_list = util_tag_history_parse_page_type1(page_src)
+
+    now_tick = int(time.mktime(time.localtime()))
+    max_time = -1
+    min_time = now_tick + 86400 + 1 # prevent time zone problems
+
+    for id_in_set, update_time_int in update_list:
+        if update_time_int > max_time:
+            max_time = update_time_int
+        if update_time_int < min_time:
+            min_time = update_time_int
+
+    return (min_time, max_time)
+
+
+def moe_fetch_tag_history_type1(query_api, set_name):
+    print "TODO: this shall be done!"
+    print "fetching tag history from type1 site: %s => %s" % (query_api, set_name)
+    max_page = util_tag_history_get_max_page_type1(query_api)
+    print "there are %d pages of tag history" % max_page
+    print util_tag_history_get_page_time_range_type1(query_api, 1)
+    print util_tag_history_get_page_time_range_type1(query_api, max_page)
+
 def moe_help():
     print """moe.py: manage all my acg pictures"
 usage: moe.py <command>"
 available commands:"
 
-    add                        add a new image to library
-    add-dir                    add all images in a directory to the library
-    add-dir-tree               add all images in a directory tree to the library
-    backup-albums              backup albums
-    backup-all                 backup everything
-    backup-cleanup             cleanup backup repository
-    backup-db                  backup database
-    backup-rate-1              backup images with rating 1
-    backup-rate-2              backup images with rating 2
-    backup-rate-3              backup images with rating 3
-    backup-unrated             backup images without rating
-    check-md5                  check all images by their md5, need to build binaries under libexec first
-    cleanup                    delete images with rating 0, empty albums, and compact the black list
-    create-album               create an album based on a folder of well-formed images
-    export                     export images
-    export-album               export images in an album
-    export-big-unrated         export big and unrated images for rating, see import-rating-by-find
-    export-psp                 (depracated) export images for PSP rating
-    export-sql                 export images based on sql query result
-    find-ophan                 find images that are in images root, but not in database
-    help                       display this info
-    highres-rating             (depracated) mirror rating of normal res image set to highres image set
-    import                     batch import pictures
-    import-album               import existing album
-    import-black-list          import existing black list file
-    import-rating-dir          import existing rating result from `find` output
-    import-rating-psp          (depracated) import existing rating from my PSP lua application
-    info                       display info about an image
-    info-album                 display info about an album
-    list-albums                list all the albums and their size
-    mirror-all                 mirror all known sites
-    mirror-danbooru            mirror danbooru.donmai.us
-    mirror-danbooru-1000       mirror danbooru.donmai.us from 1000th page
-    mirror-danbooru-before     mirror danbooru.donmai.us before a certain picture id
-    mirror-konachan            mirror konachan.com
-    mirror-moe-imouto          mirror moe.imouto.org
-    mirror-moe-imouto-html     mirror moe.imouto.org (through html request)
-    mirror-nekobooru           mirror nekobooru.com
-    mirror-tu178               mirror tu.178.com
-    sync-rating                sync rating for images
-    update-file-size           (depreated) make sure every images's file_size is read into databse
-    update-pool-danbooru       update pool info from danbooru.com
-    update-pool-konachan       update pool info from konachan.com
-    update-pool-moe-imouto     update pool info from moe.imouto.org
-    update-pool-nekobooru      update pool info from nekobooru.com
+    add                             add a new image to library
+    add-dir                         add all images in a directory to the library
+    add-dir-tree                    add all images in a directory tree to the library
+    backup-albums                   backup albums
+    backup-all                      backup everything
+    backup-cleanup                  cleanup backup repository
+    backup-db                       backup database
+    backup-rate-1                   backup images with rating 1
+    backup-rate-2                   backup images with rating 2
+    backup-rate-3                   backup images with rating 3
+    backup-unrated                  backup images without rating
+    check-md5                       check all images by their md5, need to build binaries under libexec first
+    cleanup                         delete images with rating 0, empty albums, and compact the black list
+    create-album                    create an album based on a folder of well-formed images
+    export                          export images
+    export-album                    export images in an album
+    export-big-unrated              export big and unrated images for rating, see import-rating-by-find
+    export-psp                      (depracated) export images for PSP rating
+    export-sql                      export images based on sql query result
+    fetch-tag-history-danbooru      fetch tag history from danbooru.donmai.us
+    fetch-tag-history-konachan      fetch tag history from konachan.com
+    fetch-tag-history-moe-imouto    fetch tag history from moe.imouto.org
+    fetch-tag-history-nekobooru     fetch tag history from nekobooru.net
+    find-ophan                      find images that are in images root, but not in database
+    help                            display this info
+    highres-rating                  (depracated) mirror rating of normal res image set to highres image set
+    import                          batch import pictures
+    import-album                    import existing album
+    import-black-list               import existing black list file
+    import-rating-dir               import existing rating result from `find` output
+    import-rating-psp               (depracated) import existing rating from my PSP lua application
+    info                            display info about an image
+    info-album                      display info about an album
+    list-albums                     list all the albums and their size
+    mirror-all                      mirror all known sites
+    mirror-danbooru                 mirror danbooru.donmai.us
+    mirror-danbooru-1000            mirror danbooru.donmai.us from 1000th page
+    mirror-danbooru-before          mirror danbooru.donmai.us before a certain picture id
+    mirror-konachan                 mirror konachan.com
+    mirror-moe-imouto               mirror moe.imouto.org
+    mirror-moe-imouto-html          mirror moe.imouto.org (through html request)
+    mirror-nekobooru                mirror nekobooru.net
+    mirror-tu178                    mirror tu.178.com
+    sync-rating                     sync rating for images
+    update-file-size                (depreated) make sure every images's file_size is read into databse
+    update-pool-danbooru            update pool info from danbooru.donmai.us
+    update-pool-konachan            update pool info from konachan.com
+    update-pool-moe-imouto          update pool info from moe.imouto.org
+    update-pool-nekobooru           update pool info from nekobooru.net
 
 author: Santa Zhang (santa1987@gmail.com)"""
 
@@ -2112,6 +2183,14 @@ if __name__ == "__main__":
     elif sys.argv[1] == "export-sql":
         init_db_connection()
         moe_export_sql()
+    elif sys.argv[1] == "fetch-tag-history-danbooru":
+        print "TODO: this shall be done!"
+    elif sys.argv[1] == "fetch-tag-history-konachan":
+        moe_fetch_tag_history_type1("http://konachan.com/history?search=type%3Aposts", "konachan")
+    elif sys.argv[1] == "fetch-tag-history-moe-imouto":
+        moe_fetch_tag_history_type1("http://oreno.imouto.org/history?search=type%3Aposts", "moe_imouto")
+    elif sys.argv[1] == "fetch-tag-history-nekobooru":
+        print "TODO: this shall be done!"
     elif sys.argv[1] == "find-ophan":
         init_db_connection()
         moe_find_ophan()
