@@ -1088,94 +1088,124 @@ def moe_mirror_all():
     os.system("screen -r")
 
 def moe_cleanup():
-  c = DB_CONN.cursor()
-  # Get list of image sets.
-  image_sets = []
-  c.execute("select set_name from images group by set_name")
-  ret_all = c.fetchall()
-  for ret in ret_all:
-    image_sets += ret[0],
-  # Delete images with rating 0
-  c.execute("select set_name, id_in_set, md5 from images where rating = 0")
-  ret_all = c.fetchall()
-  for ret in ret_all:
-    set_name, id_in_set, md5 = ret
-    c.execute("insert into black_list(set_name, start_id, end_id) values('%s', %d, %d)" % (set_name, id_in_set, id_in_set))
-    c.execute("insert into black_list_md5(md5) values('%s')" % (md5))
-    db_del_image(set_name, id_in_set)
-    if set_name + "_highres" in image_sets:
-      db_del_image(set_name + "_highres", id_in_set)
-  # Remove empty folders.
-  images_root = g_image_root
-  def rm_empty_dir_walker(arg, dir, files):
-    print "working in dir: %s" % dir
-    for file in files:
-      fpath = dir + os.path.sep + file
-      if file.lower() == "thumbs.db":
-        print "[rm] %s" % fpath
-        os.remove(fpath)
-    if len(os.listdir(dir)) == 0:
-      print "[rmdir] %s" % dir
-      os.rmdir(dir)
-  for image_set in image_sets:
-    os.path.walk(images_root + os.path.sep + image_set, rm_empty_dir_walker, None)
-  # Shrink black list.
-  internal_black_list = {}
-  for image_set in image_sets:
-    internal_black_list[image_set] = set()
-  c.execute("select * from black_list")
-  ret_all = c.fetchall()
-  for ret in ret_all:
-    set_name, start_id, end_id = ret
-    for i in range(start_id, end_id + 1):
-      internal_black_list[set_name].add(i)
-    # Synchronize black list for "normal_res" and "high_res" image sets.
-    if set_name.endswith("_highres"):
-      normal_res_set_name = set_name[:-8]
-      for i in range(start_id, end_id + 1):
-        internal_black_list[normal_res_set_name].add(i)
-    elif (set_name + "_highres") in image_sets:
-      high_res_set_name = set_name + "_highres"
-      for i in range(start_id, end_id + 1):
-        internal_black_list[high_res_set_name].add(i)
-  new_black_list = {}
-  for image_set in image_sets:
-    helper_list = list(internal_black_list[image_set])
-    helper_list.sort()
-    new_black_list[image_set] = []
-    last_i = None
-    new_start_id = None
-    new_end_id = None
-    for i in helper_list:
-      if new_start_id == None:
-        new_start_id = i
-      elif i != last_i + 1:
-        new_end_id = last_i
-        new_black_list[image_set] += (new_start_id, new_end_id),
-        new_start_id = i
+    c = DB_CONN.cursor()
+    # Get list of image sets.
+    image_sets = []
+    c.execute("select set_name from images group by set_name")
+    ret_all = c.fetchall()
+    for ret in ret_all:
+        image_sets += ret[0],
+
+    # Delete images with rating 0
+    print "deleting images with rating of 0..."
+    c.execute("select set_name, id_in_set, md5 from images where rating = 0")
+    ret_all = c.fetchall()
+    for ret in ret_all:
+        set_name, id_in_set, md5 = ret
+        c.execute("insert into black_list(set_name, start_id, end_id) values('%s', %d, %d)" % (set_name, id_in_set, id_in_set))
+        c.execute("insert into black_list_md5(md5) values('%s')" % (md5))
+        db_del_image(set_name, id_in_set)
+        if set_name + "_highres" in image_sets:
+            db_del_image(set_name + "_highres", id_in_set)
+
+    # Remove empty folders.
+    print "removing empty folders..."
+    images_root = g_image_root
+    def rm_empty_dir_walker(arg, dir, files):
+        print "working in dir: %s" % dir
+        for file in files:
+            fpath = dir + os.path.sep + file
+            if file.lower() == "thumbs.db":
+                print "[rm] %s" % fpath
+                os.remove(fpath)
+        if len(os.listdir(dir)) == 0:
+            print "[rmdir] %s" % dir
+            os.rmdir(dir)
+    for image_set in image_sets:
+        os.path.walk(images_root + os.path.sep + image_set, rm_empty_dir_walker, None)
+
+    # remove empty albums
+    print "removing empty albums..."
+    c.execute("select id, name from albums order by name")
+    albums = c.fetchall()
+    empty_albums = []
+    for album in albums:
+      id, name = album
+      query_sql = "select count(*) from albums_has_images where album_id = %d" % id
+      count = int(c.execute(query_sql).fetchone()[0])
+      if count == 0:
+          write_log("[info] found empty album: %s" % name)
+          empty_albums += name,
+    for album in empty_albums:
+        try:
+            write_log("[info] removing empty album: %s" % album)
+            c.execute("delete from albums where name = '%s'" % album)
+        except:
+          traceback.print_exc()
+          time.sleep(1)
+    db_commit()
+
+    # Shrink black list.
+    print "shrinking black list..."
+    internal_black_list = {}
+    for image_set in image_sets:
+        internal_black_list[image_set] = set()
+    c.execute("select * from black_list")
+    ret_all = c.fetchall()
+    for ret in ret_all:
+        set_name, start_id, end_id = ret
+        for i in range(start_id, end_id + 1):
+            internal_black_list[set_name].add(i)
+        # Synchronize black list for "normal_res" and "high_res" image sets.
+        if set_name.endswith("_highres"):
+            normal_res_set_name = set_name[:-8]
+            for i in range(start_id, end_id + 1):
+                internal_black_list[normal_res_set_name].add(i)
+        elif (set_name + "_highres") in image_sets:
+            high_res_set_name = set_name + "_highres"
+            for i in range(start_id, end_id + 1):
+                internal_black_list[high_res_set_name].add(i)
+    new_black_list = {}
+    for image_set in image_sets:
+        helper_list = list(internal_black_list[image_set])
+        helper_list.sort()
+        new_black_list[image_set] = []
+        last_i = None
+        new_start_id = None
         new_end_id = None
-      last_i = i
-    if new_start_id != None:
-      new_end_id = last_i
-      new_black_list[image_set] += (new_start_id, new_end_id),
-  c.execute("delete from black_list")
-  for image_set in image_sets:
-    for item in new_black_list[image_set]:
-      c.execute("insert into black_list(set_name, start_id, end_id) values('%s', %d, %d)" % (image_set, item[0], item[1]))
-  db_commit()
-  # Delete images in black list.
-  c.execute("select * from black_list")
-  ret_all = c.fetchall()
-  print "%d items in black list" % len(ret_all)
-  counter = 0
-  for ret in ret_all:
-    set_name, start_id, end_id = ret
-    for i in range(start_id, end_id + 1):
-      db_del_image(set_name, i)
-    counter += 1
-    if counter % 10 == 0:
-      print "%d items done (of %d)" % (counter, len(ret_all))
-  print "%d items done" % counter
+        for i in helper_list:
+            if new_start_id == None:
+                new_start_id = i
+            elif i != last_i + 1:
+                new_end_id = last_i
+                new_black_list[image_set] += (new_start_id, new_end_id),
+                new_start_id = i
+                new_end_id = None
+            last_i = i
+        if new_start_id != None:
+            new_end_id = last_i
+            new_black_list[image_set] += (new_start_id, new_end_id),
+    c.execute("delete from black_list")
+    for image_set in image_sets:
+        for item in new_black_list[image_set]:
+            c.execute("insert into black_list(set_name, start_id, end_id) values('%s', %d, %d)" % (image_set, item[0], item[1]))
+    db_commit()
+
+    # Delete images in black list.
+    print "deleting images in black list..."
+    c.execute("select * from black_list")
+    ret_all = c.fetchall()
+    print "%d items in black list" % len(ret_all)
+    counter = 0
+    for ret in ret_all:
+        set_name, start_id, end_id = ret
+        for i in range(start_id, end_id + 1):
+            db_del_image(set_name, i)
+        counter += 1
+        if counter % 10 == 0:
+            print "%d items done (of %d)" % (counter, len(ret_all))
+    print "%d items done" % counter
+
 
 def moe_find_ophan():
   images_root = g_image_root
@@ -1358,18 +1388,18 @@ def moe_backup_db():
   db_backup_file = os.path.join(backup_to, "%s.backup.%s%s" % (db_main_fn, tm_str, db_ext_fn))
   print "copying '%s' -> '%s'" % (db_file, db_backup_file)
   shutil.copyfile(db_file, db_backup_file)
-  
+
   db_dump_file = os.path.join(backup_to, "%s.dump.%s.sql" % (db_main_fn, tm_str))
   print "dumping '%s' -> '%s'" % (db_file, db_dump_file)
   sqlite_bin = os.path.join(os.path.split(__file__)[0], "libexec", "sqlite3.exe")
   cmd = "%s \"%s\" .dump  > \"%s\"" % (sqlite_bin, db_file, db_dump_file)
   os.system(cmd)
-  
+
   print "archiving..."
   db_dump_archive = os.path.join(backup_to, "%s.dump.%s.zip" % (db_main_fn, tm_str))
   if zipfile(db_dump_file, db_dump_archive) == True:
     os.remove(db_dump_file)
-  
+
   backup_counter = 0
   dump_counter = 0
   for fn in os.listdir(backup_to):
