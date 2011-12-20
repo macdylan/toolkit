@@ -1827,44 +1827,46 @@ def moe_export_big_unrated():
         db_del_image(image_set, id_in_set)
 
 def moe_export_sql():
-  query_sql = raw_input("your sql query? (no trailing ';') ")
-  query_sql = "select set_name, id_in_set, ext, file_size from (%s)" % query_sql
-  c = DB_CONN.cursor()
-  c.execute(query_sql)
-  ret_all = c.fetchall()
-  total_sz = 0
-  for ret in ret_all:
-    image_set, id_in_set, ext, fsize = ret[0], ret[1], ret[2], ret[3]
-    total_sz += fsize
-  print "%d images, total size %s" % (len(ret_all), pretty_fsize(total_sz))
-  outdir = raw_input("Output dir? ")
-  util_make_dirs(os.path.join(outdir, "unrated"))
-  util_make_dirs(os.path.join(outdir, "0"))
-  util_make_dirs(os.path.join(outdir, "1"))
-  util_make_dirs(os.path.join(outdir, "2"))
-  util_make_dirs(os.path.join(outdir, "3"))
-  done_sz = 0
-  counter = 0
-  images_root = g_image_root
-  for ret in ret_all:
-    counter += 1
-    image_set, id_in_set, ext, fsize = ret[0], ret[1], ret[2], ret[3]
-    img_path = images_root + os.path.sep + image_set + os.path.sep + util_get_bucket_name(id_in_set) + os.path.sep + str(id_in_set) + ext
-    dest_file = os.path.join(outdir, "unrated", image_set + " " + str(id_in_set) + ext)
-    done_sz += fsize
-    print "(%d/%d, %s/%s) %s --> %s" % (counter, len(ret_all), pretty_fsize(done_sz), pretty_fsize(total_sz), img_path, dest_file)
-    shutil.copyfile(img_path, dest_file)
+    query_sql = raw_input("your sql query? (no trailing ';') ")
+    if ";" in query_sql:
+        raise ValueError("no ';' allowed in sql query!")
+    query_sql = "select set_name, id_in_set, ext, file_size from (%s)" % query_sql
+    c = DB_CONN.cursor()
+    c.execute(query_sql)
+    ret_all = c.fetchall()
+    total_sz = 0
+    for ret in ret_all:
+        image_set, id_in_set, ext, fsize = ret[0], ret[1], ret[2], ret[3]
+        total_sz += fsize
+    print "%d images, total size %s" % (len(ret_all), pretty_fsize(total_sz))
+    outdir = raw_input("Output dir? ")
+    util_make_dirs(os.path.join(outdir, "unrated"))
+    util_make_dirs(os.path.join(outdir, "0"))
+    util_make_dirs(os.path.join(outdir, "1"))
+    util_make_dirs(os.path.join(outdir, "2"))
+    util_make_dirs(os.path.join(outdir, "3"))
+    done_sz = 0
+    counter = 0
+    images_root = g_image_root
+    for ret in ret_all:
+        counter += 1
+        image_set, id_in_set, ext, fsize = ret[0], ret[1], ret[2], ret[3]
+        img_path = images_root + os.path.sep + image_set + os.path.sep + util_get_bucket_name(id_in_set) + os.path.sep + str(id_in_set) + ext
+        dest_file = os.path.join(outdir, "unrated", image_set + " " + str(id_in_set) + ext)
+        done_sz += fsize
+        print "(%d/%d, %s/%s) %s --> %s" % (counter, len(ret_all), pretty_fsize(done_sz), pretty_fsize(total_sz), img_path, dest_file)
+        shutil.copyfile(img_path, dest_file)
 
 def moe_list_albums():
-  print "Loading data..."
-  c = DB_CONN.cursor()
-  c.execute("select id, name from albums order by name")
-  albums = c.fetchall()
-  for album in albums:
-    id, name = album
-    query_sql = "select count(*) from albums_has_images where album_id = %d" % id
-    count = int(c.execute(query_sql).fetchone()[0])
-    print "%s  (id=%d, count=%d)" % (name, id, count)
+    print "Loading data..."
+    c = DB_CONN.cursor()
+    c.execute("select id, name from albums order by name")
+    albums = c.fetchall()
+    for album in albums:
+        id, name = album
+        query_sql = "select count(*) from albums_has_images where album_id = %d" % id
+        count = int(c.execute(query_sql).fetchone()[0])
+        print "%s  (id=%d, count=%d)" % (name, id, count)
 
 def moe_help():
     print """moe.py: manage all my acg pictures"
