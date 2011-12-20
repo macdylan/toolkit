@@ -17,6 +17,7 @@ import time
 import socket
 import traceback
 import datetime
+import urlparse
 from urllib2 import HTTPError
 from select import *
 from utils import *
@@ -1868,6 +1869,80 @@ def moe_list_albums():
         count = int(c.execute(query_sql).fetchone()[0])
         print "%s  (id=%d, count=%d)" % (name, id, count)
 
+
+def util_pool_get_max_page(pool_api):
+    max_page = 1
+    query_url = pool_api
+    page_src = "\n".join(map(str.strip, urllib2.urlopen(query_url).readlines()))
+    idx = page_src.find("<div class=\"pagination\">")
+    idx2 = page_src.find("</div>", idx)
+    paging_code = page_src[idx:idx2]
+    idx = 0
+    while True:
+        idx = paging_code.find("?page=", idx)
+        if idx < 0:
+            break
+        idx2 = paging_code.find('"', idx)
+        page_id = int(paging_code[idx + 6:idx2])
+        if page_id > max_page:
+            max_page = page_id
+        idx = idx2
+    return max_page
+
+
+def util_pool_mirror(pool_index, set_name, pool_name, pool_size):
+    # TODO escape pool_name?
+    print "TODO: mirror pool '%s' from '%s' (set=%s), size=%d" % (pool_name, pool_index, set_name, pool_size)
+    # TODO really mirror the pool
+
+
+def util_pool_fetch_page_directory(query_url, set_name):
+    print "fetching pool directory %s" % query_url
+    page_src = "\n".join(map(str.strip, urllib2.urlopen(query_url).readlines()))
+    idx = 0
+    urlsplt = urlparse.urlparse(query_url)
+    pool_info_list = []
+    while True:
+        idx = page_src.find("/pool/show/", idx)
+        if idx < 0:
+            break
+        idx2 = page_src.find('"', idx)
+        pool_index_url = page_src[idx:idx2]
+        pool_index_url = urlsplt.scheme + "://" + urlsplt.netloc + pool_index_url
+
+        idx = page_src.find(">", idx2) + 1
+        idx2 = page_src.find("<", idx)
+        pool_name = page_src[idx:idx2]
+
+        idx = page_src.find("<td>", idx2) + 1
+        idx2 = page_src.find("</td>", idx) + 1
+        idx = page_src.find("<td>", idx2) + 4
+        idx2 = page_src.find("</td>", idx)
+
+        pool_size = int(page_src[idx:idx2])
+
+        print "found a pool at '%s'" % pool_index_url
+
+        pool_info_list += (pool_index_url, pool_name, pool_size),
+        idx = idx2
+
+    for (pool_index_url, pool_name, pool_size) in pool_info_list:
+        util_pool_mirror(pool_index_url, set_name, pool_name, pool_size)
+
+
+def moe_update_pool(pool_api, set_name):
+    print "updating pools from image set '%s', query api is '%s'" % (set_name, pool_api)
+    max_page = util_pool_get_max_page(pool_api)
+    print "there is %d pages of pools" % max_page
+    for page_id in range(1, max_page + 1):
+        try:
+            query_url = pool_api + ("?page=%d" % page_id)
+            util_pool_fetch_page_directory(query_url, set_name)
+        except:
+            traceback.print_exc()
+            time.sleep(1)
+
+
 def moe_help():
     print """moe.py: manage all my acg pictures"
 usage: moe.py <command>"
@@ -1914,133 +1989,149 @@ available commands:"
     mirror-tu178               mirror tu.178.com
     sync-rating                sync rating for images
     update-file-size           (depreated) make sure every images's file_size is read into databse
+    update-pool-danbooru       update pool info from danbooru.com
+    update-pool-konachan       update pool info from konachan.com
+    update-pool-moe-imouto     update pool info from moe.imouto.org
+    update-pool-nekobooru      update pool info from nekobooru.com
 
 author: Santa Zhang (santa1987@gmail.com)"""
 
 if __name__ == "__main__":
-  if len(sys.argv) == 1 or sys.argv[1] == "help":
-    moe_help()
-  elif sys.argv[1] == "add":
-    init_db_connection()
-    moe_add()
-  elif sys.argv[1] == "add-dir":
-    init_db_connection()
-    moe_add_dir()
-  elif sys.argv[1] == "add-dir-tree":
-    init_db_connection()
-    moe_add_dir_tree()
-  elif sys.argv[1] == "backup-db":
-    init_db_connection()
-    moe_backup_db()
-  elif sys.argv[1] == "backup-all":
-    init_db_connection()
-    moe_backup_all()
-  elif sys.argv[1] == "backup-albums":
-    init_db_connection()
-    moe_backup_albums()
-  elif sys.argv[1] == "backup-rate-1":
-    init_db_connection()
-    moe_backup_by_rating(1)
-  elif sys.argv[1] == "backup-rate-2":
-    init_db_connection()
-    moe_backup_by_rating(2)
-  elif sys.argv[1] == "backup-rate-3":
-    init_db_connection()
-    moe_backup_by_rating(3)
-  elif sys.argv[1] == "backup-unrated":
-    init_db_connection()
-    moe_backup_by_rating(None)
-  elif sys.argv[1] == "backup-cleanup":
-    init_db_connection()
-    moe_backup_cleanup()
-  elif sys.argv[1] == "check-md5":
-    init_db_connection()
-    moe_check_md5()
-  elif sys.argv[1] == "cleanup":
-    init_db_connection()
-    moe_cleanup()
-  elif sys.argv[1] == "create-album":
-    init_db_connection()
-    moe_create_album()
-  elif sys.argv[1] == "export":
-    init_db_connection()
-    moe_export()
-  elif sys.argv[1] == "export-album":
-    init_db_connection()
-    moe_export_album()
-  elif sys.argv[1] == "export-big-unrated":
-    init_db_connection()
-    moe_export_big_unrated()
-  elif sys.argv[1] == "export-psp":
-    init_db_connection()
-    moe_export_psp()
-  elif sys.argv[1] == "export-sql":
-    init_db_connection()
-    moe_export_sql()
-  elif sys.argv[1] == "find-ophan":
-    init_db_connection()
-    moe_find_ophan()
-  elif sys.argv[1] == "import":
-    init_db_connection()
-    moe_import()
-  elif sys.argv[1] == "import-album":
-    init_db_connection()
-    moe_import_album()
-  elif sys.argv[1] == "import-black-list":
-    init_db_connection()
-    moe_import_black_list()
-  elif sys.argv[1] == "import-rating-dir":
-    init_db_connection()
-    moe_import_rating_dir()
-  elif sys.argv[1] == "import-rating-psp":
-    init_db_connection()
-    moe_import_rating_psp()
-  elif sys.argv[1] == "highres-rating":
-    init_db_connection()
-    moe_highres_rating()
-  elif sys.argv[1] == "info":
-    init_db_connection()
-    moe_info()
-  elif sys.argv[1] == "info-album":
-    init_db_connection()
-    moe_info_album()
-  elif sys.argv[1] == "list-albums":
-    init_db_connection()
-    moe_list_albums()
-  elif sys.argv[1] == "mirror-all":
-    moe_mirror_all()
-  elif sys.argv[1] == "mirror-danbooru":
-    init_db_connection()
-    moe_mirror_danbooru()
-  elif sys.argv[1] == "mirror-danbooru-1000":
-    init_db_connection()
-    moe_mirror_danbooru_1000()
-  elif sys.argv[1] == "mirror-danbooru-before":
-    init_db_connection()
-    moe_mirror_danbooru_before(int(sys.argv[2]))
-  elif sys.argv[1] == "mirror-konachan":
-    init_db_connection()
-    moe_mirror_konachan()
-  elif sys.argv[1] == "mirror-konachan-html":
-    init_db_connection()
-    moe_mirror_konachan_html()
-  elif sys.argv[1] == "mirror-moe-imouto":
-    init_db_connection()
-    moe_mirror_moe_imouto()
-  elif sys.argv[1] == "mirror-moe-imouto-html":
-    init_db_connection()
-    moe_mirror_moe_imouto_html()
-  elif sys.argv[1] == "mirror-nekobooru":
-    init_db_connection()
-    moe_mirror_nekobooru()
-  elif sys.argv[1] == "mirror-tu178":
-    init_db_connection()
-    moe_mirror_tu178()
-  elif sys.argv[1] == "sync-rating":
-    init_db_connection()
-    moe_sync_rating()
-  elif sys.argv[1] == "update-file-size":
-    init_db_connection()
-    moe_update_file_size()
-  else:
-    print "command '%s' not understood, see 'moe.py help' for more info" % sys.argv[1]
+    if len(sys.argv) == 1 or sys.argv[1] == "help":
+        moe_help()
+    elif sys.argv[1] == "add":
+        init_db_connection()
+        moe_add()
+    elif sys.argv[1] == "add-dir":
+        init_db_connection()
+        moe_add_dir()
+    elif sys.argv[1] == "add-dir-tree":
+        init_db_connection()
+        moe_add_dir_tree()
+    elif sys.argv[1] == "backup-db":
+        init_db_connection()
+        moe_backup_db()
+    elif sys.argv[1] == "backup-all":
+        init_db_connection()
+        moe_backup_all()
+    elif sys.argv[1] == "backup-albums":
+        init_db_connection()
+        moe_backup_albums()
+    elif sys.argv[1] == "backup-rate-1":
+        init_db_connection()
+        moe_backup_by_rating(1)
+    elif sys.argv[1] == "backup-rate-2":
+        init_db_connection()
+        moe_backup_by_rating(2)
+    elif sys.argv[1] == "backup-rate-3":
+        init_db_connection()
+        moe_backup_by_rating(3)
+    elif sys.argv[1] == "backup-unrated":
+        init_db_connection()
+        moe_backup_by_rating(None)
+    elif sys.argv[1] == "backup-cleanup":
+        init_db_connection()
+        moe_backup_cleanup()
+    elif sys.argv[1] == "check-md5":
+        init_db_connection()
+        moe_check_md5()
+    elif sys.argv[1] == "cleanup":
+        init_db_connection()
+        moe_cleanup()
+    elif sys.argv[1] == "create-album":
+        init_db_connection()
+        moe_create_album()
+    elif sys.argv[1] == "export":
+        init_db_connection()
+        moe_export()
+    elif sys.argv[1] == "export-album":
+        init_db_connection()
+        moe_export_album()
+    elif sys.argv[1] == "export-big-unrated":
+        init_db_connection()
+        moe_export_big_unrated()
+    elif sys.argv[1] == "export-psp":
+        init_db_connection()
+        moe_export_psp()
+    elif sys.argv[1] == "export-sql":
+        init_db_connection()
+        moe_export_sql()
+    elif sys.argv[1] == "find-ophan":
+        init_db_connection()
+        moe_find_ophan()
+    elif sys.argv[1] == "import":
+        init_db_connection()
+        moe_import()
+    elif sys.argv[1] == "import-album":
+        init_db_connection()
+        moe_import_album()
+    elif sys.argv[1] == "import-black-list":
+        init_db_connection()
+        moe_import_black_list()
+    elif sys.argv[1] == "import-rating-dir":
+        init_db_connection()
+        moe_import_rating_dir()
+    elif sys.argv[1] == "import-rating-psp":
+        init_db_connection()
+        moe_import_rating_psp()
+    elif sys.argv[1] == "highres-rating":
+        init_db_connection()
+        moe_highres_rating()
+    elif sys.argv[1] == "info":
+        init_db_connection()
+        moe_info()
+    elif sys.argv[1] == "info-album":
+        init_db_connection()
+        moe_info_album()
+    elif sys.argv[1] == "list-albums":
+        init_db_connection()
+        moe_list_albums()
+    elif sys.argv[1] == "mirror-all":
+        moe_mirror_all()
+    elif sys.argv[1] == "mirror-danbooru":
+        init_db_connection()
+        moe_mirror_danbooru()
+    elif sys.argv[1] == "mirror-danbooru-1000":
+        init_db_connection()
+        moe_mirror_danbooru_1000()
+    elif sys.argv[1] == "mirror-danbooru-before":
+        init_db_connection()
+        moe_mirror_danbooru_before(int(sys.argv[2]))
+    elif sys.argv[1] == "mirror-konachan":
+        init_db_connection()
+        moe_mirror_konachan()
+    elif sys.argv[1] == "mirror-konachan-html":
+        init_db_connection()
+        moe_mirror_konachan_html()
+    elif sys.argv[1] == "mirror-moe-imouto":
+        init_db_connection()
+        moe_mirror_moe_imouto()
+    elif sys.argv[1] == "mirror-moe-imouto-html":
+        init_db_connection()
+        moe_mirror_moe_imouto_html()
+    elif sys.argv[1] == "mirror-nekobooru":
+        init_db_connection()
+        moe_mirror_nekobooru()
+    elif sys.argv[1] == "mirror-tu178":
+        init_db_connection()
+        moe_mirror_tu178()
+    elif sys.argv[1] == "sync-rating":
+        init_db_connection()
+        moe_sync_rating()
+    elif sys.argv[1] == "update-file-size":
+        init_db_connection()
+        moe_update_file_size()
+    elif sys.argv[1] == "update-pool-danbooru":
+        init_db_connection()
+        moe_update_pool("http://danbooru.donmai.us/pool/index", "danbooru")
+    elif sys.argv[1] == "update-pool-konachan":
+        init_db_connection()
+        moe_update_pool("http://konachan.com/pool", "konachan")
+    elif sys.argv[1] == "update-pool-moe-imouto":
+        init_db_connection()
+        moe_update_pool("http://oreno.imouto.org/pool", "moe_imouto")
+    elif sys.argv[1] == "update-pool-nekobooru":
+        init_db_connection()
+        moe_update_pool("http://nekobooru.net/pool/index", "nekobooru")
+    else:
+        print "command '%s' not understood, see 'moe.py help' for more info" % sys.argv[1]
