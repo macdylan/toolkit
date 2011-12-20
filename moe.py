@@ -25,7 +25,7 @@ from utils import *
 # images(id, set_name, id_in_set, md5, rating, ext, file_size)
 # tags(id, name)
 # images_has_tags(image_id, tag_id)
-# albums(id, name)
+# albums(id, name, description)
 # albums_has_images(album_id, image_id)
 # black_list(set_name, start_id, end_id)
 
@@ -64,7 +64,7 @@ def init_db_connection():
   my_dbexec(DB_CONN, "create table if not exists tags(id integer primary key, name text unique)")
   my_dbexec(DB_CONN, "create table if not exists tags_version(set_name text, version int)")
   my_dbexec(DB_CONN, "create table if not exists images_has_tags(image_id int, tag_id int)")
-  my_dbexec(DB_CONN, "create table if not exists albums(id integer primary key, name text unique)")
+  my_dbexec(DB_CONN, "create table if not exists albums(id integer primary key, name text unique, description text)")
   my_dbexec(DB_CONN, "create table if not exists albums_has_images(album_id int, image_id int)")
   my_dbexec(DB_CONN, "create table if not exists black_list(set_name text, start_id int, end_id int)")
   my_dbexec(DB_CONN, "create table if not exists black_list_md5(md5 text)")
