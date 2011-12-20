@@ -322,24 +322,25 @@ class CbzFile:
 
 
 if __name__ == "__main__":
-  cbz = CbzFile()
-  cbz.open("/Users/santa/Downloads/dummy.cbz")
-  print cbz.get_info("author")
-  cbz.set_title("title")
-  cbz.set_author("Auqaplus")
-  cbz.set_comment("# NO COMMENT")
-  cbz.set_series("To Heart 2")
-  cbz.close()
-  for root, folders, files in os.walk("/Users/santa/Downloads/t"):
-    for fn in files:
-      if fn.endswith(".jpg") == False:
-        continue
-      fpath = os.path.join(root, fn)
-      cbz.open("/Users/santa/Downloads/dummy.cbz")
-      cbz.add_image(fpath)
-      print cbz.get_info("author")
-      cbz.set_cover("images/a.jpg")
-      print cbz.get_info("cover")
-      cbz.close()
-
+    print "*** fancycbz.py is now a dummy testing script"
+    print "*** it is not intended for use!"
+    cbz = CbzFile()
+    cbz.open("/Users/santa/Downloads/dummy.cbz")
+    print cbz.get_info("author")
+    cbz.set_title("title")
+    cbz.set_author("Auqaplus")
+    cbz.set_comment("# NO COMMENT")
+    cbz.set_series("To Heart 2")
+    cbz.close()
+    for root, folders, files in os.walk("/Users/santa/Downloads/t"):
+        for fn in files:
+            if fn.endswith(".jpg") == False:
+                continue
+            fpath = os.path.join(root, fn)
+            cbz.open("/Users/santa/Downloads/dummy.cbz")
+            cbz.add_image(fpath)
+            print cbz.get_info("author")
+            cbz.set_cover("images/a.jpg")
+            print cbz.get_info("cover")
+            cbz.close()
 
