@@ -2058,13 +2058,39 @@ def util_tag_history_get_page_time_range_type1(query_api, page_id):
     return (min_time, max_time)
 
 
+def db_tag_history_get_head_version(set_name):
+    head_version = 0
+    c = DB_CONN.cursor()
+    c.execute("select newest_version from tag_history_head where set_name = '%s'" % set_name)
+    query_ret = c.fetchone()
+    if query_ret != None:
+        head_version = int(query_ret[0])
+    return head_version
+
+def db_tag_history_set_head_version(set_name, head_version):
+    c = DB_CONN.cursor()
+    c.execute("select newest_version from tag_history_head where set_name = '%s'" % set_name)
+    query_ret = c.fetchone()
+    if query_ret == None:
+        c.execute("insert into tag_history_head(set_name, newest_version) values('%s', %d)" % (set_name, head_version))
+    else:
+        c.execute("update tag_history_head set newest_version = %d" % head_version)
+    db_commit()
+
 def moe_fetch_tag_history_type1(query_api, set_name):
     print "TODO: this shall be done!"
     print "fetching tag history from type1 site: %s => %s" % (query_api, set_name)
     max_page = util_tag_history_get_max_page_type1(query_api)
     print "there are %d pages of tag history" % max_page
-    print util_tag_history_get_page_time_range_type1(query_api, 1)
-    print util_tag_history_get_page_time_range_type1(query_api, max_page)
+
+    head_version = db_tag_history_get_head_version(set_name)
+    print "current head version in '%s' is %d" % (set_name, head_version)
+
+    first_page_version_range = util_tag_history_get_page_time_range_type1(query_api, 1)
+    last_page_version_range = util_tag_history_get_page_time_range_type1(query_api, max_page)
+
+    print "version on first page (1) is %d ~ %d" % (first_page_version_range[0], first_page_version_range[1])
+    print "version on last page (%d) is %d ~ %d" % (max_page, last_page_version_range[0], last_page_version_range[1])
 
 def moe_help():
     print """moe.py: manage all my acg pictures"
@@ -2184,12 +2210,16 @@ if __name__ == "__main__":
         init_db_connection()
         moe_export_sql()
     elif sys.argv[1] == "fetch-tag-history-danbooru":
+        init_db_connection()
         print "TODO: this shall be done!"
     elif sys.argv[1] == "fetch-tag-history-konachan":
+        init_db_connection()
         moe_fetch_tag_history_type1("http://konachan.com/history?search=type%3Aposts", "konachan")
     elif sys.argv[1] == "fetch-tag-history-moe-imouto":
+        init_db_connection()
         moe_fetch_tag_history_type1("http://oreno.imouto.org/history?search=type%3Aposts", "moe_imouto")
     elif sys.argv[1] == "fetch-tag-history-nekobooru":
+        init_db_connection()
         print "TODO: this shall be done!"
     elif sys.argv[1] == "find-ophan":
         init_db_connection()
