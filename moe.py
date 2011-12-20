@@ -38,58 +38,61 @@ g_image_root = None
 g_tmp_folder = None
 
 def my_dbexec(DB_CONN, sql):
-  #print "[sql] %s" % sql
-  DB_CONN.execute(sql)
+    #print "[sql] %s" % sql
+    DB_CONN.execute(sql)
 
 def init_db_connection():
-  global SQLITE3_DB
-  global DB_CONN
-  global g_image_root
-  global g_tmp_folder
+    global SQLITE3_DB
+    global DB_CONN
+    global g_image_root
+    global g_tmp_folder
 
-  SQLITE3_DB = get_config("db_file")
+    SQLITE3_DB = get_config("db_file")
 
-  # read basic config data
-  g_image_root = get_config("image_root")
-  g_tmp_folder = get_config("tmp_folder")
+    # read basic config data
+    g_image_root = get_config("image_root")
+    g_tmp_folder = get_config("tmp_folder")
 
-  if os.path.exists(SQLITE3_DB) == False:
-    print "[warning] database file '%s' not exist, will create new file!" % SQLITE3_DB
+    if os.path.exists(SQLITE3_DB) == False:
+        print "[warning] database file '%s' not exist, will create new file!" % SQLITE3_DB
 
-  # Open the sqlite3 connection.
-  DB_CONN = sqlite3.connect(SQLITE3_DB, 100)
+    # Open the sqlite3 connection.
+    DB_CONN = sqlite3.connect(SQLITE3_DB, 100)
 
-  # Create tables if necessary.
-  my_dbexec(DB_CONN, "create table if not exists images(id integer primary key, set_name text, id_in_set int, md5 text, rating int, ext text, file_size int)")
-  my_dbexec(DB_CONN, "create table if not exists tags(id integer primary key, name text unique)")
-  my_dbexec(DB_CONN, "create table if not exists tags_version(set_name text, version int)")
-  my_dbexec(DB_CONN, "create table if not exists images_has_tags(image_id int, tag_id int)")
-  my_dbexec(DB_CONN, "create table if not exists albums(id integer primary key, name text unique, description text)")
-  my_dbexec(DB_CONN, "create table if not exists albums_has_images(album_id int, image_id int)")
-  my_dbexec(DB_CONN, "create table if not exists black_list(set_name text, start_id int, end_id int)")
-  my_dbexec(DB_CONN, "create table if not exists black_list_md5(md5 text)")
+    # Create tables if necessary.
+    my_dbexec(DB_CONN, "create table if not exists images(id integer primary key, set_name text, id_in_set int, md5 text, rating int, ext text, file_size int)")
+    my_dbexec(DB_CONN, "create table if not exists tags(id integer primary key, name text unique)")
+    my_dbexec(DB_CONN, "create table if not exists tag_history(image_id integer, new_version int)")
+    my_dbexec(DB_CONN, "create table if not exists tag_history_head(set_name text, newest_version int)")
+    my_dbexec(DB_CONN, "create table if not exists images_has_tags(image_id int, tag_id int)")
+    my_dbexec(DB_CONN, "create table if not exists albums(id integer primary key, name text unique, description text)")
+    my_dbexec(DB_CONN, "create table if not exists albums_has_images(album_id int, image_id int)")
+    my_dbexec(DB_CONN, "create table if not exists black_list(set_name text, start_id int, end_id int)")
+    my_dbexec(DB_CONN, "create table if not exists black_list_md5(md5 text)")
 
-  # Create indexes if necessary.
-  my_dbexec(DB_CONN, "create index if not exists i_images__file_size on images(file_size)")
-  my_dbexec(DB_CONN, "create index if not exists i_images__md5 on images(md5)")
-  my_dbexec(DB_CONN, "create index if not exists i_images__rating on images(rating)")
-  my_dbexec(DB_CONN, "create index if not exists i_images__set_name__id_in_set on images(set_name, id_in_set)")
+    # Create indexes if necessary.
+    my_dbexec(DB_CONN, "create index if not exists i_images__file_size on images(file_size)")
+    my_dbexec(DB_CONN, "create index if not exists i_images__md5 on images(md5)")
+    my_dbexec(DB_CONN, "create index if not exists i_images__rating on images(rating)")
+    my_dbexec(DB_CONN, "create index if not exists i_images__set_name__id_in_set on images(set_name, id_in_set)")
 
-  my_dbexec(DB_CONN, "create index if not exists i_tags__name on tags(name)")
+    my_dbexec(DB_CONN, "create index if not exists i_tags__name on tags(name)")
 
-  my_dbexec(DB_CONN, "create index if not exists i_images_has_tags__tag_id__image_id on images_has_tags(tag_id, image_id)")
-  my_dbexec(DB_CONN, "create index if not exists i_images_has_tags__image_id__tag_id on images_has_tags(image_id, tag_id)")
+    my_dbexec(DB_CONN, "create index if not exists i_tag_history__image_id on tag_history(image_id)")
 
-  my_dbexec(DB_CONN, "create index if not exists i_albums__name on albums(name)")
+    my_dbexec(DB_CONN, "create index if not exists i_images_has_tags__tag_id__image_id on images_has_tags(tag_id, image_id)")
+    my_dbexec(DB_CONN, "create index if not exists i_images_has_tags__image_id__tag_id on images_has_tags(image_id, tag_id)")
 
-  my_dbexec(DB_CONN, "create index if not exists i_albums_has_images__album_id__image_id on albums_has_images(album_id, image_id)")
+    my_dbexec(DB_CONN, "create index if not exists i_albums__name on albums(name)")
 
-  my_dbexec(DB_CONN, "create index if not exists i_black_list__set_name__start_id on black_list(set_name, start_id)")
+    my_dbexec(DB_CONN, "create index if not exists i_albums_has_images__album_id__image_id on albums_has_images(album_id, image_id)")
 
-  my_dbexec(DB_CONN, "create index if not exists i_black_list_md5__md5 on black_list_md5(md5)")
+    my_dbexec(DB_CONN, "create index if not exists i_black_list__set_name__start_id on black_list(set_name, start_id)")
+
+    my_dbexec(DB_CONN, "create index if not exists i_black_list_md5__md5 on black_list_md5(md5)")
 
 def db_commit():
-  DB_CONN.commit()
+    DB_CONN.commit()
 
 def db_image_in_black_list(image_set, id_in_set):
   c = DB_CONN.cursor()
@@ -148,24 +151,24 @@ def db_add_image_real(fpath, image_set, id_in_set, final_id_list = None):
   return True
 
 def db_get_image_by_md5(md5):
-  c = DB_CONN.cursor()
-  c.execute("select * from images where md5 = '%s'" % md5)
-  ret = c.fetchone()
-  return ret
+    c = DB_CONN.cursor()
+    c.execute("select * from images where md5 = '%s'" % md5)
+    ret = c.fetchone()
+    return ret
 
 def db_get_image_by_id_in_set(image_set, id_in_set):
-  c = DB_CONN.cursor()
-  c.execute("select * from images where set_name = '%s' and id_in_set = %d" % (image_set, id_in_set))
-  ret = c.fetchone()
-  return ret
+    c = DB_CONN.cursor()
+    c.execute("select * from images where set_name = '%s' and id_in_set = %d" % (image_set, id_in_set))
+    ret = c.fetchone()
+    return ret
 
 def db_set_image_tags(image_set, id_in_set, tags):
-  img = db_get_image_by_id_in_set(image_set, id_in_set)
-  if img == None:
-    print "[failure] cannot set tags on '%s %d': image not found" % (image_set, id_in_set)
-    return
-  db_clear_image_tags(img[0])
-  db_add_image_tags(img[0], tags)
+    img = db_get_image_by_id_in_set(image_set, id_in_set)
+    if img == None:
+        print "[failure] cannot set tags on '%s %d': image not found" % (image_set, id_in_set)
+        return
+    db_clear_image_tags(img[0])
+    db_add_image_tags(img[0], tags)
 
 def db_get_image_tags(image_set, id_in_set):
   img = db_get_image_by_id_in_set(image_set, id_in_set)
@@ -181,16 +184,16 @@ def db_get_image_tags(image_set, id_in_set):
   return tags
 
 def db_add_image_tags(image_id, tags):
-  for tag in tags:
-    db_add_tag(tag)
-    tag = db_get_tag_by_name(tag)
-    tag_id = tag[0]
-    c = DB_CONN.cursor()
-    c.execute("insert into images_has_tags(image_id, tag_id) values(%d, %d)" % (image_id, tag_id))
+    for tag in tags:
+        db_add_tag(tag)
+        tag = db_get_tag_by_name(tag)
+        tag_id = tag[0]
+        c = DB_CONN.cursor()
+        c.execute("insert into images_has_tags(image_id, tag_id) values(%d, %d)" % (image_id, tag_id))
 
 def db_clear_image_tags(image_id):
-  c = DB_CONN.cursor()
-  c.execute("delete from images_has_tags where image_id = %d" % image_id)
+    c = DB_CONN.cursor()
+    c.execute("delete from images_has_tags where image_id = %d" % image_id)
 
 def db_del_image(image_set, id_in_set):
   img = db_get_image_by_id_in_set(image_set, id_in_set)
@@ -211,22 +214,35 @@ def db_del_image(image_set, id_in_set):
     print "warning: file '%s' not found!" % fpath
 
 def db_add_tag(tag_name):
-  c = DB_CONN.cursor()
-  ret = db_get_tag_by_name(tag_name)
-  if ret == None:
-    c.execute("insert into tags(name) values(\"%s\")" % tag_name.replace("'", "\\'"))
+    c = DB_CONN.cursor()
+    ret = db_get_tag_by_name(tag_name)
+    if ret == None:
+        c.execute("insert into tags(name) values(\"%s\")" % tag_name.replace("'", "\\'"))
 
 def db_get_tag_by_name(tag_name):
-  c = DB_CONN.cursor()
-  c.execute("select id from tags where name = \"%s\"" % tag_name.replace("'", "\\'"))
-  ret = c.fetchone()
-  return ret
+    c = DB_CONN.cursor()
+    c.execute("select id from tags where name = \"%s\"" % tag_name.replace("'", "\\'"))
+    ret = c.fetchone()
+    return ret
 
 def db_add_album(album_name):
-  c = DB_CONN.cursor()
-  c.execute("select * from albums where name = '%s'" % album_name)
-  if c.fetchone() == None:
-    c.execute("insert into albums(name) values('%s')" % album_name)
+    c = DB_CONN.cursor()
+    c.execute("select * from albums where name = '%s'" % album_name)
+    if c.fetchone() == None:
+        write_log("[info] adding new album: %s" % album_name)
+        c.execute("insert into albums(name) values('%s')" % album_name)
+
+
+def db_del_album(album_name):
+    c = DB_CONN.cursor()
+    try:
+        c.execute("select id from albums where name = '%s'" % album_name)
+        album_id = int(c.fetchone()[0])
+        write_log("[info] removing album: %s, id = %d" % (album_name, album_id))
+        c.execute("delete from albums_has_images where album_id = %d" % album_id)
+        c.execute("delete from albums where name = '%s'" % album_name)
+    finally:
+        db_commit()
 
 def db_get_album_images(album_name):
   c = DB_CONN.cursor()
@@ -277,25 +293,25 @@ def db_get_image_albums(image_set, id_in_set):
   return albums
 
 def util_is_image(fname):
-  return is_image(fname)
+    return is_image(fname)
 
 def util_make_dirs(path):
-  if os.path.exists(path) == False:
-    print "[mkdir] %s" % path
-    os.makedirs(path)
+    if os.path.exists(path) == False:
+        print "[mkdir] %s" % path
+        os.makedirs(path)
 
 def util_md5_of_file(fpath):
-  m = hashlib.md5()
-  f = open(fpath, "rb")
-  m.update(f.read())
-  f.close()
-  return m.hexdigest()
+    m = hashlib.md5()
+    f = open(fpath, "rb")
+    m.update(f.read())
+    f.close()
+    return m.hexdigest()
 
 def util_get_bucket_name(id_in_set):
-  BUCKET_SIZE = 100
-  bucket_id = id_in_set / BUCKET_SIZE
-  bucket_name = "%d-%d" % (bucket_id * BUCKET_SIZE, bucket_id * BUCKET_SIZE + BUCKET_SIZE - 1)
-  return bucket_name
+    BUCKET_SIZE = 100
+    bucket_id = id_in_set / BUCKET_SIZE
+    bucket_name = "%d-%d" % (bucket_id * BUCKET_SIZE, bucket_id * BUCKET_SIZE + BUCKET_SIZE - 1)
+    return bucket_name
 
 def util_get_image_info(image_set, id_in_set):
   c = DB_CONN.cursor()
@@ -651,8 +667,8 @@ def util_mirror_danbooru_site_ex(site_url, before_id = None):
 
 
 def util_execute(cmd):
-  print "[cmd] %s" % cmd
-  os.system(cmd)
+    print "[cmd] %s" % cmd
+    os.system(cmd)
 
 # Import images.
 def moe_import():
@@ -917,14 +933,14 @@ def moe_sync_rating_helper(set1, set2):
   print "done sync %s -> %s, %d updates, %d conflict" % (set1, set2, update_cnt, conflict_cnt)
 
 def moe_sync_rating():
-  moe_sync_rating_helper("nekobooru", "nekobooru_highres")
-  moe_sync_rating_helper("nekobooru_highres", "nekobooru")
-  moe_sync_rating_helper("konachan", "konachan_highres")
-  moe_sync_rating_helper("konachan_highres", "konachan")
-  moe_sync_rating_helper("moe_imouto", "moe_imouto_highres")
-  moe_sync_rating_helper("moe_imouto_highres", "moe_imouto")
-  moe_sync_rating_helper("danbooru", "danbooru_highres")
-  moe_sync_rating_helper("danbooru_highres", "danbooru")
+    moe_sync_rating_helper("nekobooru", "nekobooru_highres")
+    moe_sync_rating_helper("nekobooru_highres", "nekobooru")
+    moe_sync_rating_helper("konachan", "konachan_highres")
+    moe_sync_rating_helper("konachan_highres", "konachan")
+    moe_sync_rating_helper("moe_imouto", "moe_imouto_highres")
+    moe_sync_rating_helper("moe_imouto_highres", "moe_imouto")
+    moe_sync_rating_helper("danbooru", "danbooru_highres")
+    moe_sync_rating_helper("danbooru_highres", "danbooru")
 
 def moe_highres_rating():
   normal_set = raw_input("The normal res image set:")
@@ -945,28 +961,28 @@ def moe_highres_rating():
   db_commit()
 
 def moe_mirror_danbooru():
-  util_mirror_danbooru_site("http://danbooru.donmai.us")
+    util_mirror_danbooru_site("http://danbooru.donmai.us")
 
 def moe_mirror_danbooru_1000():
-  util_mirror_danbooru_site_ex("http://danbooru.donmai.us")
+    util_mirror_danbooru_site_ex("http://danbooru.donmai.us")
 
 def moe_mirror_danbooru_before(before_id):
-  util_mirror_danbooru_site_ex("http://danbooru.donmai.us", before_id)
+    util_mirror_danbooru_site_ex("http://danbooru.donmai.us", before_id)
 
 def moe_mirror_konachan():
-  util_mirror_danbooru_site("http://konachan.com")
+    util_mirror_danbooru_site("http://konachan.com")
 
 def moe_mirror_moe_imouto():
-  util_mirror_danbooru_site("http://moe.imouto.org")
+    util_mirror_danbooru_site("http://moe.imouto.org")
 
 def moe_mirror_moe_imouto_html():
-  util_mirror_danbooru_site_html("http://moe.imouto.org")
+    util_mirror_danbooru_site_html("http://moe.imouto.org")
 
 def moe_mirror_konachan_html():
-  util_mirror_danbooru_site_html("http://konachan.com")
+    util_mirror_danbooru_site_html("http://konachan.com")
 
 def moe_mirror_nekobooru():
-  util_mirror_danbooru_site("http://nekobooru.net")
+    util_mirror_danbooru_site("http://nekobooru.net")
 
 def util_download_tu178_image(page_url, title, id_in_set):
   images_root = g_image_root
@@ -1070,22 +1086,22 @@ def moe_mirror_tu178():
       time.sleep(1)
 
 def moe_mirror_all():
-  if os.name == "nt":
-    os.system("start moe.py mirror-danbooru")
-    os.system("start moe.py mirror-konachan-html")
-    os.system("start moe.py mirror-nekobooru")
-    os.system("start moe.py mirror-moe-imouto-html")
-    os.system("start moe.py mirror-tu178")
-  else:
-    print "Your download job will be running in 5 detached screen session"
-    print "run `screen -r` to show them"
-    print
-    os.system("screen -dm ./moe.py mirror-danbooru")
-    os.system("screen -dm ./moe.py mirror-konachan-html")
-    os.system("screen -dm ./moe.py mirror-nekobooru")
-    os.system("screen -dm ./moe.py mirror-moe-imouto-html")
-    os.system("screen -dm ./moe.py mirror-tu178")
-    os.system("screen -r")
+    if os.name == "nt":
+        os.system("start moe.py mirror-danbooru")
+        os.system("start moe.py mirror-konachan-html")
+        os.system("start moe.py mirror-nekobooru")
+        os.system("start moe.py mirror-moe-imouto-html")
+        os.system("start moe.py mirror-tu178")
+    else:
+        print "Your download job will be running in 5 detached screen session"
+        print "run `screen -r` to show them"
+        print
+        os.system("screen -dm ./moe.py mirror-danbooru")
+        os.system("screen -dm ./moe.py mirror-konachan-html")
+        os.system("screen -dm ./moe.py mirror-nekobooru")
+        os.system("screen -dm ./moe.py mirror-moe-imouto-html")
+        os.system("screen -dm ./moe.py mirror-tu178")
+        os.system("screen -r")
 
 def moe_cleanup():
     c = DB_CONN.cursor()
@@ -1138,8 +1154,7 @@ def moe_cleanup():
           empty_albums += name,
     for album in empty_albums:
         try:
-            write_log("[info] removing empty album: %s" % album)
-            c.execute("delete from albums where name = '%s'" % album)
+            db_del_album(album)
         except:
           traceback.print_exc()
           time.sleep(1)
