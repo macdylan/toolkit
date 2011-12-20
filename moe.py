@@ -16,6 +16,7 @@ import re
 import time
 import socket
 import traceback
+import datetime
 from urllib2 import HTTPError
 from select import *
 from utils import *
@@ -292,6 +293,41 @@ def db_get_image_albums(image_set, id_in_set):
     albums += ret[0],
   albums.sort()
   return albums
+
+
+def util_time_to_int(time_str):
+    #util_time_to_int("Dec 20 2011, 06:07") # konachan, moe_imouto tag history
+    #util_time_to_int("2011-12-19 23:51") # danbooru, nekobooru, tag history
+
+    if "," in time_str:
+        # konachan, moe_imouto tag history style
+        time_str = time_str.replace("Jan", "01")
+        time_str = time_str.replace("Feb", "02")
+        time_str = time_str.replace("Mar", "03")
+        time_str = time_str.replace("Apr", "04")
+        time_str = time_str.replace("May", "05")
+        time_str = time_str.replace("Jun", "06")
+        time_str = time_str.replace("Jul", "07")
+        time_str = time_str.replace("Aug", "08")
+        time_str = time_str.replace("Sep", "09")
+        time_str = time_str.replace("Oct", "10")
+        time_str = time_str.replace("Nov", "11")
+        time_str = time_str.replace("Dec", "12")
+        tm_val = datetime.datetime.strptime(time_str, "%m %d %Y, %H:%M")
+        pass
+    elif "-" in time_str:
+        # danbooru, nekobooru style
+        tm_val = datetime.datetime.strptime(time_str, "%Y-%m-%d %H:%M")
+    else:
+        # exception! don't know how to handle
+        raise ValueError("don't know how to parse: '%s'" % time_str)
+    int_val = int(time.mktime(tm_val.timetuple()))
+    return tm_val
+
+
+def util_int_to_time(time_int):
+    return str(time.ctime(time_int))
+
 
 def util_is_image(fname):
     return is_image(fname)
@@ -1846,8 +1882,8 @@ def moe_help():
   print "  backup-rate-2              backup images with rating 2"
   print "  backup-rate-3              backup images with rating 3"
   print "  backup-unrated             backup images without rating"
-  print "  check-md5                  check all images by md5"
-  print "  cleanup                    delete images with rating 0, and compact the black list"
+  print "  check-md5                  check all images by their md5, need to build binaries under libexec first"
+  print "  cleanup                    delete images with rating 0, empty albums, and compact the black list"
   print "  create-album               create an album based on a folder of well-formed images"
   print "  export                     export images"
   print "  export-album               export images in an album"
