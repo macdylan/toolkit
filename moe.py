@@ -1682,38 +1682,50 @@ def moe_export_psp():
   print "%d images done" % counter
 
 def moe_export_album():
-  album_name = raw_input("album name: ")
-  print "Image rating:"
-  print "0: not rated, 1: so-so, 2: good, 3: excellent"
-  print "eg: 0123 means all images, 23 means good & excellent images"
-  rating_range = raw_input("image rating (press ENTER for all images): ")
-  if rating_range == "":
-    rating_range = "0123"
-  rating_sql = ""
-  for c in rating_range:
-    if rating_sql != "":
-      rating_sql += " or "
-    if c == "0":
-      rating_sql += "rating is null"
+    album_name = raw_input("album name: ")
+    print "Image rating:"
+    print "0: not rated, 1: so-so, 2: good, 3: excellent"
+    print "eg: 0123 means all images, 23 means good & excellent images"
+    rating_range = raw_input("image rating (press ENTER for all images): ")
+    if rating_range == "":
+        rating_range = "0123"
+    rating_sql = ""
+    for c in rating_range:
+        if rating_sql != "":
+            rating_sql += " or "
+        if c == "0":
+            rating_sql += "rating is null"
+        else:
+            rating_sql += "rating = %s" % c
+    export_dir = raw_input("export to folder: ")
+    # write description.txt
+    c = DB_CONN.cursor()
+    query_sql = "select description from albums where albums.name = '%s'" % album_name
+    c.execute(query_sql)
+    ret_all = c.fetchall()
+    album_description = ret_all[0][0]
+    if album_description == None:
+        print "no description, not creating a description.txt"
     else:
-      rating_sql += "rating = %s" % c
-  export_dir = raw_input("export to folder: ")
-  images_root = g_image_root
-  c = DB_CONN.cursor()
-  query_sql = "select set_name, id_in_set, ext, rating from albums, albums_has_images, images where albums.name = '%s' and albums.id = albums_has_images.album_id and images.id = albums_has_images.image_id and (%s)" % (album_name, rating_sql)
-  c.execute(query_sql)
-  ret_all = c.fetchall()
-  print "%d images to be exported" % len(ret_all)
-  counter = 0
-  for ret in ret_all:
-    counter += 1
-    image_set, id_in_set, ext = ret[0], ret[1], ret[2]
-    img_path = images_root + os.path.sep + image_set + os.path.sep + util_get_bucket_name(id_in_set) + os.path.sep + str(id_in_set) + ext
-    dest_file = export_dir + os.path.sep + image_set + " " + str(id_in_set) + ext
-    shutil.copyfile(img_path, dest_file)
-    if counter % 20 == 0:
-      print "%d images done" % counter
-  print "%d images done" % counter
+        f = open(os.path.join(export_dir, "description.txt"), "w")
+        f.write(album_description)
+        f.close()
+    # copy images
+    images_root = g_image_root
+    query_sql = "select set_name, id_in_set, ext, rating from albums, albums_has_images, images where albums.name = '%s' and albums.id = albums_has_images.album_id and images.id = albums_has_images.image_id and (%s)" % (album_name, rating_sql)
+    c.execute(query_sql)
+    ret_all = c.fetchall()
+    print "%d images to be exported" % len(ret_all)
+    counter = 0
+    for ret in ret_all:
+        counter += 1
+        image_set, id_in_set, ext = ret[0], ret[1], ret[2]
+        img_path = images_root + os.path.sep + image_set + os.path.sep + util_get_bucket_name(id_in_set) + os.path.sep + str(id_in_set) + ext
+        dest_file = export_dir + os.path.sep + image_set + " " + str(id_in_set) + ext
+        shutil.copyfile(img_path, dest_file)
+        if counter % 20 == 0:
+            print "%d images done" % counter
+    print "%d images done" % counter
 
 def moe_export_big_unrated():
   n_images = raw_input("How many images to be exported? [default 1000] ")
