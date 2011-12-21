@@ -2066,6 +2066,7 @@ def db_tag_history_get_head_version(set_name):
         head_version = int(query_ret[0])
     return head_version
 
+
 def db_tag_history_set_head_version(set_name, head_version):
     c = DB_CONN.cursor()
     c.execute("select newest_version from tag_history_head where set_name = '%s'" % set_name)
@@ -2073,7 +2074,7 @@ def db_tag_history_set_head_version(set_name, head_version):
     if query_ret == None:
         c.execute("insert into tag_history_head(set_name, newest_version) values('%s', %d)" % (set_name, head_version))
     else:
-        c.execute("update tag_history_head set newest_version = %d" % head_version)
+        c.execute("update tag_history_head set newest_version = %d where set_name = '%s'" % (head_version, set_name))
     db_commit()
 
 
@@ -2115,7 +2116,6 @@ def moe_fetch_tag_history_page_type1(query_url, set_name):
 
 
 def moe_fetch_tag_history_type1(query_api, set_name):
-
     print "fetching tag history from type1 site: %s => %s" % (query_api, set_name)
     max_page = util_tag_history_get_max_page_type1(query_api)
     print "there are %d pages of tag history" % max_page
@@ -2158,6 +2158,93 @@ def moe_fetch_tag_history_type1(query_api, set_name):
             page_id -= 1
 
     print "fetched all tag history on site '%s'" % query_api
+
+
+
+
+def util_tag_history_get_max_page_type2(query_url):
+    # TODO
+    max_page = 1
+    page_src = "\n".join(map(str.strip, urllib2.urlopen(query_url).readlines()))
+    idx = page_src.find("<div class=\"pagination\">")
+    idx2 = page_src.find("</div>", idx)
+    paging_code = page_src[idx:idx2]
+    idx = 0
+    while True:
+        idx = paging_code.find("?page=", idx)
+        if idx < 0:
+            break
+        idx2 = paging_code.find('"', idx)
+        page_id = int(paging_code[idx + 6:idx2])
+        if page_id > max_page:
+            max_page = page_id
+        idx = idx2
+    return max_page
+
+
+def util_tag_history_parse_page_type2(page_src):
+    # TODO
+    update_list = [] # a list of tuples (id_in_set, update_time_int)
+
+    idx = 0
+    while True:
+        idx = page_src.find('<td><a href="/post/show/', idx)
+        if idx < 0:
+            break
+        idx += 24
+        idx2 = page_src.find('"', idx)
+        id_in_set = int(page_src[idx:idx2])
+
+        idx = page_src.find("<td>", idx2)
+        idx2 = page_src.find("</td>", idx)
+        time_str = page_src[idx + 4:idx2]
+        time_val_int = util_time_to_int(time_str)
+
+        idx = idx2
+
+        update_list += (id_in_set, time_val_int),
+
+    return update_list
+
+def util_tag_history_get_page_time_range_type2(query_url):
+    # TODO
+    page_src = "\n".join(map(str.strip, urllib2.urlopen(query_url).readlines()))
+    update_list = util_tag_history_parse_page_type2(page_src)
+
+    now_tick = int(time.mktime(time.localtime()))
+    max_time = -1
+    min_time = now_tick + 86400 + 1 # prevent time zone problems
+
+    for id_in_set, update_time_int in update_list:
+        if update_time_int > max_time:
+            max_time = update_time_int
+        if update_time_int < min_time:
+            min_time = update_time_int
+
+    return (min_time, max_time)
+
+
+
+def moe_fetch_tag_history_nekobooru():
+    query_api = "http://nekobooru.net/post_tag_history"
+    set_name = "nekobooru"
+    
+    print "fetching tag history from nekobooru site: %s" % query_api
+    max_page = util_tag_history_get_max_page_type2(query_api)
+    print "there are %d pages of tag history" % max_page
+    
+    head_version = db_tag_history_get_head_version(set_name)
+    print "current head version in '%s' is %d" % (set_name, head_version)
+
+    first_page_version_range = util_tag_history_get_page_time_range_type2(query_api + ("?page=%d" % 1))
+    last_page_version_range = util_tag_history_get_page_time_range_type2(query_api + ("?page=%d" % max_page))
+
+    print "version on first page (1) is %d ~ %d" % (first_page_version_range[0], first_page_version_range[1])
+    print "version on last page (%d) is %d ~ %d" % (max_page, last_page_version_range[0], last_page_version_range[1])
+    
+    
+    #TODO
+    
 
 def moe_help():
     print """moe.py: manage all my acg pictures"
@@ -2287,7 +2374,7 @@ if __name__ == "__main__":
         moe_fetch_tag_history_type1("http://oreno.imouto.org/history?search=type%3Aposts", "moe_imouto")
     elif sys.argv[1] == "fetch-tag-history-nekobooru":
         init_db_connection()
-        print "TODO: this shall be done!"
+        moe_fetch_tag_history_nekobooru()
     elif sys.argv[1] == "find-ophan":
         init_db_connection()
         moe_find_ophan()
