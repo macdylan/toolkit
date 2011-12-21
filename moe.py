@@ -65,7 +65,7 @@ def init_db_connection():
     # Create tables if necessary.
     my_dbexec(DB_CONN, "create table if not exists images(id integer primary key, set_name text, id_in_set int, md5 text, rating int, ext text, file_size int)")
     my_dbexec(DB_CONN, "create table if not exists tags(id integer primary key, name text unique)")
-    my_dbexec(DB_CONN, "create table if not exists tag_history(image_id integer, new_version int)")
+    my_dbexec(DB_CONN, "create table if not exists tag_history(set_name text, id_in_set integer, new_version int)")
     my_dbexec(DB_CONN, "create table if not exists tag_history_head(set_name text, newest_version int)")
     my_dbexec(DB_CONN, "create table if not exists images_has_tags(image_id int, tag_id int)")
     my_dbexec(DB_CONN, "create table if not exists albums(id integer primary key, name text unique, description text)")
@@ -81,7 +81,7 @@ def init_db_connection():
 
     my_dbexec(DB_CONN, "create index if not exists i_tags__name on tags(name)")
 
-    my_dbexec(DB_CONN, "create index if not exists i_tag_history__image_id on tag_history(image_id)")
+    my_dbexec(DB_CONN, "create index if not exists i_tag_history__id_in_set on tag_history(id_in_set)")
 
     my_dbexec(DB_CONN, "create index if not exists i_images_has_tags__tag_id__image_id on images_has_tags(tag_id, image_id)")
     my_dbexec(DB_CONN, "create index if not exists i_images_has_tags__image_id__tag_id on images_has_tags(image_id, tag_id)")
@@ -2040,7 +2040,6 @@ def util_tag_history_parse_page_type1(page_src):
     return update_list
 
 def util_tag_history_get_page_time_range_type1(query_api, page_id):
-    # TODO
     query_url = query_api + ("&page=%d" % page_id)
     page_src = "\n".join(map(str.strip, urllib2.urlopen(query_url).readlines()))
     update_list = util_tag_history_parse_page_type1(page_src)
@@ -2077,8 +2076,46 @@ def db_tag_history_set_head_version(set_name, head_version):
         c.execute("update tag_history_head set newest_version = %d" % head_version)
     db_commit()
 
+
+def db_update_image_tag_version(set_name, id_in_set, new_version):
+    if db_image_in_black_list(set_name, id_in_set):
+        print "'%s %d' is in black list" % (set_name, id_in_set)
+        return False
+
+    c = DB_CONN.cursor()
+    c.execute("select new_version from tag_history where set_name = '%s' and id_in_set = %d" % (set_name, id_in_set))
+    query_ret = c.fetchone()
+    if query_ret != None:
+        old_version = int(query_ret[0])
+        if new_version > old_version:
+            c.execute("update tag_history set new_version = %d where set_name = '%s' and id_in_set = %d" % (new_version, set_name, id_in_set))
+            return True
+        else:
+            return False
+    else:
+        c.execute("insert into tag_history(set_name, id_in_set, new_version) values('%s', %d, %d)" % (set_name, id_in_set, new_version))
+        return True
+
+
+def moe_fetch_tag_history_page_type1(query_url, set_name):
+    print "fetching tag history from page: %s" % query_url
+    page_src = "\n".join(map(str.strip, urllib2.urlopen(query_url).readlines()))
+    update_list = util_tag_history_parse_page_type1(page_src)
+
+    max_ver = 0
+    for id_in_set, new_version in update_list:
+        if new_version > max_ver:
+            max_ver = new_version
+        ret = db_update_image_tag_version(set_name, id_in_set, new_version)
+        if ret == True:
+            print "update image version: %s %d => v%d" % (set_name, id_in_set, new_version)
+
+    db_tag_history_set_head_version(set_name, max_ver)
+    db_commit()
+
+
 def moe_fetch_tag_history_type1(query_api, set_name):
-    print "TODO: this shall be done!"
+
     print "fetching tag history from type1 site: %s => %s" % (query_api, set_name)
     max_page = util_tag_history_get_max_page_type1(query_api)
     print "there are %d pages of tag history" % max_page
@@ -2091,6 +2128,36 @@ def moe_fetch_tag_history_type1(query_api, set_name):
 
     print "version on first page (1) is %d ~ %d" % (first_page_version_range[0], first_page_version_range[1])
     print "version on last page (%d) is %d ~ %d" % (max_page, last_page_version_range[0], last_page_version_range[1])
+
+    page_id = max_page # by default, start from last page
+    high_page_range = last_page_version_range
+    low_page_range = first_page_version_range
+    if head_version > first_page_version_range[1] + 86400 + 1:
+        page_id = 0 # no need to mirror
+    elif head_version >= last_page_version_range[0]:
+        # bisect to proper page and restart mirroring
+        high_page_id = max_page
+        low_page_id = 1
+        while low_page_id + 1 < high_page_id:
+            mid_page_id = (high_page_id + low_page_id) / 2
+            mid_page_range = util_tag_history_get_page_time_range_type1(query_api, mid_page_id)
+            print "version on page %d is %d ~ %d" % (mid_page_id, mid_page_range[0], mid_page_range[1])
+            if head_version <= mid_page_range[1]:
+                low_page_id = mid_page_id
+                low_page_range = mid_page_range
+            else: # mid_page_range[1] < head_version
+                high_page_id = mid_page_id
+                high_page_range = mid_page_range
+        page_id = high_page_id
+
+    if page_id > 0:
+        print "start fetching from page %d, version %d ~ %d" % (page_id, high_page_range[0], high_page_range[1])
+        while page_id > 0:
+            query_url = query_api + ("&page=%d" % page_id)
+            moe_fetch_tag_history_page_type1(query_url, set_name)
+            page_id -= 1
+
+    print "fetched all tag history on site '%s'" % query_api
 
 def moe_help():
     print """moe.py: manage all my acg pictures"
