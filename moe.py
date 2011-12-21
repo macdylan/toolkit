@@ -2292,6 +2292,103 @@ def moe_fetch_tag_history_nekobooru():
     print "fetched all tag history on site '%s'" % query_api
 
 
+def util_count_history_per_page(page_src):
+    count_per_page = 0
+    idx = 0
+    while True:
+        idx = page_src.find("PostTagHistory.add_change", idx)
+        if idx < 0:
+            break
+        count_per_page += 1
+        idx = idx + 20
+    return count_per_page
+
+
+def util_tag_history_parse_update_id_list_danbooru(query_url):
+    id_list = []
+    page_src = "\n".join(map(str.strip, urllib2.urlopen(query_url).readlines()))
+    idx = 0
+    while True:
+        idx = page_src.find("PostTagHistory.add_change(", idx)
+        if idx < 0:
+            break
+        idx = idx + 26
+        idx2 = page_src.find(",", idx)
+        id_list += int(page_src[idx:idx2]),
+        idx = idx2
+    return id_list
+
+
+def util_tag_history_find_update_id_range_danbooru(query_api, history_per_page):
+    largest = 0
+    smallest = 0
+
+    # find largest
+    id_list = util_tag_history_parse_update_id_list_danbooru(query_api)
+    largest = max(id_list)
+
+    # bisect finding smallest
+    low_bound = 0
+    high_bound = largest
+    while low_bound + 1 < high_bound:
+        guess = (low_bound + high_bound) / 2
+        print "guessing smallest update_id to be %d" % guess
+        id_list = util_tag_history_parse_update_id_list_danbooru(query_api + ("?before_id=%d" % guess))
+        if len(id_list) > 0 and len(id_list) < (history_per_page / 2) + 1:
+            smallest = min(id_list)
+            break
+        elif len(id_list) == 0:
+            low_bound = guess
+        else: # len(id_list) is large, so need to decrease high_bound
+            high_bound = guess
+
+    return [smallest, largest]
+
+
+
+def moe_fetch_tag_history_danbooru():
+    query_api = "http://danbooru.donmai.us/post_tag_history"
+    set_name = "danbooru"
+    print "fetching tag history from nekobooru site: %s" % query_api
+
+    page_src = "\n".join(map(str.strip, urllib2.urlopen(query_api).readlines()))
+
+    history_per_page = util_count_history_per_page(page_src)
+    print "there are %d tag history entries per page" % history_per_page
+
+    head_version = db_tag_history_get_head_version(set_name)
+    print "current head version in '%s' is %d" % (set_name, head_version)
+
+    smallest_update_id, largest_update_id = util_tag_history_find_update_id_range_danbooru(query_api, history_per_page)
+    print "update_id range %d ~ %d" % (smallest_update_id, largest_update_id)
+
+    before_id = smallest_update_id # by default, start from last page
+    last_page_version_range = util_tag_history_get_page_time_range_type2(query_api + ("?before_id=%d" % (smallest_update_id + 10)))
+
+    if head_version >= last_page_version_range[0]:
+        high_before_id = largest_update_id
+        low_before_id = smallest_update_id
+        while low_before_id + 1 < high_before_id:
+            mid_before_id = (high_before_id + low_before_id) / 2
+            mid_page_range = util_tag_history_get_page_time_range_type2(query_api + ("?before_id=%d" % mid_before_id))
+            print "version (before_id=%d) is %d ~ %d" % (mid_before_id, mid_page_range[0], mid_page_range[1])
+            if head_version <= mid_page_range[1]:
+                high_before_id = mid_before_id
+            else:
+                low_before_id = mid_before_id
+        before_id = low_before_id
+
+    if before_id > 0:
+        print "start fetching with before_id=%d"
+        while before_id <= largest_update_id + history_per_page:
+            query_url = query_api + ("?before_id=%d" % before_id)
+            moe_fetch_tag_history_page_type2(query_url, set_name)
+            before_id += history_per_page
+
+    print "fetched all tag history on site '%s'" % query_api
+
+
+
 def moe_help():
     print """moe.py: manage all my acg pictures"
 usage: moe.py <command>"
@@ -2411,7 +2508,7 @@ if __name__ == "__main__":
         moe_export_sql()
     elif sys.argv[1] == "fetch-tag-history-danbooru":
         init_db_connection()
-        print "TODO: this shall be done!"
+        moe_fetch_tag_history_danbooru()
     elif sys.argv[1] == "fetch-tag-history-konachan":
         init_db_connection()
         moe_fetch_tag_history_type1("http://konachan.com/history?search=type%3Aposts", "konachan")
