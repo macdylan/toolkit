@@ -2103,6 +2103,7 @@ def moe_fetch_tag_history_page_type1(query_url, set_name):
     page_src = "\n".join(map(str.strip, urllib2.urlopen(query_url).readlines()))
     update_list = util_tag_history_parse_page_type1(page_src)
 
+    has_update = False
     max_ver = 0
     for id_in_set, new_version in update_list:
         if new_version > max_ver:
@@ -2110,8 +2111,10 @@ def moe_fetch_tag_history_page_type1(query_url, set_name):
         ret = db_update_image_tag_version(set_name, id_in_set, new_version)
         if ret == True:
             print "update image version: %s %d => v%d" % (set_name, id_in_set, new_version)
+            has_update = True
 
-    db_tag_history_set_head_version(set_name, max_ver)
+    if has_update:
+        db_tag_history_set_head_version(set_name, max_ver)
     db_commit()
 
 
@@ -2163,7 +2166,6 @@ def moe_fetch_tag_history_type1(query_api, set_name):
 
 
 def util_tag_history_get_max_page_type2(query_url):
-    # TODO
     max_page = 1
     page_src = "\n".join(map(str.strip, urllib2.urlopen(query_url).readlines()))
     idx = page_src.find("<div class=\"pagination\">")
@@ -2183,7 +2185,6 @@ def util_tag_history_get_max_page_type2(query_url):
 
 
 def util_tag_history_parse_page_type2(page_src):
-    # TODO
     update_list = [] # a list of tuples (id_in_set, update_time_int)
 
     idx = 0
@@ -2207,7 +2208,6 @@ def util_tag_history_parse_page_type2(page_src):
     return update_list
 
 def util_tag_history_get_page_time_range_type2(query_url):
-    # TODO
     page_src = "\n".join(map(str.strip, urllib2.urlopen(query_url).readlines()))
     update_list = util_tag_history_parse_page_type2(page_src)
 
@@ -2224,15 +2224,34 @@ def util_tag_history_get_page_time_range_type2(query_url):
     return (min_time, max_time)
 
 
+def moe_fetch_tag_history_page_type2(query_url, set_name):
+    print "fetching tag history from page: %s" % query_url
+    page_src = "\n".join(map(str.strip, urllib2.urlopen(query_url).readlines()))
+    update_list = util_tag_history_parse_page_type2(page_src)
+
+    has_update = False
+    max_ver = 0
+    for id_in_set, new_version in update_list:
+        if new_version > max_ver:
+            max_ver = new_version
+        ret = db_update_image_tag_version(set_name, id_in_set, new_version)
+        if ret == True:
+            print "update image version: %s %d => v%d" % (set_name, id_in_set, new_version)
+            has_update = True
+
+    if has_update:
+        db_tag_history_set_head_version(set_name, max_ver)
+    db_commit()
+
 
 def moe_fetch_tag_history_nekobooru():
     query_api = "http://nekobooru.net/post_tag_history"
     set_name = "nekobooru"
-    
+
     print "fetching tag history from nekobooru site: %s" % query_api
     max_page = util_tag_history_get_max_page_type2(query_api)
     print "there are %d pages of tag history" % max_page
-    
+
     head_version = db_tag_history_get_head_version(set_name)
     print "current head version in '%s' is %d" % (set_name, head_version)
 
@@ -2241,10 +2260,37 @@ def moe_fetch_tag_history_nekobooru():
 
     print "version on first page (1) is %d ~ %d" % (first_page_version_range[0], first_page_version_range[1])
     print "version on last page (%d) is %d ~ %d" % (max_page, last_page_version_range[0], last_page_version_range[1])
-    
-    
-    #TODO
-    
+
+    page_id = max_page # by default, start from last page
+    high_page_range = last_page_version_range
+    low_page_range = first_page_version_range
+    if head_version > first_page_version_range[1] + 86400 + 1:
+        page_id = 0 # no need to mirror
+    elif head_version >= last_page_version_range[0]:
+        # bisect to proper page and restart mirroring
+        high_page_id = max_page
+        low_page_id = 1
+        while low_page_id + 1 < high_page_id:
+            mid_page_id = (high_page_id + low_page_id) / 2
+            mid_page_range = util_tag_history_get_page_time_range_type2(query_api + ("?page=%d" % mid_page_id))
+            print "version on page %d is %d ~ %d" % (mid_page_id, mid_page_range[0], mid_page_range[1])
+            if head_version <= mid_page_range[1]:
+                low_page_id = mid_page_id
+                low_page_range = mid_page_range
+            else: # mid_page_range[1] < head_version
+                high_page_id = mid_page_id
+                high_page_range = mid_page_range
+        page_id = high_page_id
+
+    if page_id > 0:
+        print "start fetching from page %d, version %d ~ %d" % (page_id, high_page_range[0], high_page_range[1])
+        while page_id > 0:
+            query_url = query_api + ("?page=%d" % page_id)
+            moe_fetch_tag_history_page_type2(query_url, set_name)
+            page_id -= 1
+
+    print "fetched all tag history on site '%s'" % query_api
+
 
 def moe_help():
     print """moe.py: manage all my acg pictures"
