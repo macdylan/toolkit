@@ -18,6 +18,7 @@ import socket
 import traceback
 import datetime
 import urlparse
+import random
 from urllib2 import HTTPError
 from select import *
 from utils import *
@@ -81,7 +82,7 @@ def init_db_connection():
 
     my_dbexec(DB_CONN, "create index if not exists i_tags__name on tags(name)")
 
-    my_dbexec(DB_CONN, "create index if not exists i_tag_history__id_in_set on tag_history(id_in_set)")
+    my_dbexec(DB_CONN, "create index if not exists i_tag_history__set_name__id_in_set on tag_history(set_name, id_in_set)")
 
     my_dbexec(DB_CONN, "create index if not exists i_images_has_tags__tag_id__image_id on images_has_tags(tag_id, image_id)")
     my_dbexec(DB_CONN, "create index if not exists i_images_has_tags__image_id__tag_id on images_has_tags(image_id, tag_id)")
@@ -1998,6 +1999,77 @@ def moe_update_pool(pool_api, set_name):
             time.sleep(1)
 
 
+def util_update_tags_from_page(post_url, set_name, id_in_set):
+    try:
+        print "update tags of '%s %d' => %s" % (set_name, id_in_set, post_url)
+        page_src = "\n".join(map(str.strip, urllib2.urlopen(post_url).readlines()))
+        idx = page_src.find('<div id="note-container">')
+        if idx < 0:
+            print "*** failed to parse page: " + post_url
+            return False
+        idx = page_src.find('<img alt="', idx)
+        if idx < 0:
+            print "*** failed to parse page: " + post_url
+            return False
+        idx += 10
+
+        idx2 = page_src.find('"', idx)
+        tags = page_src[idx:idx2].split()
+        print "tags:", tags
+
+        db_set_image_tags(set_name, id_in_set, tags)
+        db_set_image_tags(set_name + "_highres", id_in_set, tags)
+
+        c = DB_CONN.cursor()
+        c.execute("delete from tag_history where set_name = '%s' and id_in_set = %d" % (set_name, id_in_set))
+        db_commit()
+        return True
+
+    except:
+        traceback.print_exc()
+        time.sleep(1)
+        return False
+
+
+
+def moe_update_tag_history(post_api, set_name):
+    if post_api.endswith("/") == False:
+        post_api += '/'
+    print "updating tag history (set_name='%s') from: %s" % (set_name, post_api)
+    c = DB_CONN.cursor()
+    c.execute("select count(*) from tag_history where set_name = '%s'" % set_name)
+    query_ret = c.fetchone()
+    n_update = int(query_ret[0])
+    print "there are %d posts to be updated in set '%s'" % (n_update, set_name)
+
+    if n_update == 0:
+        return
+
+    n_fetch_lim = 10000 # query limit
+    while True:
+        c.execute("select id_in_set from tag_history where set_name = '%s' limit %d" % (set_name, n_fetch_lim))
+        query_ret = c.fetchall()
+        update_list = []
+        for ret in query_ret:
+            update_list += int(ret[0]),
+        if len(update_list) == 0:
+            break
+        random.shuffle(update_list) # shuffle the list, prevent some dead item getting accumulated to head of list
+        n_success = 0
+        for id_in_set in update_list:
+            post_url = post_api + str(id_in_set)
+            ret = util_update_tags_from_page(post_url, set_name, id_in_set)
+            if ret == True:
+                n_success += 1
+        if n_success > 0:
+            print "successfully updated tags on %d posts"
+        else:
+            print "*** failed to update some tags! quit now!"
+            print "*** note that this might be caused by server side deletion of images"
+            print "*** you may routinly cleanup tag_history to prevent this error message"
+            break
+
+
 def util_tag_history_get_max_page_type1(query_url):
     max_page = 1
     page_src = "\n".join(map(str.strip, urllib2.urlopen(query_url).readlines()))
@@ -2443,6 +2515,10 @@ available commands:"
     update-pool-konachan            update pool info from konachan.com
     update-pool-moe-imouto          update pool info from moe.imouto.org
     update-pool-nekobooru           update pool info from nekobooru.net
+    update-tag-history-danbooru     update tag history from danbooru.donmai.us
+    update-tag-history-konachan     update tag history from konachan.com
+    update-tag-history-moe-imouto   update tag history from moe.imouto.org
+    update-tag-history-nekobooru    update tag history from nekobooru.net
 
 author: Santa Zhang (santa1987@gmail.com)"""
 
@@ -2595,5 +2671,17 @@ if __name__ == "__main__":
     elif sys.argv[1] == "update-pool-nekobooru":
         init_db_connection()
         moe_update_pool("http://nekobooru.net/pool/index", "nekobooru")
+    elif sys.argv[1] == "update-tag-history-danbooru":
+        init_db_connection()
+        moe_update_tag_history("http://danbooru.donmai.us/post/show", "danbooru")
+    elif sys.argv[1] == "update-tag-history-konachan":
+        init_db_connection()
+        moe_update_tag_history("http://konachan.com/post/show", "konachan")
+    elif sys.argv[1] == "update-tag-history-moe-imouto":
+        init_db_connection()
+        moe_update_tag_history("http://oreno.imouto.org/post/show", "moe_imouto")
+    elif sys.argv[1] == "update-tag-history-nekobooru":
+        init_db_connection()
+        moe_update_tag_history("http://nekobooru.net/post/show", "nekobooru")
     else:
         print "command '%s' not understood, see 'moe.py help' for more info" % sys.argv[1]
