@@ -1914,7 +1914,10 @@ def util_pool_mirror(pool_index, set_name, pool_name, pool_size):
     print "mirror pool '%s' from '%s' (set=%s), size=%d" % (pool_name, pool_index, set_name, pool_size)
     # first remove the album, then add the album
     album_name = util_html_escape("[pool_%s] %s" % (set_name, pool_name))
-    print "album_name = %s" % album_name
+    try:
+        print "album_name = %s" % album_name
+    except:
+        pass
     db_del_album(album_name)
     page_id = 1
     desc = None
@@ -1927,7 +1930,10 @@ def util_pool_mirror(pool_index, set_name, pool_name, pool_size):
             if desc == None:
                 desc = xml.find("description").text
                 print "---- begin description ----"
-                print desc
+                try:
+                    print desc
+                except:
+                    pass
                 print "---- end description ----"
 
             db_add_album(album_name, desc)
@@ -1950,6 +1956,11 @@ def util_pool_mirror(pool_index, set_name, pool_name, pool_size):
             traceback.print_exc()
             time.sleep(1)
             break
+
+    try:
+        print "finished mirroring pool %s" % pool_name
+    except:
+        pass
 
 
 def util_pool_fetch_page_directory(query_url, set_name):
@@ -1997,6 +2008,7 @@ def moe_update_pool(pool_api, set_name):
         except:
             traceback.print_exc()
             time.sleep(1)
+    print "finished updating pools of set '%s'" % set_name
 
 
 def util_update_tags_from_page(post_url, set_name, id_in_set):
