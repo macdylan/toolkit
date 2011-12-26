@@ -2197,7 +2197,7 @@ def moe_fetch_tag_history_page_type1(query_url, set_name):
             max_ver = new_version
         ret = db_update_image_tag_version(set_name, id_in_set, new_version)
         if ret == True:
-            print "update image version: %s %d => v%d" % (set_name, id_in_set, new_version)
+            print "update image version: %s %d => v%d (%s)" % (set_name, id_in_set, new_version, util_int_to_time(new_version))
             has_update = True
 
     if has_update:
@@ -2323,7 +2323,7 @@ def moe_fetch_tag_history_page_type2(query_url, set_name):
             max_ver = new_version
         ret = db_update_image_tag_version(set_name, id_in_set, new_version)
         if ret == True:
-            print "update image version: %s %d => v%d" % (set_name, id_in_set, new_version)
+            print "update image version: %s %d => v%d (%s)" % (set_name, id_in_set, new_version, util_int_to_time(new_version))
             has_update = True
 
     if has_update:
