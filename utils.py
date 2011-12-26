@@ -154,15 +154,21 @@ def is_music(fname):
   return False
 
 def write_log(text):
-  print text
-  main_name = os.path.basename(sys.argv[0])
-  if "." in main_name:
-    main_name = os.path.splitext(main_name)[0]
-  log_fn = os.path.join(os.path.split(__file__)[0], main_name + ".log")
-  f = open(log_fn, "a")
-  tm = time.strftime("%Y.%m.%d %H:%M:%S", time.localtime())
-  f.write("[%s] %s\n" % (tm, text))
-  f.close()
+    try:
+        print text
+    except:
+        pass
+    main_name = os.path.basename(sys.argv[0])
+    if "." in main_name:
+      main_name = os.path.splitext(main_name)[0]
+    log_fn = os.path.join(os.path.split(__file__)[0], main_name + ".log")
+    f = open(log_fn, "a")
+    tm = time.strftime("%Y.%m.%d %H:%M:%S", time.localtime())
+    try:
+        f.write("[%s] %s\n" % (tm, text))
+    except:
+        pass
+    f.close()
 
 def random_token(size=5):
   token = ""

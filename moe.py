@@ -1887,7 +1887,10 @@ def moe_list_albums():
         id, name = album
         query_sql = "select count(*) from albums_has_images where album_id = %d" % id
         count = int(c.execute(query_sql).fetchone()[0])
-        print "%s  (id=%d, count=%d)" % (name, id, count)
+        try:
+            print "%s  (id=%d, count=%d)" % (name, id, count)
+        except:
+            traceback.print_exc()
 
 
 def util_pool_get_max_page(pool_api):
