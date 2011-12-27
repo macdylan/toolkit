@@ -534,7 +534,6 @@ def util_check_corrupt_zip():
         print "*** corruption found:"
         for bad in bad_list:
             print bad
-    return bad_list
 
 
 # used in util_check_corrupt_images_in_zip, wrap binary as a file object for PIL
@@ -551,7 +550,7 @@ class FileObjForPIL(object):
         ret_data = self.bin_data[self.pos:(self.pos + cnt)]
         self.pos += cnt
         return ret_data
-    
+
     def tell(self):
         return self.pos
 
@@ -589,16 +588,12 @@ def util_check_corrupt_images_in_zip(fpath):
 def util_check_corrupt_images():
     tmp_folder = get_config("tmp_folder")
     print "tmp folder:", tmp_folder
-    bad_list = []
     for root, dirnames, fnames in os.walk(MANGA_FOLDER):
         for fn in fnames:
             fpath = os.path.join(root, fn)
             if fpath.lower().endswith(".zip"):
                 ret = util_check_corrupt_images_in_zip(fpath)
 
-    print "bad list:"
-    print bad_list
-    return bad_list
 
 def grab_check_corrupt():
     pil_installed = False
@@ -609,7 +604,7 @@ def grab_check_corrupt():
         pass
 
     if pil_installed:
-#        util_check_corrupt_zip()
+        util_check_corrupt_zip()
         util_check_corrupt_images()
     else:
         print "*** PIL not installed! only checking for corrupt zip files!"
