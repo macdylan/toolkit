@@ -5,7 +5,6 @@
 # Author: Santa Zhang (santa1987@gmail.com)
 #
 
-
 import sys
 import os
 import re
@@ -43,19 +42,22 @@ def prepare_folder(path):
     grab_message("[mkdir] %s" % path)
 
 def grab_print_help():
-  print "grabber.py: manage my manga books"
-  print "usage: grabber.py <command>"
-  print "available commands:"
-  print
-  print "  download             download a manga book"
-  print "  download-reverse     download a manga book, in reverse order"
-  print "  help                 display this help message"
-  print "  list-library         list contents in library"
-  print "  pack-all             packup all manga books"
-  print "  update               update specified managed manga books"
-  print "  update-all           update all managed manga books"
-  print
-  print "author: Santa Zhang (santa1987@gmail.com)"
+    print """grabber.py: manage my manga books
+usage: grabber.py <command>
+available commands:
+
+  check-corrupt        check for corrupt zip files and images
+  download             download a manga book
+  download-reverse     download a manga book, in reverse order
+  help                 display this help message
+  list-library         list contents in library
+  pack-all             packup all manga books
+  update               update specified managed manga books
+  update-all           update all managed manga books
+
+author: Santa Zhang (santa1987@gmail.com)"""
+
+
 
 def grab_is_image(fname):
   return is_image(fname)
@@ -500,29 +502,132 @@ def grab_update():
 
 
 def grab_list_library():
-  library = grab_load_library()
-  print "library content:"
-  print
-  for item in library:
-    print "%s => %s" % (item, library[item])
-  print
-  print "%d items in library" % len(library)
+    library = grab_load_library()
+    print "library content:"
+    print
+    for item in library:
+        print "%s => %s" % (item, library[item])
+    print
+    print "%d items in library" % len(library)
+
+
+def util_check_corrupt_zip():
+    import zipfile
+    tmp_folder = get_config("tmp_folder")
+    print "tmp folder:", tmp_folder
+    bad_list = []
+    for root, dirnames, fnames in os.walk(MANGA_FOLDER):
+        for fn in fnames:
+            fpath = os.path.join(root, fn)
+            if fpath.lower().endswith(".zip"):
+                print "checking zip file:", fpath
+                the_zip_file = zipfile.ZipFile(fpath)
+                ret = the_zip_file.testzip()
+                if ret is not None:
+                    print "*** first bad file in zip: %s" % ret
+                    bad_list += (fpath, ret),
+                the_zip_file.close()
+
+    if len(bad_list) == 0:
+        print "*** all files are consistent"
+    else:
+        print "*** corruption found:"
+        for bad in bad_list:
+            print bad
+
+
+# used in util_check_corrupt_images_in_zip, wrap binary as a file object for PIL
+class FileObjForPIL(object):
+
+    def __init__(self, bin_data):
+        self.bin_data = bin_data
+        self.pos = 0
+
+    def read(self, sz=None):
+        if sz == None:
+            sz = len(self.bin_data) - self.pos
+        cnt = min(sz, len(self.bin_data) - self.pos)
+        ret_data = self.bin_data[self.pos:(self.pos + cnt)]
+        self.pos += cnt
+        return ret_data
+
+    def tell(self):
+        return self.pos
+
+    def seek(self, offset, whence=None):
+        if whence == None:
+            whence = os.SEEK_SET
+        if whence == os.SEEK_SET:
+            self.pos = offset
+        elif whence == os.SEEK_CUR:
+            self.pos += offset
+        elif whence == os.SEEK_END:
+            self.pos = len(self.bin_data) + offset
+        if self.pos < 0:
+            self.pos = 0
+        if self.pos > len(self.bin_data):
+            self.pos = len(self.bin_data)
+
+
+def util_check_corrupt_images_in_zip(fpath):
+    import zipfile
+    from PIL import Image
+    print "checking images in zip file:", fpath
+    zf = zipfile.ZipFile(fpath)
+    for zinfo in zf.infolist():
+        if is_image(zinfo.filename.lower()):
+            zobj = zf.open(zinfo.filename, "r")
+            zdata = zobj.read()
+            fobj = FileObjForPIL(zdata)
+            vimg = Image.open(fobj)
+            vimg.verify()
+            zobj.close()
+    zf.close()
+
+
+def util_check_corrupt_images():
+    tmp_folder = get_config("tmp_folder")
+    print "tmp folder:", tmp_folder
+    for root, dirnames, fnames in os.walk(MANGA_FOLDER):
+        for fn in fnames:
+            fpath = os.path.join(root, fn)
+            if fpath.lower().endswith(".zip"):
+                ret = util_check_corrupt_images_in_zip(fpath)
+
+
+def grab_check_corrupt():
+    pil_installed = False
+    try:
+        from PIL import Image
+        pil_installed = True
+    except:
+        pass
+
+    if pil_installed:
+        util_check_corrupt_zip()
+        util_check_corrupt_images()
+    else:
+        print "*** PIL not installed! only checking for corrupt zip files!"
+        util_check_corrupt_zip()
+
 
 if __name__ == "__main__":
-  if len(sys.argv) == 1 or sys.argv[1] == "help":
-    grab_print_help()
-  elif sys.argv[1] == "download":
-    grab_download()
-  elif sys.argv[1] == "download-reverse":
-    grab_download(reverse=True)
-  elif sys.argv[1] == "list-library":
-    grab_list_library()
-  elif sys.argv[1] == "pack-all":
-    grab_pack_all()
-  elif sys.argv[1] == "update":
-    grab_update()
-  elif sys.argv[1] == "update-all":
-    grab_update_all()
-  else:
-    print "command '%s' not understood, see 'grabber.py help' for more info" % sys.argv[1]
+    if len(sys.argv) == 1 or sys.argv[1] == "help":
+        grab_print_help()
+    elif sys.argv[1] == "check-corrupt":
+        grab_check_corrupt()
+    elif sys.argv[1] == "download":
+        grab_download()
+    elif sys.argv[1] == "download-reverse":
+        grab_download(reverse=True)
+    elif sys.argv[1] == "list-library":
+        grab_list_library()
+    elif sys.argv[1] == "pack-all":
+        grab_pack_all()
+    elif sys.argv[1] == "update":
+        grab_update()
+    elif sys.argv[1] == "update-all":
+        grab_update_all()
+    else:
+        print "command '%s' not understood, see 'grabber.py help' for more info" % sys.argv[1]
 

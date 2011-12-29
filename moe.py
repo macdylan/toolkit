@@ -2455,7 +2455,7 @@ def moe_fetch_tag_history_danbooru():
     if head_version >= last_page_version_range[0]:
         high_before_id = largest_update_id
         low_before_id = smallest_update_id
-        while low_before_id + 1 < high_before_id:
+        while low_before_id + history_per_page / 2 < high_before_id:
             mid_before_id = (high_before_id + low_before_id) / 2
             mid_page_range = util_tag_history_get_page_time_range_type2(query_api + ("?before_id=%d" % mid_before_id))
             print "version (before_id=%d) is %d ~ %d" % (mid_before_id, mid_page_range[0], mid_page_range[1])
@@ -2466,7 +2466,7 @@ def moe_fetch_tag_history_danbooru():
         before_id = low_before_id
 
     if before_id > 0:
-        print "start fetching with before_id=%d"
+        print "start fetching with before_id=%d" % before_id
         while before_id <= largest_update_id + history_per_page:
             query_url = query_api + ("?before_id=%d" % before_id)
             moe_fetch_tag_history_page_type2(query_url, set_name)
