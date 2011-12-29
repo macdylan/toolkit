@@ -1296,6 +1296,7 @@ def hk_rsync_to_labpc():
   if os.path.exists("/Volumes/Takaramono$"):
     print "Backing up to /Volumes/Takaramono$"
     hk_exec("rsync -avx --delete /Users/santa/Archive/ /Volumes/Takaramono$/backup/archive/")
+    hk_exec("cp /Volumes/Takaramono$/backup/music/itunes_genuine_report.csv /Users/santa/Music")
     hk_exec("rsync -avx --delete /Users/santa/Music/ /Volumes/Takaramono$/backup/music/")
     hk_exec("rsync -avx --delete /Users/santa/Movies/ /Volumes/Takaramono$/backup/video/")
     hk_exec("rsync -avx --delete /Users/santa/Manga/ /Volumes/Takaramono$/manga/")
