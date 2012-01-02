@@ -8,6 +8,9 @@
 #
 # there is empty lines between manga books
 
+name=mushishi
+url=http://manhua.178.com/congshi/
+
 name=yunzbd
 url=http://manhua.178.com/yunzbd/
 
@@ -547,8 +550,8 @@ name=sidooh
 url=http://manhua.178.com/s/sidoohshidao.shtml
 
 
-name=deathnote
-url=http://www.bengou.com/100427/sw10042714/index.html
+#name=deathnote
+#url=http://www.bengou.com/100427/sw10042714/index.html
 
 
 
