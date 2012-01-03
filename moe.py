@@ -2021,10 +2021,16 @@ def util_update_tags_from_page(post_url, set_name, id_in_set):
         idx = page_src.find('<div id="note-container">')
         if idx < 0:
             print "*** failed to parse page: " + post_url
+            c = DB_CONN.cursor()
+            c.execute("delete from tag_history where set_name = '%s' and id_in_set = %d" % (set_name, id_in_set))
+            db_commit()
             return False
         idx = page_src.find('<img alt="', idx)
         if idx < 0:
             print "*** failed to parse page: " + post_url
+            c = DB_CONN.cursor()
+            c.execute("delete from tag_history where set_name = '%s' and id_in_set = %d" % (set_name, id_in_set))
+            db_commit()
             return False
         idx += 10
 
@@ -2501,7 +2507,6 @@ def util_check_dropbox_images_id(fpath, set_name, id_in_set):
         idx = page_src.find("<", idx2)
         assert idx >= 0
         info_seg = page_src[idx2:idx]
-        print info_seg
         splt = info_seg.split()
         sz = float(splt[1][1:])
         if splt[2].startswith("KB"):
