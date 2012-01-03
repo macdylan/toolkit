@@ -2475,6 +2475,93 @@ def moe_fetch_tag_history_danbooru():
     print "fetched all tag history on site '%s'" % query_api
 
 
+def util_check_dropbox_images_id(fpath, set_name, id_in_set):
+    fsize = os.stat(fpath).st_size
+    print "checking %s %d, fsize=%s (%d)" % (set_name, id_in_set, pretty_fsize(fsize), fsize)
+    if set_name.startswith("moe_imouto"):
+        post_url = "http://moe.imouto.org/post/show/%d" % id_in_set
+    elif set_name.startswith("danbooru"):
+        post_url = "http://danbooru.donmai.us/post/show/%d" % id_in_set
+    elif set_name.startswith("konachan"):
+        post_url = "http://konachan.com/post/show/%d" % id_in_set
+    elif set_name.startswith("nekobooru"):
+        post_url = "http://nekobooru.net/post/show/%d" % id_in_set
+    print post_url
+    page_src = "\n".join(map(str.strip, urllib2.urlopen(post_url).readlines()))
+
+    idx = page_src.find("Post.register_resp({")
+    if idx < 0:
+        idx = page_src.find("<li>Size: ")
+        assert idx >= 0
+        idx = page_src.find("<a", idx)
+        assert idx >= 0
+        idx2 = page_src.find(">", idx)
+        assert idx2 >= 0
+        idx2 += 1
+        idx = page_src.find("<", idx2)
+        assert idx >= 0
+        info_seg = page_src[idx2:idx]
+        print info_seg
+        splt = info_seg.split()
+        sz = float(splt[1][1:])
+        if splt[2].startswith("KB"):
+            sz *= 1024
+        elif splt[2].startswith("MB"):
+            sz *= 1024 * 1024
+        else:
+            raise Exception("Unknown unit: %s" % splt[2])
+        print "post size = %s" % info_seg
+        if abs(sz - fsize) / (sz + fsize) < 0.01:
+            ret = True
+            print "pass"
+        else:
+            ret = False
+            print "not match!"
+    else:
+        idx += 19
+        idx2 = page_src.find("});", idx)
+        idx2 += 1
+        post_info = page_src[idx:idx2]
+        post_info = json.loads(post_info)
+        post_info = post_info[u"posts"][0]
+#        print post_info
+#        print post_info["file_size"]
+#        print post_info["sample_file_size"]
+        print "post size = %d or %d or %d" % (post_info["file_size"], post_info["sample_file_size"], post_info["jpeg_file_size"])
+        if fsize == post_info["file_size"] or fsize == post_info["sample_file_size"] or fsize == post_info["jpeg_file_size"]:
+            print "pass"
+            ret = True
+        else:
+            print "not match!"
+            ret = False
+
+    print
+    return ret
+
+
+def moe_check_dropbox_images_id():
+    images_folder = os.path.join(get_config("dropbox_folder"), "Photos")
+    print "images folder: %s" % images_folder
+    summary = []
+    for root, dnames, fnames in os.walk(images_folder):
+        for fn in fnames:
+            fpath = os.path.join(root, fn)
+            if is_image(fpath):
+                set_name, id_in_set = os.path.splitext(fn)[0].split()
+                id_in_set = int(id_in_set)
+                if set_name == "mypic" or set_name == "tu178":
+                    continue
+                try:
+                    if util_check_dropbox_images_id(fpath, set_name, id_in_set) == False:
+                        summary += "[not match] %s %d" % (set_name, id_in_set),
+                except:
+                    traceback.print_exc()
+                    time.sleep(1)
+                    summary += "[exception] %s %d" % (set_name, id_in_set),
+    print "--- summary ---"
+    for item in summary:
+        print item
+
 
 def moe_help():
     print """moe.py: manage all my acg pictures"
@@ -2493,6 +2580,7 @@ available commands:"
     backup-rate-3                   backup images with rating 3
     backup-unrated                  backup images without rating
     check-md5                       check all images by their md5, need to build binaries under libexec first
+    check-dropbox-images-id         check images id under Dropbox image folder
     cleanup                         delete images with rating 0, empty albums, and compact the black list
     create-album                    create an album based on a folder of well-formed images
     export                          export images
@@ -2576,6 +2664,8 @@ if __name__ == "__main__":
     elif sys.argv[1] == "check-md5":
         init_db_connection()
         moe_check_md5()
+    elif sys.argv[1] == "check-dropbox-images-id":
+        moe_check_dropbox_images_id()
     elif sys.argv[1] == "cleanup":
         init_db_connection()
         moe_cleanup()
