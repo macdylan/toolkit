@@ -2014,6 +2014,18 @@ def moe_update_pool(pool_api, set_name):
     print "finished updating pools of set '%s'" % set_name
 
 
+def util_delete_tag_history_if_necessary(page_src, set_name, id_in_set):
+    should_delete = False
+    if page_src.find("This post was deleted") >= 0:
+        should_delete = True
+
+    if should_delete:
+        print "*** delete tag history of %s %d since the post is probably deleted" % (set_name, id_in_set)
+        c = DB_CONN.cursor()
+        c.execute("delete from tag_history where set_name = '%s' and id_in_set = %d" % (set_name, id_in_set))
+        db_commit()
+
+
 def util_update_tags_from_page(post_url, set_name, id_in_set):
     try:
         print "update tags of '%s %d' => %s" % (set_name, id_in_set, post_url)
@@ -2021,16 +2033,12 @@ def util_update_tags_from_page(post_url, set_name, id_in_set):
         idx = page_src.find('<div id="note-container">')
         if idx < 0:
             print "*** failed to parse page: " + post_url
-            c = DB_CONN.cursor()
-            c.execute("delete from tag_history where set_name = '%s' and id_in_set = %d" % (set_name, id_in_set))
-            db_commit()
+            util_delete_tag_history_if_necessary(page_src, set_name, id_in_set)
             return False
         idx = page_src.find('<img alt="', idx)
         if idx < 0:
             print "*** failed to parse page: " + post_url
-            c = DB_CONN.cursor()
-            c.execute("delete from tag_history where set_name = '%s' and id_in_set = %d" % (set_name, id_in_set))
-            db_commit()
+            util_delete_tag_history_if_necessary(page_src, set_name, id_in_set)
             return False
         idx += 10
 
