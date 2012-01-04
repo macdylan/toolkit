@@ -2560,6 +2560,7 @@ def moe_check_dropbox_images_id():
         for fn in fnames:
             fpath = os.path.join(root, fn)
             if is_image(fpath):
+                print fpath
                 set_name, id_in_set = os.path.splitext(fn)[0].split()
                 id_in_set = int(id_in_set)
                 if set_name == "mypic" or set_name == "tu178":
