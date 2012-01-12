@@ -821,50 +821,50 @@ def get_du_of_folder(folder):
   return du
 
 def hk_backup_psp():
-  tmp_folder = get_config("tmp_folder")
-  psp_root = get_config("psp_root")
-  bkup_folder = os.path.join(get_config("dropbox_folder"), "Backups")
-  bkup_job_name = "psp_backup.%s" % (time.strftime("%y%m%d-%H%M%S", time.localtime()))
-  tmp_cp_folder = os.path.join(tmp_folder, bkup_job_name)
-  hk_make_dirs(tmp_cp_folder)
-  tmp_savedata_dir = os.path.join(tmp_cp_folder, "PSP", "SAVEDATA")
-  hk_make_dirs(tmp_savedata_dir)
-  psp_save_root = os.path.join(psp_root, "PSP", "SAVEDATA")
-  bkup_threshold = int(get_config("psp_savedata_backup_threshold_mb")) * 1024 * 1024
-  for fn in os.listdir(psp_save_root):
-    fpath = os.path.join(psp_save_root, fn)
-    if os.path.isdir(fpath) == False:
-      continue
-    folder_du = get_du_of_folder(fpath)
-    if folder_du <= bkup_threshold:
-      print "[backup] %d bytes, '%s'" % (folder_du, fpath)
-      shutil.copytree(fpath, os.path.join(tmp_savedata_dir, fn))
-    else:
-      print "[skip] too big: %d bytes, '%s'" % (folder_du, fpath)
-  for fn in os.listdir(psp_root):
-    fpath = os.path.join(psp_root, fn)
-    if os.path.isdir(fpath) == False:
-      if fpath.lower().endswith(".bin") or fpath.lower().endswith(".txt") or fpath.lower().endswith(".ind") or fpath.lower().endswith(".prx"):
-        f_size = os.stat(fpath).st_size
-        if f_size <= bkup_threshold:
-          print "[backup] %d bytes, '%s'" % (f_size, fpath)
-          shutil.copy(fpath, os.path.join(tmp_cp_folder, fn))
-        else:
-          print "[skip] too big: %d bytes, '%s'" % (f_size, fpath)
-    else:
-      if fn.lower() == "registry" or fn.lower() == "seplugins" or fn.lower() == "freecheat":
+    tmp_folder = get_config("tmp_folder")
+    psp_root = get_config("psp_root")
+    bkup_folder = os.path.join(get_config("dropbox_folder"), "Backups")
+    bkup_job_name = "psp_backup.%s" % (time.strftime("%y%m%d-%H%M%S", time.localtime()))
+    tmp_cp_folder = os.path.join(tmp_folder, bkup_job_name)
+    hk_make_dirs(tmp_cp_folder)
+    tmp_savedata_dir = os.path.join(tmp_cp_folder, "PSP", "SAVEDATA")
+    hk_make_dirs(tmp_savedata_dir)
+    psp_save_root = os.path.join(psp_root, "PSP", "SAVEDATA")
+    bkup_threshold = int(get_config("psp_savedata_backup_threshold_mb")) * 1024 * 1024
+    for fn in os.listdir(psp_save_root):
+        fpath = os.path.join(psp_save_root, fn)
+        if os.path.isdir(fpath) == False:
+            continue
         folder_du = get_du_of_folder(fpath)
         if folder_du <= bkup_threshold:
-          print "[backup] %d bytes, '%s'" % (folder_du, fpath)
-          shutil.copytree(fpath, os.path.join(tmp_cp_folder, fn))
+            print "[backup] %d bytes, '%s'" % (folder_du, fpath)
+            shutil.copytree(fpath, os.path.join(tmp_savedata_dir, fn))
         else:
-          print "[skip] too big: %d bytes, '%s'" % (folder_du, fpath)
-  print "zipping...."
-  zipdir(tmp_cp_folder, tmp_cp_folder + ".zip")
-  print "[rmdir] %s" % tmp_cp_folder
-  shutil.rmtree(tmp_cp_folder)
-  shutil.move(tmp_cp_folder + ".zip", bkup_folder)
-  print "Done!"
+            print "[skip] too big: %d bytes, '%s'" % (folder_du, fpath)
+    for fn in os.listdir(psp_root):
+        fpath = os.path.join(psp_root, fn)
+        if os.path.isdir(fpath) == False:
+            if fpath.lower().endswith(".bin") or fpath.lower().endswith(".txt") or fpath.lower().endswith(".ind") or fpath.lower().endswith(".prx"):
+                f_size = os.stat(fpath).st_size
+                if f_size <= bkup_threshold:
+                    print "[backup] %d bytes, '%s'" % (f_size, fpath)
+                    shutil.copy(fpath, os.path.join(tmp_cp_folder, fn))
+                else:
+                    print "[skip] too big: %d bytes, '%s'" % (f_size, fpath)
+        else:
+            if fn.lower() == "registry" or fn.lower() == "seplugins" or fn.lower() == "freecheat":
+                folder_du = get_du_of_folder(fpath)
+                if folder_du <= bkup_threshold:
+                    print "[backup] %d bytes, '%s'" % (folder_du, fpath)
+                    shutil.copytree(fpath, os.path.join(tmp_cp_folder, fn))
+                else:
+                    print "[skip] too big: %d bytes, '%s'" % (folder_du, fpath)
+    print "zipping...."
+    zipdir(tmp_cp_folder, tmp_cp_folder + ".zip")
+    print "[rmdir] %s" % tmp_cp_folder
+    shutil.rmtree(tmp_cp_folder)
+    shutil.move(tmp_cp_folder + ".zip", bkup_folder)
+    print "done!"
 
 def hk_backup_addr_book():
   mac_required()
