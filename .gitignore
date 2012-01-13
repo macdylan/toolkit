@@ -12,4 +12,5 @@ SyncToy*.dat
 *.pyc
 *.bak
 *.bak.*
+log/
 *.exe

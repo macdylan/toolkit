@@ -160,8 +160,11 @@ def write_log(text):
         pass
     main_name = os.path.basename(sys.argv[0])
     if "." in main_name:
-      main_name = os.path.splitext(main_name)[0]
-    log_fn = os.path.join(os.path.split(__file__)[0], main_name + ".log")
+        main_name = os.path.splitext(main_name)[0]
+    log_folder = os.path.join(os.path.split(__file__)[0], "log")
+    if os.path.exists(log_folder) == False:
+        os.makedirs(log_folder)
+    log_fn = os.path.join(log_folder, main_name + ".log")
     f = open(log_fn, "a")
     tm = time.strftime("%Y.%m.%d %H:%M:%S", time.localtime())
     try:
