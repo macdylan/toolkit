@@ -143,41 +143,78 @@ def zipfile(fpath, archivepath):
       raise e # re-threow
   return ok
 
+def os_is_windows():
+    return os.name == "nt"
+
+def os_is_linux():
+    return os.name == "posix" and os.path.exists("/initrd.img")
+
+def os_is_mac():
+    return os.name == "posix" and os.path.exists("/mach_kernel")
+
 def get_config(key, default_value=None):
-  module_name = os.path.basename(sys.argv[0])
-  if "." in module_name:
-    module_name = os.path.splitext(module_name)[0]
-  conf_fn = os.path.join(os.path.split(__file__)[0], "toolkit.conf")
-  value = None
+    module_name = os.path.basename(sys.argv[0])
+    if "." in module_name:
+        module_name = os.path.splitext(module_name)[0]
+    conf_fn = os.path.join(os.path.split(__file__)[0], "toolkit.conf")
+    value = None
 
-  if key.startswith(module_name):
-    full_key = key
-  else:
-    full_key = module_name + "." + key
+    if key.startswith(module_name):
+        full_key = key
+    else:
+        full_key = module_name + "." + key
 
-  f = None
-  try:
-    f = open(conf_fn)
-    for line in f.readlines():
-      line = line.strip()
-      if line.startswith(";") or line.startswith("#") or line == "":
-        continue
-      idx = line.find("=")
-      if idx < 0:
-        continue
-      if (line[:idx] == full_key + ".windows" and os.name == "nt") or (line[:idx] == full_key + ".posix" and os.name == "posix") or (line[:idx] == full_key) or (line[:idx] == key + ".windows" and os.name == "nt") or (line[:idx] == key + ".posix" and os.name == "posix") or (line[:idx] == key):
-        value = line[(idx + 1):]
-        break
-  finally:
-    if f != None:
-      f.close()
+    f = None
+    try:
+        f = open(conf_fn)
+        for line in f.readlines():
+            line = line.strip()
+            if line.startswith(";") or line.startswith("#") or line == "":
+                continue
+            idx = line.find("=")
+            if idx < 0:
+                continue
+            if line[:idx] == full_key + ".windows" and os_is_windows():
+                value = line[(idx + 1):]
+                break
+            elif line[:idx] == full_key + ".mac" and os_is_mac():
+                value = line[(idx + 1):]
+                break
+            elif line[:idx] == full_key + ".linux" and os_is_linux():
+                value = line[(idx + 1):]
+                break
+            elif line[:idx] == full_key + ".posix" and os.name == "posix":
+                value = line[(idx + 1):]
+                break
+            elif line[:idx] == full_key:
+                value = line[(idx + 1):]
+                break
+            elif line[:idx] == key + ".windows" and os_is_windows():
+                value = line[(idx + 1):]
+                break
+            elif line[:idx] == key + ".mac" and os_is_mac():
+                value = line[(idx + 1):]
+                break
+            elif line[:idx] == key + ".linux" and os_is_linux():
+                value = line[(idx + 1):]
+                break
+            elif line[:idx] == key + ".posix" and os.name == "posix":
+                value = line[(idx + 1):]
+                break
+            elif line[:idx] == key:
+                value = line[(idx + 1):]
+                break
+    finally:
+        if f != None:
+            f.close()
 
-  if default_value != None and value == None:
-    value = default_value
-  if value == None:
-    raise Exception("Config '%s' not found!" % key)
-  else:
-    return value
+    if default_value != None and value == None:
+        value = default_value
+    if value == None:
+        raise Exception("Config '%s' not found!" % key)
+    else:
+        print "[config] %s=%s" % (key, value)
+        return value
 
 def is_hex(text):
   text = text.lower()
