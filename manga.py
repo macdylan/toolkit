@@ -30,7 +30,7 @@ else:
 MANGA_FOLDER = get_config("manga_folder")
 
 
-def grab_message(message):
+def mang_message(message):
   try:
     print message
   except:
@@ -39,11 +39,11 @@ def grab_message(message):
 def prepare_folder(path):
   if os.path.exists(path) == False:
     os.makedirs(path)
-    grab_message("[mkdir] %s" % path)
+    mang_message("[mkdir] %s" % path)
 
-def grab_print_help():
-    print """grabber.py: manage my manga books
-usage: grabber.py <command>
+def mang_print_help():
+    print """manga.py: manage my manga books
+usage: manga.py <command>
 available commands:
 
   check-corrupt        check for corrupt zip files and images
@@ -59,17 +59,17 @@ author: Santa Zhang (santa1987@gmail.com)"""
 
 
 
-def grab_is_image(fname):
+def mang_is_image(fname):
   return is_image(fname)
 
 
 def folder_contains_images(dirpath):
   for fn in os.listdir(dirpath):
-    if grab_is_image(fn):
+    if mang_is_image(fn):
       return True
   return False
 
-def grab_ensure_manga_packed_walker(arg, dirname, fnames):
+def mang_ensure_manga_packed_walker(arg, dirname, fnames):
   has_image = False
   has_subdir = False
   archive_name = os.path.abspath(dirname) + ".zip"
@@ -78,7 +78,7 @@ def grab_ensure_manga_packed_walker(arg, dirname, fnames):
     if os.path.isdir(fpath):
       has_subdir = True
       continue
-    if grab_is_image(fn):
+    if mang_is_image(fn):
       has_image = True
     if fn == "NOT_FINISHED" or fn == "ERROR":
       # a bad folder
@@ -102,21 +102,21 @@ def grab_ensure_manga_packed_walker(arg, dirname, fnames):
   else:
     print "[error] failed to create zip archive!"
 
-def grab_ensure_manga_packed(root_dir=None):
+def mang_ensure_manga_packed(root_dir=None):
   if root_dir == None:
     return
-  grab_message("[zip] %s" % root_dir)
+  mang_message("[zip] %s" % root_dir)
   if ZIP_FILES == True:
-    grab_message("packing manga books")
-    os.path.walk(root_dir, grab_ensure_manga_packed_walker, None)
+    mang_message("packing manga books")
+    os.path.walk(root_dir, mang_ensure_manga_packed_walker, None)
 
-def grab_pack_all():
+def mang_pack_all():
   for entry in os.listdir(MANGA_FOLDER):
     fpath = os.path.join(MANGA_FOLDER, entry)
     if os.path.isdir(fpath):
-      grab_ensure_manga_packed(fpath)
+      mang_ensure_manga_packed(fpath)
 
-def grab_download_manhua178(manga_url, **opt):
+def mang_download_manhua178(manga_url, **opt):
   print "[toc] %s" % manga_url
   root_page = manga_url
   page_src = urllib2.urlopen(root_page).read()
@@ -180,7 +180,7 @@ def grab_download_manhua178(manga_url, **opt):
       not_finished_fn = chapter_folder_path + u"/NOT_FINISHED"
       if os.path.exists(error_log_fn) == False and os.path.exists(not_finished_fn) == False and folder_contains_images(chapter_folder_path):
         print "chapter already downloaded, skip"
-        grab_ensure_manga_packed(comic_folder_path)
+        mang_ensure_manga_packed(comic_folder_path)
         continue
       else:
         print "still have to download chapter"
@@ -220,10 +220,10 @@ def grab_download_manhua178(manga_url, **opt):
         leaf_nm = full_pg[idx:]
         print leaf_nm
         fn = comic_folder_path + u"/" + chap_title + u"/" + leaf_nm.decode("unicode_escape")
-        grab_message(fn)
+        mang_message(fn)
         down_filename = fn
         if os.path.exists(down_filename):
-          grab_message("[pass] %s" % down_filename)
+          mang_message("[pass] %s" % down_filename)
           continue
         down_f = None
         full_pg_unescaped = full_pg.decode("unicode_escape").encode("utf-8")
@@ -254,7 +254,7 @@ def grab_download_manhua178(manga_url, **opt):
         os.remove(not_finished_fn)
 
       # pack the folder if necessary
-      grab_ensure_manga_packed(comic_folder_path)
+      mang_ensure_manga_packed(comic_folder_path)
 
     except:
       traceback.print_exc()
@@ -336,7 +336,7 @@ def bengou_down_vol(vol_url, down_dir):
       counter += 1
   return all_ok
 
-def grab_download_bengou(index_url, **opt):
+def mang_download_bengou(index_url, **opt):
   page_src = urllib2.urlopen(index_url).read()
   index_root = index_url[:index_url.rfind("/")]
   # find manga name
@@ -344,8 +344,8 @@ def grab_download_bengou(index_url, **opt):
   idx = page_src.index("title=", idx)
   idx2 = page_src.index('"', idx + 7)
   comic_name = page_src[(idx + 7):idx2].decode("utf-8")
-  grab_message(comic_name)
-  grab_message("[index-url] %s" % index_url)
+  mang_message(comic_name)
+  mang_message("[index-url] %s" % index_url)
 
   comic_folder_path = MANGA_FOLDER + os.path.sep + comic_name + "(bengou)"
 
@@ -374,8 +374,8 @@ def grab_download_bengou(index_url, **opt):
     manga_list.reverse()
 
   for vol_name, vol_url in manga_list:
-    grab_message(vol_name)
-    grab_message("[vol-page] %s" % vol_url)
+    mang_message(vol_name)
+    mang_message("[vol-page] %s" % vol_url)
     chapter_folder_path = os.path.join(comic_folder_path, vol_name)
     chapter_zip_fn = chapter_folder_path + ".zip"
 
@@ -391,7 +391,7 @@ def grab_download_bengou(index_url, **opt):
     not_finished_fn = chapter_folder_path + u"/NOT_FINISHED"
     if os.path.exists(error_log_fn) == False and os.path.exists(not_finished_fn) == False and folder_contains_images(chapter_folder_path):
       print "chapter already downloaded, skip"
-      grab_ensure_manga_packed(comic_folder_path)
+      mang_ensure_manga_packed(comic_folder_path)
       continue
     else:
       print "still have to download chapter"
@@ -412,84 +412,84 @@ def grab_download_bengou(index_url, **opt):
       os.remove(not_finished_fn)
 
     # pack the folder if necessary
-    grab_ensure_manga_packed(comic_folder_path)
+    mang_ensure_manga_packed(comic_folder_path)
 
 
-def grab_download_print_help():
+def mang_download_print_help():
   print "download a manga book"
-  print "usage: grabber.py download <url>"
+  print "usage: manga.py download <url>"
   print "<url> is the table of contents page"
 
-def grab_download_real(url, **opt):
+def mang_download_real(url, **opt):
   if url.startswith("http://") == False:
     url = "http://" + url
   if url.find("manhua.178.com") >= 0:
-    grab_download_manhua178(url, **opt)
+    mang_download_manhua178(url, **opt)
   elif url.find("bengou.com") >= 0:
-    grab_download_bengou(url, **opt)
+    mang_download_bengou(url, **opt)
   else:
     print "sorry, the manga book site is not supported!"
 
 
-def grab_download(**opt):
+def mang_download(**opt):
   if len(sys.argv) <= 2:
-    grab_download_print_help()
+    mang_download_print_help()
     exit()
   url = sys.argv[2]
-  grab_download_real(url, **opt)
+  mang_download_real(url, **opt)
 
 
-def grab_load_library():
-  library_fn = os.path.join(os.path.split(__file__)[0], "grabber.library")
-  print library_fn
-  lib_f = open(library_fn)
-  name = None
-  url = None
-  library = {}
-  for line in lib_f.readlines():
-    line = line.strip()
-    if line.startswith("#"):
-      continue
-    if line == "":
-      if name != None and url != None:
+def mang_load_library():
+    library_fn = os.path.join(os.path.split(__file__)[0], "manga.library")
+#  print library_fn
+    lib_f = open(library_fn)
+    name = None
+    url = None
+    library = {}
+    for line in lib_f.readlines():
+        line = line.strip()
+        if line.startswith("#"):
+            continue
+        if line == "":
+            if name != None and url != None:
+                if library.has_key(name):
+                    print "[warning] duplicate name '%s' in manga.library" % name
+                library[name] = url
+                name = None
+                url = None
+        if line.startswith("name="):
+            name = line[5:]
+        elif line.startswith("url="):
+            url = line[4:]
+    if name != None and url != None:
         if library.has_key(name):
-          print "[warning] duplicate name '%s' in grabber.library" % name
+            print "[warning] duplicate name '%s' in manga.library" % name
         library[name] = url
         name = None
         url = None
-    if line.startswith("name="):
-      name = line[5:]
-    elif line.startswith("url="):
-      url = line[4:]
-  if name != None and url != None:
-    if library.has_key(name):
-      print "[warning] duplicate name '%s' in grabber.library" % name
-    library[name] = url
-    name = None
-    url = None
-  lib_f.close()
-  return library
+    lib_f.close()
+    return library
 
-def grab_update_all():
-  library = grab_load_library()
+def mang_update_all():
+  library = mang_load_library()
   for manga_name in library:
     try:
       url = library[manga_name]
       print "downloading '%s' from '%s'" % (manga_name, url)
-      grab_download_real(url)
+      mang_download_real(url)
     except:
       traceback.print_exc()
       time.sleep(1)
 
-def grab_update_show_help():
+def mang_update_show_help():
   print "update specific manga books"
-  print "usage: grabber.py update <manga1> [manga2] [manga3]"
+  print "usage: manga.py update <manga1> [manga2] [manga3]"
 
-def grab_update():
+def mang_update():
   if len(sys.argv) <= 2:
-    grab_update_show_help()
+    mang_update_show_help()
     return()
-  library = grab_load_library()
+  library = mang_load_library()
   for i in range(2, len(sys.argv)):
     manga_name = sys.argv[i]
     if library.has_key(manga_name) == False:
@@ -498,11 +498,11 @@ def grab_update():
     else:
       url = library[manga_name]
       print "downloading '%s' from '%s'" % (manga_name, url)
-      grab_download_real(url)
+      mang_download_real(url)
 
 
-def grab_list_library():
-    library = grab_load_library()
+def mang_list_library():
+    library = mang_load_library()
     print "library content:"
     print
     for item in library:
@@ -595,7 +595,7 @@ def util_check_corrupt_images():
                 ret = util_check_corrupt_images_in_zip(fpath)
 
 
-def grab_check_corrupt():
+def mang_check_corrupt():
     pil_installed = False
     try:
         from PIL import Image
@@ -613,21 +613,21 @@ def grab_check_corrupt():
 
 if __name__ == "__main__":
     if len(sys.argv) == 1 or sys.argv[1] == "help":
-        grab_print_help()
+        mang_print_help()
     elif sys.argv[1] == "check-corrupt":
-        grab_check_corrupt()
+        mang_check_corrupt()
     elif sys.argv[1] == "download":
-        grab_download()
+        mang_download()
     elif sys.argv[1] == "download-reverse":
-        grab_download(reverse=True)
+        mang_download(reverse=True)
     elif sys.argv[1] == "list-library":
-        grab_list_library()
+        mang_list_library()
     elif sys.argv[1] == "pack-all":
-        grab_pack_all()
+        mang_pack_all()
     elif sys.argv[1] == "update":
-        grab_update()
+        mang_update()
     elif sys.argv[1] == "update-all":
-        grab_update_all()
+        mang_update_all()
     else:
-        print "command '%s' not understood, see 'grabber.py help' for more info" % sys.argv[1]
+        print "command '%s' not understood, see 'manga.py help' for more info" % sys.argv[1]
 

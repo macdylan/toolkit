@@ -159,7 +159,7 @@ def get_config(key, default_value=None):
     conf_fn = os.path.join(os.path.split(__file__)[0], "toolkit.conf")
     value = None
 
-    if key.startswith(module_name):
+    if key.startswith(module_name + "."):
         full_key = key
     else:
         full_key = module_name + "." + key
@@ -171,6 +171,7 @@ def get_config(key, default_value=None):
             line = line.strip()
             if line.startswith(";") or line.startswith("#") or line == "":
                 continue
+
             idx = line.find("=")
             if idx < 0:
                 continue
