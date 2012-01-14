@@ -4,7 +4,7 @@ Santa Zhang (santa1987@gmail.com)
 coding.py           Helper script for developing.
 cpplint.py          Google C++ coding style checker, used by coding.py
 fancycbz.py         A much better .cbz format spec, with metadata inside the book.
-grabber.py          Downloads and manages my manga books.
+manga.py            Downloads and manages my manga books.
 housekeeper.py      Script to manage my files, and provides simple housekeeping work.
 justconvert.py      Convert video, music, pictures.
 moe.py              Subscribes and manages my picture collections.

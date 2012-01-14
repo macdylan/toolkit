@@ -1,4 +1,4 @@
-# library file for manga books managed by grabber.py
+# library file for manga books managed by manga.py
 #
 # each manga is defined by those items:
 # name=the english name of the manga, used as identifier (name is variable-like)
