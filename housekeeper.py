@@ -6,6 +6,8 @@
 # Author: Santa Zhang (santa1987@gmail.com)
 #
 
+from __future__ import with_statement
+from contextlib import closing
 import urllib
 import sys
 import os
@@ -1063,6 +1065,7 @@ def hk_zip_sub_dir():
       print "[zip-dir] %s" % fpath
       zipdir(fpath, fpath + ".zip")
 
+
 def parse_ics_uid_map(ics_content):
   uidmap = {}
   splt = re.split("\n|\r", ics_content)
@@ -1320,126 +1323,151 @@ def hk_size_ftp_ls_lr():
   print "%d bytes, or %s" % (total_sz, pretty_fsize(total_sz))
 
 
+
+def hk_zip():
+    arc_name = sys.argv[2]
+    src_list = list(set(sys.argv[3:]))  # remove duplicates
+    print "target archive name: %s" % arc_name
+    print "items to be archived:", src_list
+    if os.path.exists(arc_name):
+        print "archive %s already exists!" % arc_name
+        exit(1)
+    with closing(ZipFile(arc_name, "w", ZIP_DEFLATED)) as zip_file:
+        for item in src_list:
+            if os.path.isdir(item):
+                zip_add_dir(zip_file, item)
+            elif os.path.isfile(item):
+                zip_add_file(zip_file, item)
+            else:
+                raise Exception("Cannot handle: %s" % item)
+
+
 def hk_help():
-  print "housekeeper.py: helper script to manage my important collections"
-  print "usage: housekeeper.py <command>"
-  print "available commands:"
-  print
-  print "  backup-addr-book                   backup my Address Book"
-  print "  backup-conf                        backup my config files"
-  print "  backup-evernote                    bakcup evernote documents"
-  print "  backup-psp                         backup my psp"
-  print "  batch-rename                       batch rename files under a folder"
-  print "  check-ascii-fnames                 make sure all file has ascii-only name"
-  print "  check-crc32                        check file integrity by crc32"
-  print "  clean-eject-usb <name>             cleanly eject usb drives (cleans .Trash, .SpotLight folders)"
-  print "  gem-cleanup                        cleanup gem files"
-  print "  help                               display this info"
-  print "  itunes-backup                      backup iTunes library"
-  print "  itunes-bad-cover                   list cd covers with bad ratio"
-  print "  itunes-check-exists (deprecated)   check if music in iTunes library really exists"
-  print "  itunes-export-cover                export covers from iTunes library"
-  print "  itunes-find-ophan (deprecated)     check if music is in music folder but not in iTunes"
-  print "  itunes-genuine-check               check if music in iTunes is genuine"
-  print "  itunes-play-count                  display the play count of iTunes library"
-  print "  itunes-rm-useless-cover            remove useless covers from iTunes library"
-  print "  itunes-stats                       display iTunes library info"
-  print "  jpeg2jpg                           convert .jpeg ext name to .jpg"
-  print "  lowercase-ext                      make sure file extensions are lower case"
-  print "  psp-sync-pic                       sync images to psp"
-  print "  papers-find-ophan                  check if pdf is in papers folder but not in Papers library"
-  print "  rm-all-gems                        remove all rubygems (currently Mac only)"
-  print "  rm-empty-dir                       remove empty dir"
-  print "  rsync-to-labpc                     use rsync to backup my craps onto LabPC"
-  print "  size-ftp-ls-lr                     get the total size of an FTP site by its ls-lR file"
-  print "  sync-rainlendar (deprecated)       sync iCal & rainlendar"
-  print "  sys-backup                         system backup (currently Mac only)"
-  print "  sys-maint                          system maintenance (currently Mac only)"
-  print "  timemachine-image                  create new Time Machine image"
-  print "  update-chrome                      update chrome browser (Windows only)"
-  print "  upgrade-dropbox-pic                update dropbox photos folder, prefer highres pictures"
-  print "  write-crc32                        write crc32 data in every directory, overwrite old crc32 files"
-  print "  write-crc32-new-only               write crc32 data in every directroy, new files only"
-  print "  zip-sub-dir                        pack each sub directory into zip files"
-  print
-  print "author: Santa Zhang (santa1987@gmail.com)"
+  print """housekeeper.py: helper script to manage my important collections
+usage: housekeeper.py <command>
+available commands:
+
+    backup-addr-book                   backup my Address Book
+    backup-conf                        backup my config files
+    backup-evernote                    bakcup evernote documents
+    backup-psp                         backup my psp
+    batch-rename                       batch rename files under a folder
+    check-ascii-fnames                 make sure all file has ascii-only name
+    check-crc32                        check file integrity by crc32
+    clean-eject-usb <name>             cleanly eject usb drives (cleans .Trash, .SpotLight folders)
+    gem-cleanup                        cleanup gem files
+    help                               display this info
+    itunes-backup                      backup iTunes library
+    itunes-bad-cover                   list cd covers with bad ratio
+    itunes-check-exists (deprecated)   check if music in iTunes library really exists
+    itunes-export-cover                export covers from iTunes library
+    itunes-find-ophan (deprecated)     check if music is in music folder but not in iTunes
+    itunes-genuine-check               check if music in iTunes is genuine
+    itunes-play-count                  display the play count of iTunes library
+    itunes-rm-useless-cover            remove useless covers from iTunes library
+    itunes-stats                       display iTunes library info
+    jpeg2jpg                           convert .jpeg ext name to .jpg
+    lowercase-ext                      make sure file extensions are lower case
+    psp-sync-pic                       sync images to psp
+    papers-find-ophan                  check if pdf is in papers folder but not in Papers library
+    rm-all-gems                        remove all rubygems (currently Mac only)
+    rm-empty-dir                       remove empty dir
+    rsync-to-labpc                     use rsync to backup my craps onto LabPC
+    size-ftp-ls-lr                     get the total size of an FTP site by its ls-lR file
+    sync-rainlendar (deprecated)       sync iCal & rainlendar
+    sys-backup                         system backup (currently Mac only)
+    sys-maint                          system maintenance (currently Mac only)
+    timemachine-image                  create new Time Machine image
+    update-chrome                      update chrome browser (Windows only)
+    upgrade-dropbox-pic                update dropbox photos folder, prefer highres pictures
+    write-crc32                        write crc32 data in every directory, overwrite old crc32 files
+    write-crc32-new-only               write crc32 data in every directroy, new files only
+    zip <arc_name> <names>...          cleanly create a zip archive
+    zip-sub-dir                        pack each sub directory into zip files
+
+author: Santa Zhang (santa1987@gmail.com)"""
 
 if __name__ == "__main__":
-  if len(sys.argv) == 1 or sys.argv[1] == "help":
-    hk_help()
-  elif sys.argv[1] == "backup-addr-book":
-    hk_backup_addr_book()
-  elif sys.argv[1] == "backup-conf":
-    hk_backup_conf()
-  elif sys.argv[1] == "backup-evernote":
-    hk_backup_evernote()
-  elif sys.argv[1] == "backup-psp":
-    hk_backup_psp()
-  elif sys.argv[1] == "batch-rename":
-    hk_batch_rename()
-  elif sys.argv[1] == "check-crc32":
-    hk_check_crc32()
-  elif sys.argv[1] == "check-ascii-fnames":
-    hk_check_ascii_fnames()
-  elif sys.argv[1] == "clean-eject-usb":
-    if len(sys.argv) < 3:
-      print "usage: housekeeper.py clean-eject-usb <usb_name>"
-      exit(0)
-    hk_clean_eject_usb(sys.argv[2])
-  elif sys.argv[1] == "gem-cleanup":
-    hk_gem_cleanup()
-  elif sys.argv[1] == "itunes-backup":
-    hk_itunes_backup()
-  elif sys.argv[1] == "itunes-bad-cover":
-    hk_itunes_bad_cover()
-  elif sys.argv[1] == "itunes-check-exists":
-    hk_itunes_check_exists()
-  elif sys.argv[1] == "itunes-export-cover":
-    hk_itunes_export_cover()
-  elif sys.argv[1] == "itunes-find-ophan":
-    hk_itunes_find_ophan()
-  elif sys.argv[1] == "itunes-genuine-check":
-    hk_itunes_genuine_check()
-  elif sys.argv[1] == "itunes-play-count":
-    hk_itunes_play_count()
-  elif sys.argv[1] == "itunes-rm-useless-cover":
-    hk_itunes_rm_useless_cover()
-  elif sys.argv[1] == "itunes-stats":
-    hk_itunes_stats();
-  elif sys.argv[1] == "jpeg2jpg":
-    hk_jpeg2jpg()
-  elif sys.argv[1] == "lowercase-ext":
-    hk_lowercase_ext()
-  elif sys.argv[1] == "psp-sync-pic":
-    hk_psp_sync_pic()
-  elif sys.argv[1] == "papers-find-ophan":
-    hk_papers_find_ophan()
-  elif sys.argv[1] == "rm-all-gems":
-    hk_rm_all_gems()
-  elif sys.argv[1] == "rm-empty-dir":
-    hk_rm_empty_dir()
-  elif sys.argv[1] == "rsync-to-labpc":
-    hk_rsync_to_labpc()
-  elif sys.argv[1] == "size-ftp-ls-lr":
-    hk_size_ftp_ls_lr()
-  elif sys.argv[1] == "sync-rainlendar":
-    hk_sync_rainlendar()
-  elif sys.argv[1] == "sys-backup":
-    hk_sys_backup()
-  elif sys.argv[1] == "sys-maint":
-    hk_sys_maint()
-  elif sys.argv[1] == "timemachine-image":
-    hk_timemachine_image()
-  elif sys.argv[1] == "update-chrome":
-    hk_update_chrome()
-  elif sys.argv[1] == "upgrade-dropbox-pic":
-    hk_upgrade_dropbox_pic()
-  elif sys.argv[1] == "write-crc32":
-    hk_write_crc32()
-  elif sys.argv[1] == "write-crc32-new-only":
-    hk_write_crc32_new_only()
-  elif sys.argv[1] == "zip-sub-dir":
-    hk_zip_sub_dir()
-  else:
-    print "command '%s' not understood, see 'housekeeper.py help' for more info" % sys.argv[1]
+    if len(sys.argv) == 1 or sys.argv[1] == "help":
+      hk_help()
+    elif sys.argv[1] == "backup-addr-book":
+        hk_backup_addr_book()
+    elif sys.argv[1] == "backup-conf":
+        hk_backup_conf()
+    elif sys.argv[1] == "backup-evernote":
+        hk_backup_evernote()
+    elif sys.argv[1] == "backup-psp":
+        hk_backup_psp()
+    elif sys.argv[1] == "batch-rename":
+        hk_batch_rename()
+    elif sys.argv[1] == "check-crc32":
+        hk_check_crc32()
+    elif sys.argv[1] == "check-ascii-fnames":
+        hk_check_ascii_fnames()
+    elif sys.argv[1] == "clean-eject-usb":
+        if len(sys.argv) < 3:
+            print "usage: housekeeper.py clean-eject-usb <usb_name>"
+            exit(0)
+        hk_clean_eject_usb(sys.argv[2])
+    elif sys.argv[1] == "gem-cleanup":
+        hk_gem_cleanup()
+    elif sys.argv[1] == "itunes-backup":
+        hk_itunes_backup()
+    elif sys.argv[1] == "itunes-bad-cover":
+        hk_itunes_bad_cover()
+    elif sys.argv[1] == "itunes-check-exists":
+        hk_itunes_check_exists()
+    elif sys.argv[1] == "itunes-export-cover":
+        hk_itunes_export_cover()
+    elif sys.argv[1] == "itunes-find-ophan":
+        hk_itunes_find_ophan()
+    elif sys.argv[1] == "itunes-genuine-check":
+        hk_itunes_genuine_check()
+    elif sys.argv[1] == "itunes-play-count":
+        hk_itunes_play_count()
+    elif sys.argv[1] == "itunes-rm-useless-cover":
+        hk_itunes_rm_useless_cover()
+    elif sys.argv[1] == "itunes-stats":
+        hk_itunes_stats();
+    elif sys.argv[1] == "jpeg2jpg":
+        hk_jpeg2jpg()
+    elif sys.argv[1] == "lowercase-ext":
+        hk_lowercase_ext()
+    elif sys.argv[1] == "psp-sync-pic":
+        hk_psp_sync_pic()
+    elif sys.argv[1] == "papers-find-ophan":
+        hk_papers_find_ophan()
+    elif sys.argv[1] == "rm-all-gems":
+        hk_rm_all_gems()
+    elif sys.argv[1] == "rm-empty-dir":
+        hk_rm_empty_dir()
+    elif sys.argv[1] == "rsync-to-labpc":
+        hk_rsync_to_labpc()
+    elif sys.argv[1] == "size-ftp-ls-lr":
+        hk_size_ftp_ls_lr()
+    elif sys.argv[1] == "sync-rainlendar":
+        hk_sync_rainlendar()
+    elif sys.argv[1] == "sys-backup":
+        hk_sys_backup()
+    elif sys.argv[1] == "sys-maint":
+        hk_sys_maint()
+    elif sys.argv[1] == "timemachine-image":
+        hk_timemachine_image()
+    elif sys.argv[1] == "update-chrome":
+        hk_update_chrome()
+    elif sys.argv[1] == "upgrade-dropbox-pic":
+        hk_upgrade_dropbox_pic()
+    elif sys.argv[1] == "write-crc32":
+        hk_write_crc32()
+    elif sys.argv[1] == "write-crc32-new-only":
+        hk_write_crc32_new_only()
+    elif sys.argv[1] == "zip":
+        if len(sys.argv) < 4:
+            print "Not enough parameters!"
+            exit(0)
+        hk_zip()
+    elif sys.argv[1] == "zip-sub-dir":
+        hk_zip_sub_dir()
+    else:
+        print "command '%s' not understood, see 'housekeeper.py help' for more info" % sys.argv[1]
 

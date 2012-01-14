@@ -433,24 +433,24 @@ def jc_gbk2utf8(files):
     print "failed:", failed
 
 def jc_print_help():
-    print "justconvert.py: convertion tools for video, picture & text files"
-    print "usage: justconvert.py <command>"
-    print
-    print "    dos2unix                                convert dos text file to unix text file"
-    print "    everything-to-jpg             convert every picture under a folder to jpg"
-    print "    everything-to-png             convert every picture under a folder to png"
-    print "    ffmpeg-info                         display info about ffmpeg"
-    print "    gbk2utf8                                convert gbk text files to utf8 files"
-    print "    iphone-ringtone                 convert music files into m4r (iphone ringtone)"
-    print "    ipod-movie                            convert a video to ipod movie (2nd generation)"
-    print "    ipod-movie-wide                 convert a video to ipod movie (2nd generation, wide screen)"
-    print "    psp-movie                             convert a video to psp format"
-    print "    psp-movie-dir                     convert video in a folder to psp format"
-    print "    psp-srt-from-ssa                convert .ssa subtitle into psp .srt format"
-    print "    ssa-from-mkv                        extract .ssa subtitle from .mkv files"
-    print "    help                                        display this info"
-    print
-    print "author: Santa Zhang (santa1987@gmail.com)"
+    print """justconvert.py: convertion tools for video, picture & text files
+usage: justconvert.py <command>
+
+    dos2unix                      convert dos text file to unix text file
+    everything-to-jpg             convert every picture under a folder to jpg
+    everything-to-png             convert every picture under a folder to png
+    ffmpeg-info                   display info about ffmpeg
+    gbk2utf8                      convert gbk text files to utf8 files
+    help                          display this info
+    iphone-ringtone               convert music files into m4r (iphone ringtone)
+    ipod-movie                    convert a video to ipod movie (2nd generation)
+    ipod-movie-wide               convert a video to ipod movie (2nd generation, wide screen)
+    psp-movie                     convert a video to psp format
+    psp-movie-dir                 convert video in a folder to psp format
+    psp-srt-from-ssa              convert .ssa subtitle into psp .srt format
+    ssa-from-mkv                  extract .ssa subtitle from .mkv files
+
+author: Santa Zhang (santa1987@gmail.com)"""
 
 
 if __name__ == "__main__":

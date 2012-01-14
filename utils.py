@@ -49,25 +49,87 @@ def is_well_formed_uuid(uuid):
     return False
   return True
 
+
+def check_good_zip_fn(fn):
+    if fn.startswith("/"):
+        fn = fn[1:]
+    print "    adding: %s" % fn
+    ok = True
+    for c in fn:
+        if ord(c) > 127:
+            ok = False
+    if ok == False:
+        print "*** warning: %s is not a good name! English-only filename is better." % fn
+    return fn
+
+
+def zip_add_dir(zip_file, dir_path):
+    ok = True
+    assert os.path.isdir(dir_path)
+    splt = os.path.split(dir_path)
+    if splt[1] != "":
+        chop_len = len(os.path.split(dir_path)[0])
+    else:
+        chop_len = 0
+    for root, dirs, files in os.walk(dir_path):
+        for d_ent in dirs:
+            # generate zip entry for each folder, even empty ones
+            try:
+                absfn = os.path.join(root, d_ent)
+                zfn = absfn[chop_len:]
+                zfn = check_good_zip_fn(zfn)
+                zip_file.write(absfn, zfn)
+            except Exception as e:
+                ok = False
+                raise e # re-throw
+        for fn in files:
+            # ignore useless files
+            absfn = os.path.join(root, fn)
+            if fn.lower() == ".ds_store" or fn.lower() == "thumbs.db":
+                print "exclude useless file '%s' from zip file" % absfn
+                continue
+            try:
+                zfn = absfn[chop_len:]
+                zfn = check_good_zip_fn(zfn)
+                zip_file.write(absfn, zfn)
+            except Exception as e:
+                ok = False
+                raise e # re-throw
+    return ok
+
+
+def zip_add_file(zip_file, file_path):
+    ok = True
+    assert os.path.isfile(file_path)
+    try:
+        zfn = os.path.split(file_path)[1]
+        zfn = check_good_zip_fn(zfn)
+        zip_file.write(file_path, zfn)
+    except Exception as e:
+        ok = False
+        raise e # re-throw
+    return ok
+
+
 def zipdir(basedir, archivename):
-  ok = True
-  assert os.path.isdir(basedir)
-  with closing(ZipFile(archivename, "w", ZIP_DEFLATED)) as z:
-    for root, dirs, files in os.walk(basedir):
-      #NOTE: ignore empty directories
-      for fn in files:
-        # ignore useless files
-        if fn.lower() == ".ds_store" or fn.lower() == "thumbs.db":
-          print "exclude useless file '%s' from zip file" % fn
-          continue
-        try:
-          absfn = os.path.join(root, fn)
-          zfn = absfn[len(basedir)+len(os.sep):] #XXX: relative path
-          z.write(absfn, zfn)
-        except Exception as e:
-          ok = False
-          raise e # re-throw
-  return ok
+    ok = True
+    assert os.path.isdir(basedir)
+    with closing(ZipFile(archivename, "w", ZIP_DEFLATED)) as z:
+        for root, dirs, files in os.walk(basedir):
+            #NOTE: ignore empty directories
+            for fn in files:
+                # ignore useless files
+                absfn = os.path.join(root, fn)
+                if fn.lower() == ".ds_store" or fn.lower() == "thumbs.db":
+                    print "exclude useless file '%s' from zip file" % absfn
+                    continue
+                try:
+                    zfn = absfn[len(basedir)+len(os.sep):] #XXX: relative path
+                    z.write(absfn, zfn)
+                except Exception as e:
+                    ok = False
+                    raise e # re-throw
+    return ok
 
 def zipfile(fpath, archivepath):
   ok = True
