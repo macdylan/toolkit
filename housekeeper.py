@@ -94,9 +94,12 @@ def hk_check_crc32_walker(crc32_bin, folder, files):
 
 
 def hk_check_crc32():
-  crc32_bin = get_config("crc32_bin")
-  root_dir = raw_input("The root directory to start with? ")
-  os.path.walk(root_dir, hk_check_crc32_walker, crc32_bin)
+    crc32_bin = get_config("crc32_bin")
+    if os.path.exists(crc32_bin) == False:
+        crc32_bin = os.path.join(os.path.split(__file__)[0], crc32_bin)
+    print "using crc32 binary at %s" % crc32_bin
+    root_dir = raw_input("The root directory to start with? ")
+    os.path.walk(root_dir, hk_check_crc32_walker, crc32_bin)
 
 
 def hk_check_ascii_fnames_walker(arg, folder, files):
@@ -178,18 +181,24 @@ def hk_write_crc32_walker(args, folder, files):
     crc_f.close()
 
 def hk_write_crc32():
-  crc32_bin = get_config("crc32_bin")
-  ignore_pattern = get_config("crc32_ignore_pattern")
-  root_dir = raw_input("The root directory to start with? ")
-  new_only = False
-  os.path.walk(root_dir, hk_write_crc32_walker, (crc32_bin, ignore_pattern, new_only))
+    crc32_bin = get_config("crc32_bin")
+    if os.path.exists(crc32_bin) == False:
+        crc32_bin = os.path.join(os.path.split(__file__)[0], crc32_bin)
+    print "using crc32 binary at %s" % crc32_bin
+    ignore_pattern = get_config("crc32_ignore_pattern")
+    root_dir = raw_input("The root directory to start with? ")
+    new_only = False
+    os.path.walk(root_dir, hk_write_crc32_walker, (crc32_bin, ignore_pattern, new_only))
 
 def hk_write_crc32_new_only():
-  crc32_bin = get_config("crc32_bin")
-  ignore_pattern = get_config("crc32_ignore_pattern")
-  root_dir = raw_input("The root directory to start with? ")
-  new_only = True
-  os.path.walk(root_dir, hk_write_crc32_walker, (crc32_bin, ignore_pattern, new_only))
+    crc32_bin = get_config("crc32_bin")
+    if os.path.exists(crc32_bin) == False:
+        crc32_bin = os.path.join(os.path.split(__file__)[0], crc32_bin)
+    print "using crc32 binary at %s" % crc32_bin
+    ignore_pattern = get_config("crc32_ignore_pattern")
+    root_dir = raw_input("The root directory to start with? ")
+    new_only = True
+    os.path.walk(root_dir, hk_write_crc32_walker, (crc32_bin, ignore_pattern, new_only))
 
 def hk_util_append_tmp_ext(fpath):
   while True:
