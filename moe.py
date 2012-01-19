@@ -522,7 +522,7 @@ def util_mirror_danbooru_site_html(site_url):
         idx = 0
         idx2 = 0
         while True:
-          idx = page_src.find("Post.register(", idx2)
+          idx = page_src.find("Post.register({", idx2)
           if idx < 0:
             break
           idx2 = page_src.find("})", idx)
@@ -531,15 +531,16 @@ def util_mirror_danbooru_site_html(site_url):
 
         query_reply = "[" + ",".join(json_matches) + "]"
       except HTTPError, e:
-        print "server response code: " + str(e.code)
+        print "server response code: " + str(e.code) + " for url: %s" % query_url
 
       info_list = []
       try:
+        #print query_reply
         info_list.extend(json.loads(query_reply))
       except:
         # json decode failure, the site is probably down for maintenance... (danbooru.donmai.us, usually)
         # on this condition, we wait for a few minutes
-        print "site down for maintenance, wait for 2 minutes, on %s" % time.asctime()
+        print "site down for maintenance, wait for 2 minutes, on %s. url=%s" % (time.asctime(), query_url)
         print "when resumed, will restart from page 1"
         time.sleep(120) # wait 2 minutes
         page_id = 1
@@ -617,7 +618,7 @@ def util_mirror_danbooru_site(site_url):
       except:
         # json decode failure, the site is probably down for maintenance... (danbooru.donmai.us, usually)
         # on this condition, we wait for a few minutes
-        print "site down for maintenance, wait for 2 minutes, on %s" % time.asctime()
+        print "site down for maintenance, wait for 2 minutes, on %s. url=%s" % (time.asctime(), query_url)
         print "when resumed, will restart from page 1"
         time.sleep(120) # wait 2 minutes
         page_id = 1
@@ -1028,7 +1029,7 @@ def moe_highres_rating():
   db_commit()
 
 def moe_mirror_danbooru():
-    util_mirror_danbooru_site("http://danbooru.donmai.us")
+    util_mirror_danbooru_site_html("http://danbooru.donmai.us")
 
 def moe_mirror_danbooru_1000():
     util_mirror_danbooru_site_ex("http://danbooru.donmai.us")
