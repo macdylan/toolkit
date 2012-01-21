@@ -47,7 +47,7 @@ class cbz:
     _VERSION = "fancycbz-1.0"
     _CONTENT_MIN_SIZE_ = 4096
     _CONTENT_FNAME = "content.json"
-    
+
     def __init__(self, fpath=None):
         print "This shall be done!"
         self._meta = {}
@@ -72,16 +72,16 @@ class cbz:
     def __str__(self):
         json_txt = json.dumps(self._meta, sort_keys=True, indent=2)
         return json_txt
-        
+
 
     def open(self, fpath):
         print "This shall be done!"
         pass
-    
+
     def close(self):
         print "This shall be done!"
         pass
-    
+
     def add_image(self):
         print "This shall be done!"
         pass
@@ -90,12 +90,12 @@ class cbz:
         self._meta["title"] = title
         print "This shall be done!"
         pass
-    
+
     def set_artist(self, artist):
         self._meta["artist"] = artist
         print "This shall be done!"
         pass
-    
+
     def set_series(self, series):
         self._meta["series"] = series
         print "This shall be done!"
@@ -108,7 +108,7 @@ class cbz:
             pass
         else:
             raise BaseException("key %s is missing" % key)
-    
+
     def __getattr__(self, key):
         print "get:", key
         if key in ["artist", "title"]:
@@ -119,13 +119,13 @@ class cbz:
 
     def get_artist(self):
         return self._meta["artist"]
-    
+
     def get_title(self):
         return self._meta["title"]
-    
+
     def get_series(self):
         return self._meta["series"]
-    
+
 
 
 class CbzFile:

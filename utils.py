@@ -16,38 +16,38 @@ import re
 from zipfile import ZipFile, ZIP_DEFLATED
 
 def pretty_fsize(fsize):
-  unit = "B"
-  if fsize > 1024:
-    fsize = fsize / 1024.
-    unit = "KB"
-  if fsize > 1024:
-    fsize = fsize / 1024.
-    unit = "MB"
-  if fsize > 1024:
-    fsize = fsize / 1024.
-    unit = "GB"
-  if fsize > 1024:
-    fsize = fsize / 1024.
-    unit = "TB"
-  return "%.2f%s" % (fsize, unit)
+    unit = "B"
+    if fsize > 1024:
+        fsize = fsize / 1024.
+        unit = "KB"
+    if fsize > 1024:
+        fsize = fsize / 1024.
+        unit = "MB"
+    if fsize > 1024:
+        fsize = fsize / 1024.
+        unit = "GB"
+    if fsize > 1024:
+        fsize = fsize / 1024.
+        unit = "TB"
+    return "%.2f%s" % (fsize, unit)
 
 def root_required():
-  if os.getuid() != 0:
-    raise Exception("root required! please run with 'sudo'!")
+    if os.getuid() != 0:
+        raise Exception("root required! please run with 'sudo'!")
 
 
 def is_mac():
-  return (os.name == 'posix' and os.path.exists("/mach_kernel"))
+    return (os.name == 'posix' and os.path.exists("/mach_kernel"))
 
 def mac_required():
-  if not is_mac():
-    raise Exception("Only Mac supported!")
+    if not is_mac():
+        raise Exception("Only Mac supported!")
 
 def is_well_formed_uuid(uuid):
-  uuid = uuid.lower()
-  if re.match("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", uuid) == None:
-    return False
-  return True
+    uuid = uuid.lower()
+    if re.match("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", uuid) == None:
+        return False
+    return True
 
 
 def check_good_zip_fn(fn):
@@ -132,16 +132,16 @@ def zipdir(basedir, archivename):
     return ok
 
 def zipfile(fpath, archivepath):
-  ok = True
-  assert os.path.isfile(fpath)
-  with closing(ZipFile(archivepath, "w", ZIP_DEFLATED)) as z:
-    try:
-      zfn = os.path.split(fpath)[1]
-      z.write(fpath, zfn)
-    except Exception as e:
-      ok = False
-      raise e # re-threow
-  return ok
+    ok = True
+    assert os.path.isfile(fpath)
+    with closing(ZipFile(archivepath, "w", ZIP_DEFLATED)) as z:
+        try:
+            zfn = os.path.split(fpath)[1]
+            z.write(fpath, zfn)
+        except Exception as e:
+            ok = False
+            raise e # re-threow
+    return ok
 
 def os_is_windows():
     return os.name == "nt"
@@ -218,40 +218,40 @@ def get_config(key, default_value=None):
         return value
 
 def is_hex(text):
-  text = text.lower()
-  for c in text:
-    if ('0' <= c and c <= '9') or ('a' <= c and c <= 'f'):
-      continue
-    else:
-      return False
-  return True
+    text = text.lower()
+    for c in text:
+        if ('0' <= c and c <= '9') or ('a' <= c and c <= 'f'):
+            continue
+        else:
+            return False
+    return True
 
 def is_ascii(text):
-  for c in text:
-    if ord(c) >= 128 or ord(c) < 0:
-      return False
-  return True
+    for c in text:
+        if ord(c) >= 128 or ord(c) < 0:
+            return False
+    return True
 
 def is_image(fname):
-  fname = fname.lower()
-  for ext in [".jpg", ".png", ".gif", ".swf", ".bmp", ".pgm"]:
-    if fname.endswith(ext):
-      return True
-  return False
+    fname = fname.lower()
+    for ext in [".jpg", ".png", ".gif", ".swf", ".bmp", ".pgm"]:
+        if fname.endswith(ext):
+            return True
+    return False
 
 def is_movie(fname):
-  fname = fname.lower()
-  for ext in [".avi", ".mp4", ".wmv", ".mkv", ".rmvb", ".rm"]:
-    if fname.endswith(ext):
-      return True
-  return False
+    fname = fname.lower()
+    for ext in [".avi", ".mp4", ".wmv", ".mkv", ".rmvb", ".rm"]:
+        if fname.endswith(ext):
+            return True
+    return False
 
 def is_music(fname):
-  fname = fname.lower()
-  for ext in [".mp3", ".m4a", ".ape", ".flac", ".tta", ".wav"]:
-    if fname.endswith(ext):
-      return True
-  return False
+    fname = fname.lower()
+    for ext in [".mp3", ".m4a", ".ape", ".flac", ".tta", ".wav"]:
+        if fname.endswith(ext):
+            return True
+    return False
 
 def write_log(text):
     try:
@@ -274,9 +274,9 @@ def write_log(text):
     f.close()
 
 def random_token(size=5):
-  token = ""
-  alphabet = "abcdefghijklmnopqrst0123456789"
-  for i in range(size):
-    token += alphabet[random.randint(0, len(alphabet) - 1)]
-  return token
+    token = ""
+    alphabet = "abcdefghijklmnopqrst0123456789"
+    for i in range(size):
+        token += alphabet[random.randint(0, len(alphabet) - 1)]
+    return token
 

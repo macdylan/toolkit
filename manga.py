@@ -23,420 +23,420 @@ socket.setdefaulttimeout(SOCKET_TIMEOUT)
 # fetch global const values
 ZIP_FILES = get_config("zip_f", "true")
 if ZIP_FILES.lower().startswith("y") or ZIP_FILES.lower().startswith("t"):
-  ZIP_FILES = True
+    ZIP_FILES = True
 else:
-  ZIP_FILES = False
+    ZIP_FILES = False
 
 MANGA_FOLDER = get_config("manga_folder")
 
 
 def mang_message(message):
-  try:
-    print message
-  except:
-    pass
+    try:
+        print message
+    except:
+        pass
 
 def prepare_folder(path):
-  if os.path.exists(path) == False:
-    os.makedirs(path)
-    mang_message("[mkdir] %s" % path)
+    if os.path.exists(path) == False:
+        os.makedirs(path)
+        mang_message("[mkdir] %s" % path)
 
 def mang_print_help():
-    print """manga.py: manage my manga books
+        print """manga.py: manage my manga books
 usage: manga.py <command>
 available commands:
 
-  check-corrupt        check for corrupt zip files and images
-  download             download a manga book
-  download-reverse     download a manga book, in reverse order
-  help                 display this help message
-  list-library         list contents in library
-  pack-all             packup all manga books
-  update               update specified managed manga books
-  update-all           update all managed manga books
+    check-corrupt        check for corrupt zip files and images
+    download             download a manga book
+    download-reverse     download a manga book, in reverse order
+    help                 display this help message
+    list-library         list contents in library
+    pack-all             packup all manga books
+    update               update specified managed manga books
+    update-all           update all managed manga books
 
 author: Santa Zhang (santa1987@gmail.com)"""
 
 
 
 def mang_is_image(fname):
-  return is_image(fname)
+    return is_image(fname)
 
 
 def folder_contains_images(dirpath):
-  for fn in os.listdir(dirpath):
-    if mang_is_image(fn):
-      return True
-  return False
+    for fn in os.listdir(dirpath):
+        if mang_is_image(fn):
+            return True
+    return False
 
 def mang_ensure_manga_packed_walker(arg, dirname, fnames):
-  has_image = False
-  has_subdir = False
-  archive_name = os.path.abspath(dirname) + ".zip"
-  for fn in fnames:
-    fpath = dirname + os.path.sep + fn
-    if os.path.isdir(fpath):
-      has_subdir = True
-      continue
-    if mang_is_image(fn):
-      has_image = True
-    if fn == "NOT_FINISHED" or fn == "ERROR":
-      # a bad folder
-      print "found a bad folder, not zipping it"
-      if os.path.exists(archive_name):
-        print "zip archive already exists, removing folder"
-        shutil.rmtree(dirname)
-      return
-  if has_subdir == True:
-    print "has subdir, not zipping it"
-    return
-  if has_image == False:
-    print "found an empty folder, skipping it"
-    return
+    has_image = False
+    has_subdir = False
+    archive_name = os.path.abspath(dirname) + ".zip"
+    for fn in fnames:
+        fpath = dirname + os.path.sep + fn
+        if os.path.isdir(fpath):
+            has_subdir = True
+            continue
+        if mang_is_image(fn):
+            has_image = True
+        if fn == "NOT_FINISHED" or fn == "ERROR":
+            # a bad folder
+            print "found a bad folder, not zipping it"
+            if os.path.exists(archive_name):
+                print "zip archive already exists, removing folder"
+                shutil.rmtree(dirname)
+            return
+    if has_subdir == True:
+        print "has subdir, not zipping it"
+        return
+    if has_image == False:
+        print "found an empty folder, skipping it"
+        return
 
-  # do zipping
-  print "zipping"
-  if zipdir(dirname, archive_name) == True:
-    shutil.rmtree(dirname)
-    print "zip done, removing original folder"
-  else:
-    print "[error] failed to create zip archive!"
+    # do zipping
+    print "zipping"
+    if zipdir(dirname, archive_name) == True:
+        shutil.rmtree(dirname)
+        print "zip done, removing original folder"
+    else:
+        print "[error] failed to create zip archive!"
 
 def mang_ensure_manga_packed(root_dir=None):
-  if root_dir == None:
-    return
-  mang_message("[zip] %s" % root_dir)
-  if ZIP_FILES == True:
-    mang_message("packing manga books")
-    os.path.walk(root_dir, mang_ensure_manga_packed_walker, None)
+    if root_dir == None:
+        return
+    mang_message("[zip] %s" % root_dir)
+    if ZIP_FILES == True:
+        mang_message("packing manga books")
+        os.path.walk(root_dir, mang_ensure_manga_packed_walker, None)
 
 def mang_pack_all():
-  for entry in os.listdir(MANGA_FOLDER):
-    fpath = os.path.join(MANGA_FOLDER, entry)
-    if os.path.isdir(fpath):
-      mang_ensure_manga_packed(fpath)
+    for entry in os.listdir(MANGA_FOLDER):
+        fpath = os.path.join(MANGA_FOLDER, entry)
+        if os.path.isdir(fpath):
+            mang_ensure_manga_packed(fpath)
 
 def mang_download_manhua178(manga_url, **opt):
-  print "[toc] %s" % manga_url
-  root_page = manga_url
-  page_src = urllib2.urlopen(root_page).read()
-  idx = page_src.index("var g_comic_name = \"") + 20
-  idx2 = page_src.index("\r\n", idx) - 2
-  comic_name = page_src[idx:idx2].replace(" ", "").decode("utf-8")
-  comic_name = comic_name.strip()
+    print "[toc] %s" % manga_url
+    root_page = manga_url
+    page_src = urllib2.urlopen(root_page).read()
+    idx = page_src.index("var g_comic_name = \"") + 20
+    idx2 = page_src.index("\r\n", idx) - 2
+    comic_name = page_src[idx:idx2].replace(" ", "").decode("utf-8")
+    comic_name = comic_name.strip()
 
-  idx = page_src.index("cartoon_online_border")
-  idx = page_src.index("<ul>", idx)
-  idx2 = page_src.index("<script type=\"", idx)
-  toc_src = page_src[idx:idx2]
-  toc_src_split = toc_src.split("\r\n")
-  toc_arr = []
-  for sp in toc_src_split:
-    idx = sp.find('<li><a title="')
-    if idx == -1:
-      continue
-    idx += 14
-    idx2 = sp.find('" href="', idx)
-    title = sp[idx:idx2]
-    idx = idx2 + 8
-    idx2 = sp.find('"', idx)
-    href = sp[idx:idx2]
-    if title.strip() == "":
-      continue
-    toc_arr += (title, href),
+    idx = page_src.index("cartoon_online_border")
+    idx = page_src.index("<ul>", idx)
+    idx2 = page_src.index("<script type=\"", idx)
+    toc_src = page_src[idx:idx2]
+    toc_src_split = toc_src.split("\r\n")
+    toc_arr = []
+    for sp in toc_src_split:
+        idx = sp.find('<li><a title="')
+        if idx == -1:
+            continue
+        idx += 14
+        idx2 = sp.find('" href="', idx)
+        title = sp[idx:idx2]
+        idx = idx2 + 8
+        idx2 = sp.find('"', idx)
+        href = sp[idx:idx2]
+        if title.strip() == "":
+            continue
+        toc_arr += (title, href),
 
-  # download new chapters if necessary
-  if opt.has_key("reverse") and opt["reverse"] == True:
-    toc_arr.reverse()
+    # download new chapters if necessary
+    if opt.has_key("reverse") and opt["reverse"] == True:
+        toc_arr.reverse()
 
-  comic_name = comic_name.replace('/', "~")
-  comic_folder_path = MANGA_FOLDER + os.path.sep + comic_name + "(acg178)"
-  prepare_folder(comic_folder_path)
-  link_f = open(comic_folder_path + os.path.sep + "downloaded_from.txt", "w")
-  print "writing download url file"
-  link_f.write(manga_url + "\n")
-  link_f.close()
+    comic_name = comic_name.replace('/', "~")
+    comic_folder_path = MANGA_FOLDER + os.path.sep + comic_name + "(acg178)"
+    prepare_folder(comic_folder_path)
+    link_f = open(comic_folder_path + os.path.sep + "downloaded_from.txt", "w")
+    print "writing download url file"
+    link_f.write(manga_url + "\n")
+    link_f.close()
 
-  # now download chapter
-  for chap in toc_arr:
-    try:
-      chap_title = chap[0].decode("utf-8")
-      chap_title = chap_title.replace('/', "~")
-      chap_title = chap_title.strip()
-      chap_href = chap[1]
-      chapter_folder_path = comic_folder_path + u"/" + chap_title
-
-      # pass chapter if zip exists or the folder does not have NOT_FINISHED & ERROR file
-      chapter_zip_fn = comic_folder_path + u"/" + chap_title + ".zip"
-      if os.path.exists(chapter_zip_fn):
-        print "zip exists, pass chapter"
-        continue
-      else:
-        print "zip not exists!"
-
-      prepare_folder(chapter_folder_path)
-
-      error_log_fn = chapter_folder_path + u"/ERROR"
-      not_finished_fn = chapter_folder_path + u"/NOT_FINISHED"
-      if os.path.exists(error_log_fn) == False and os.path.exists(not_finished_fn) == False and folder_contains_images(chapter_folder_path):
-        print "chapter already downloaded, skip"
-        mang_ensure_manga_packed(comic_folder_path)
-        continue
-      else:
-        print "still have to download chapter"
-
-      idx = root_page.rfind("/")
-      idx = root_page[0:idx].rfind("/")
-      base_url = root_page[0:idx]
-      if chap_href.startswith("http://"):
-        chap_url = chap_href
-      else:
-        chap_url = base_url + chap_href[2:]
-      chap_url = chap_url.replace(" ", "%20")
-
-      print "[chap url] %s" % chap_url
-
-      chap_src = urllib2.urlopen(chap_url).read()
-      idx = chap_src.find("var pages")
-      if idx < 0:
-        print chap_src
-        raise "'var pages' not found!"
-      idx += 13
-      idx2 = chap_src.find("\r\n", idx) - 2
-      comic_pages_src = chap_src[idx:idx2].replace("\\/", "/")
-      comic_pages_url = eval(comic_pages_src)
-
-      # remove possibly existing error log file
-      if os.path.exists(error_log_fn):
-        os.remove(error_log_fn)
-
-      # create a place holder
-      open(not_finished_fn, "w").close()
-
-      chapter_download_ok = True # whether the chapter is successfully downloaded
-      for pg in comic_pages_url:
-        full_pg = (base_url + "/imgs/" + pg)
-        idx = full_pg.rfind("/") + 1
-        leaf_nm = full_pg[idx:]
-        print leaf_nm
-        fn = comic_folder_path + u"/" + chap_title + u"/" + leaf_nm.decode("unicode_escape")
-        mang_message(fn)
-        down_filename = fn
-        if os.path.exists(down_filename):
-          mang_message("[pass] %s" % down_filename)
-          continue
-        down_f = None
-        full_pg_unescaped = full_pg.decode("unicode_escape").encode("utf-8")
-        full_pg_unescaped = full_pg_unescaped.replace(" ", "%20")
+    # now download chapter
+    for chap in toc_arr:
         try:
-          down_data = urllib2.urlopen(full_pg_unescaped).read()
-          down_f = open(fn + u".tmp", "wb")
-          down_f.write(down_data)
-          down_f.close()
-          shutil.move(fn + u".tmp", fn)
-        except HTTPError, e:
-          print "download failure!"
-          if down_f != None:
-            down_f.close()
-          if os.path.exists(fn + u".tmp"):
-            os.remove(fn + u".tmp")
-          err_log_f = open(error_log_fn, "a")
-          try:
-            err_log_f.write("failed to download: %s\n" % fn)
-          except:
-            err_log_f.write("failed to download from: %s\n" % full_pg_unescaped)
-          finally:
-            err_log_f.close()
-          chapter_download_ok = False
+            chap_title = chap[0].decode("utf-8")
+            chap_title = chap_title.replace('/', "~")
+            chap_title = chap_title.strip()
+            chap_href = chap[1]
+            chapter_folder_path = comic_folder_path + u"/" + chap_title
 
-      # remove the place holder
-      if os.path.exists(not_finished_fn):
-        os.remove(not_finished_fn)
+            # pass chapter if zip exists or the folder does not have NOT_FINISHED & ERROR file
+            chapter_zip_fn = comic_folder_path + u"/" + chap_title + ".zip"
+            if os.path.exists(chapter_zip_fn):
+                print "zip exists, pass chapter"
+                continue
+            else:
+                print "zip not exists!"
 
-      # pack the folder if necessary
-      mang_ensure_manga_packed(comic_folder_path)
+            prepare_folder(chapter_folder_path)
 
-    except:
-      traceback.print_exc()
-      time.sleep(1)
+            error_log_fn = chapter_folder_path + u"/ERROR"
+            not_finished_fn = chapter_folder_path + u"/NOT_FINISHED"
+            if os.path.exists(error_log_fn) == False and os.path.exists(not_finished_fn) == False and folder_contains_images(chapter_folder_path):
+                print "chapter already downloaded, skip"
+                mang_ensure_manga_packed(comic_folder_path)
+                continue
+            else:
+                print "still have to download chapter"
+
+            idx = root_page.rfind("/")
+            idx = root_page[0:idx].rfind("/")
+            base_url = root_page[0:idx]
+            if chap_href.startswith("http://"):
+                chap_url = chap_href
+            else:
+                chap_url = base_url + chap_href[2:]
+            chap_url = chap_url.replace(" ", "%20")
+
+            print "[chap url] %s" % chap_url
+
+            chap_src = urllib2.urlopen(chap_url).read()
+            idx = chap_src.find("var pages")
+            if idx < 0:
+                print chap_src
+                raise "'var pages' not found!"
+            idx += 13
+            idx2 = chap_src.find("\r\n", idx) - 2
+            comic_pages_src = chap_src[idx:idx2].replace("\\/", "/")
+            comic_pages_url = eval(comic_pages_src)
+
+            # remove possibly existing error log file
+            if os.path.exists(error_log_fn):
+                os.remove(error_log_fn)
+
+            # create a place holder
+            open(not_finished_fn, "w").close()
+
+            chapter_download_ok = True # whether the chapter is successfully downloaded
+            for pg in comic_pages_url:
+                full_pg = (base_url + "/imgs/" + pg)
+                idx = full_pg.rfind("/") + 1
+                leaf_nm = full_pg[idx:]
+                print leaf_nm
+                fn = comic_folder_path + u"/" + chap_title + u"/" + leaf_nm.decode("unicode_escape")
+                mang_message(fn)
+                down_filename = fn
+                if os.path.exists(down_filename):
+                    mang_message("[pass] %s" % down_filename)
+                    continue
+                down_f = None
+                full_pg_unescaped = full_pg.decode("unicode_escape").encode("utf-8")
+                full_pg_unescaped = full_pg_unescaped.replace(" ", "%20")
+                try:
+                    down_data = urllib2.urlopen(full_pg_unescaped).read()
+                    down_f = open(fn + u".tmp", "wb")
+                    down_f.write(down_data)
+                    down_f.close()
+                    shutil.move(fn + u".tmp", fn)
+                except HTTPError, e:
+                    print "download failure!"
+                    if down_f != None:
+                        down_f.close()
+                    if os.path.exists(fn + u".tmp"):
+                        os.remove(fn + u".tmp")
+                    err_log_f = open(error_log_fn, "a")
+                    try:
+                        err_log_f.write("failed to download: %s\n" % fn)
+                    except:
+                        err_log_f.write("failed to download from: %s\n" % full_pg_unescaped)
+                    finally:
+                        err_log_f.close()
+                    chapter_download_ok = False
+
+            # remove the place holder
+            if os.path.exists(not_finished_fn):
+                os.remove(not_finished_fn)
+
+            # pack the folder if necessary
+            mang_ensure_manga_packed(comic_folder_path)
+
+        except:
+            traceback.print_exc()
+            time.sleep(1)
 
 
 def bengou_down_page(page_url, down_dir, page_id):
-  ok = True
-  print "[down] id=%d, url=%s" % (page_id, page_url)
-  page_src = urllib2.urlopen(page_url).read()
+    ok = True
+    print "[down] id=%d, url=%s" % (page_id, page_url)
+    page_src = urllib2.urlopen(page_url).read()
 
-  # get pic url:
-  idx = page_src.index('"disp"')
-  idx = page_src.index('http://', idx)
-  idx2 = page_src.index('"', idx)
-  img_url = page_src[idx:idx2]
-  print "[img] %s" % img_url
+    # get pic url:
+    idx = page_src.index('"disp"')
+    idx = page_src.index('http://', idx)
+    idx2 = page_src.index('"', idx)
+    img_url = page_src[idx:idx2]
+    print "[img] %s" % img_url
 
-  error_log_fn = os.path.join(down_dir, "ERROR")
+    error_log_fn = os.path.join(down_dir, "ERROR")
 
-  # download pic:
-  img_ext = img_url[img_url.rfind("."):]
-  pic_fn = down_dir + os.path.sep + ("%03d" % page_id) + img_ext
-  if os.path.exists(pic_fn):
-    try:
-      print "[skip] %s" % pic_fn
-    except:
-      pass
-  else:
-    pic_f = None
-    try:
-      pic_data = urllib2.urlopen(img_url).read()
-      pic_f = open(pic_fn + u".tmp", "wb")
-      pic_f.write(pic_data)
-      pic_f.close()
-      shutil.move(pic_fn + u".tmp", pic_fn)
-    except HTTPError, e:
-      ok = False
-      if pic_f != None:
-        pic_f.close()
-      if os.path.exists(pic_fn + u".tmp"):
-        os.remove(pic_fn + u".tmp")
-      print "[failure] %s" % page_url
-      err_log_f = open(error_log_fn, "a")
-      try:
-        err_log_f.write("failed to download: %s\n" % pic_fn)
-      except:
-        err_log_f.write("failed to download from: %s\n" % img_url)
-      finally:
-        err_log_f.close()
-  return ok
+    # download pic:
+    img_ext = img_url[img_url.rfind("."):]
+    pic_fn = down_dir + os.path.sep + ("%03d" % page_id) + img_ext
+    if os.path.exists(pic_fn):
+        try:
+            print "[skip] %s" % pic_fn
+        except:
+            pass
+    else:
+        pic_f = None
+        try:
+            pic_data = urllib2.urlopen(img_url).read()
+            pic_f = open(pic_fn + u".tmp", "wb")
+            pic_f.write(pic_data)
+            pic_f.close()
+            shutil.move(pic_fn + u".tmp", pic_fn)
+        except HTTPError, e:
+            ok = False
+            if pic_f != None:
+                pic_f.close()
+            if os.path.exists(pic_fn + u".tmp"):
+                os.remove(pic_fn + u".tmp")
+            print "[failure] %s" % page_url
+            err_log_f = open(error_log_fn, "a")
+            try:
+                err_log_f.write("failed to download: %s\n" % pic_fn)
+            except:
+                err_log_f.write("failed to download from: %s\n" % img_url)
+            finally:
+                err_log_f.close()
+    return ok
 
 def bengou_down_vol(vol_url, down_dir):
-  all_ok = True
-  print "[vol-url] %s" % vol_url
-  page_src = urllib2.urlopen(vol_url).read()
-  root_url = vol_url[:vol_url.rfind("/")]
+    all_ok = True
+    print "[vol-url] %s" % vol_url
+    page_src = urllib2.urlopen(vol_url).read()
+    root_url = vol_url[:vol_url.rfind("/")]
 
-  # get pic tree
-  idx = page_src.index("var pictree")
-  idx2 = page_src.index(";", idx)
-  pictree_src = page_src[(idx + 14):idx2]
-  exec "pictree=%s" % pictree_src
-  counter = 1
-  error_log_fn = down_dir + u"/ERROR"
-  for pic in pictree:
-    try:
-      ok = bengou_down_page(root_url + "/" + pic, down_dir, counter)
-      if ok == False:
-        all_ok = False
-    except:
-      all_ok = False
-      traceback.print_exc()
-      f = open(error_log_fn, "a")
-      f.write("failed to download page %d, url=%s\n" % (counter, root_url + "/" + pic))
-      f.close()
-      time.sleep(1)
-    finally:
-      counter += 1
-  return all_ok
+    # get pic tree
+    idx = page_src.index("var pictree")
+    idx2 = page_src.index(";", idx)
+    pictree_src = page_src[(idx + 14):idx2]
+    exec "pictree=%s" % pictree_src
+    counter = 1
+    error_log_fn = down_dir + u"/ERROR"
+    for pic in pictree:
+        try:
+            ok = bengou_down_page(root_url + "/" + pic, down_dir, counter)
+            if ok == False:
+                all_ok = False
+        except:
+            all_ok = False
+            traceback.print_exc()
+            f = open(error_log_fn, "a")
+            f.write("failed to download page %d, url=%s\n" % (counter, root_url + "/" + pic))
+            f.close()
+            time.sleep(1)
+        finally:
+            counter += 1
+    return all_ok
 
 def mang_download_bengou(index_url, **opt):
-  page_src = urllib2.urlopen(index_url).read()
-  index_root = index_url[:index_url.rfind("/")]
-  # find manga name
-  idx = page_src.index("sectioninfo ")
-  idx = page_src.index("title=", idx)
-  idx2 = page_src.index('"', idx + 7)
-  comic_name = page_src[(idx + 7):idx2].decode("utf-8")
-  mang_message(comic_name)
-  mang_message("[index-url] %s" % index_url)
+    page_src = urllib2.urlopen(index_url).read()
+    index_root = index_url[:index_url.rfind("/")]
+    # find manga name
+    idx = page_src.index("sectioninfo ")
+    idx = page_src.index("title=", idx)
+    idx2 = page_src.index('"', idx + 7)
+    comic_name = page_src[(idx + 7):idx2].decode("utf-8")
+    mang_message(comic_name)
+    mang_message("[index-url] %s" % index_url)
 
-  comic_folder_path = MANGA_FOLDER + os.path.sep + comic_name + "(bengou)"
+    comic_folder_path = MANGA_FOLDER + os.path.sep + comic_name + "(bengou)"
 
-  # find the volumes
-  idx = page_src.index("mhlist")
-  idx2 = page_src.index("</div>", idx)
-  mhlist_src = page_src[idx:idx2]
+    # find the volumes
+    idx = page_src.index("mhlist")
+    idx2 = page_src.index("</div>", idx)
+    mhlist_src = page_src[idx:idx2]
 
 
-  manga_list = []
-  idx = 0
-  idx2 = 0
-  while True:
-    idx = mhlist_src.find("href", idx2)
-    if idx < 0:
-      break
-    idx2 = mhlist_src.index("target", idx)
-    vol_url = index_root + "/" + mhlist_src[(idx + 6):(idx2 - 2)]
-    idx = mhlist_src.find("span", idx2)
-    idx2 = mhlist_src.index("</span>", idx)
-    vol_name = mhlist_src[(idx + 17):(idx2)].decode("utf-8")
-    manga_list += (vol_name, vol_url),
+    manga_list = []
+    idx = 0
+    idx2 = 0
+    while True:
+        idx = mhlist_src.find("href", idx2)
+        if idx < 0:
+            break
+        idx2 = mhlist_src.index("target", idx)
+        vol_url = index_root + "/" + mhlist_src[(idx + 6):(idx2 - 2)]
+        idx = mhlist_src.find("span", idx2)
+        idx2 = mhlist_src.index("</span>", idx)
+        vol_name = mhlist_src[(idx + 17):(idx2)].decode("utf-8")
+        manga_list += (vol_name, vol_url),
 
-  # download new chapters if necessary
-  if opt.has_key("reverse") and opt["reverse"] == True:
-    manga_list.reverse()
+    # download new chapters if necessary
+    if opt.has_key("reverse") and opt["reverse"] == True:
+        manga_list.reverse()
 
-  for vol_name, vol_url in manga_list:
-    mang_message(vol_name)
-    mang_message("[vol-page] %s" % vol_url)
-    chapter_folder_path = os.path.join(comic_folder_path, vol_name)
-    chapter_zip_fn = chapter_folder_path + ".zip"
+    for vol_name, vol_url in manga_list:
+        mang_message(vol_name)
+        mang_message("[vol-page] %s" % vol_url)
+        chapter_folder_path = os.path.join(comic_folder_path, vol_name)
+        chapter_zip_fn = chapter_folder_path + ".zip"
 
-    if os.path.exists(chapter_zip_fn):
-      print "zip exists, pass chapter"
-      continue
-    else:
-      print "zip not exists!"
+        if os.path.exists(chapter_zip_fn):
+            print "zip exists, pass chapter"
+            continue
+        else:
+            print "zip not exists!"
 
-    prepare_folder(chapter_folder_path)
+        prepare_folder(chapter_folder_path)
 
-    error_log_fn = chapter_folder_path + u"/ERROR"
-    not_finished_fn = chapter_folder_path + u"/NOT_FINISHED"
-    if os.path.exists(error_log_fn) == False and os.path.exists(not_finished_fn) == False and folder_contains_images(chapter_folder_path):
-      print "chapter already downloaded, skip"
-      mang_ensure_manga_packed(comic_folder_path)
-      continue
-    else:
-      print "still have to download chapter"
+        error_log_fn = chapter_folder_path + u"/ERROR"
+        not_finished_fn = chapter_folder_path + u"/NOT_FINISHED"
+        if os.path.exists(error_log_fn) == False and os.path.exists(not_finished_fn) == False and folder_contains_images(chapter_folder_path):
+            print "chapter already downloaded, skip"
+            mang_ensure_manga_packed(comic_folder_path)
+            continue
+        else:
+            print "still have to download chapter"
 
-    # remove possibly existing error log file
-    if os.path.exists(error_log_fn):
-      os.remove(error_log_fn)
+        # remove possibly existing error log file
+        if os.path.exists(error_log_fn):
+            os.remove(error_log_fn)
 
-    # create a place holder
-    open(not_finished_fn, "w").close()
+        # create a place holder
+        open(not_finished_fn, "w").close()
 
-    all_ok = bengou_down_vol(vol_url, chapter_folder_path)
-    if all_ok == False:
-      open(error_log_fn, "w").close()
+        all_ok = bengou_down_vol(vol_url, chapter_folder_path)
+        if all_ok == False:
+            open(error_log_fn, "w").close()
 
-    # remove the place holder
-    if os.path.exists(not_finished_fn):
-      os.remove(not_finished_fn)
+        # remove the place holder
+        if os.path.exists(not_finished_fn):
+            os.remove(not_finished_fn)
 
-    # pack the folder if necessary
-    mang_ensure_manga_packed(comic_folder_path)
+        # pack the folder if necessary
+        mang_ensure_manga_packed(comic_folder_path)
 
 
 def mang_download_print_help():
-  print "download a manga book"
-  print "usage: manga.py download <url>"
-  print "<url> is the table of contents page"
+    print "download a manga book"
+    print "usage: manga.py download <url>"
+    print "<url> is the table of contents page"
 
 def mang_download_real(url, **opt):
-  if url.startswith("http://") == False:
-    url = "http://" + url
-  if url.find("manhua.178.com") >= 0:
-    mang_download_manhua178(url, **opt)
-  elif url.find("bengou.com") >= 0:
-    mang_download_bengou(url, **opt)
-  else:
-    print "sorry, the manga book site is not supported!"
+    if url.startswith("http://") == False:
+        url = "http://" + url
+    if url.find("manhua.178.com") >= 0:
+        mang_download_manhua178(url, **opt)
+    elif url.find("bengou.com") >= 0:
+        mang_download_bengou(url, **opt)
+    else:
+        print "sorry, the manga book site is not supported!"
 
 
 def mang_download(**opt):
-  if len(sys.argv) <= 2:
-    mang_download_print_help()
-    exit()
-  url = sys.argv[2]
-  mang_download_real(url, **opt)
+    if len(sys.argv) <= 2:
+        mang_download_print_help()
+        exit()
+    url = sys.argv[2]
+    mang_download_real(url, **opt)
 
 
 def mang_load_library():
@@ -471,34 +471,34 @@ def mang_load_library():
     return library
 
 def mang_update_all():
-  library = mang_load_library()
-  for manga_name in library:
-    try:
-      url = library[manga_name]
-      print "downloading '%s' from '%s'" % (manga_name, url)
-      mang_download_real(url)
-    except:
-      traceback.print_exc()
-      time.sleep(1)
+    library = mang_load_library()
+    for manga_name in library:
+        try:
+            url = library[manga_name]
+            print "downloading '%s' from '%s'" % (manga_name, url)
+            mang_download_real(url)
+        except:
+            traceback.print_exc()
+            time.sleep(1)
 
 def mang_update_show_help():
-  print "update specific manga books"
-  print "usage: manga.py update <manga1> [manga2] [manga3]"
+    print "update specific manga books"
+    print "usage: manga.py update <manga1> [manga2] [manga3]"
 
 def mang_update():
-  if len(sys.argv) <= 2:
-    mang_update_show_help()
-    return()
-  library = mang_load_library()
-  for i in range(2, len(sys.argv)):
-    manga_name = sys.argv[i]
-    if library.has_key(manga_name) == False:
-      print "[warning] no such manga: '%s', skipping it" % manga_name
-      continue
-    else:
-      url = library[manga_name]
-      print "downloading '%s' from '%s'" % (manga_name, url)
-      mang_download_real(url)
+    if len(sys.argv) <= 2:
+        mang_update_show_help()
+        return()
+    library = mang_load_library()
+    for i in range(2, len(sys.argv)):
+        manga_name = sys.argv[i]
+        if library.has_key(manga_name) == False:
+            print "[warning] no such manga: '%s', skipping it" % manga_name
+            continue
+        else:
+            url = library[manga_name]
+            print "downloading '%s' from '%s'" % (manga_name, url)
+            mang_download_real(url)
 
 
 def mang_list_library():
