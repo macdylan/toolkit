@@ -2092,7 +2092,7 @@ def moe_update_tag_history(post_api, set_name):
             if ret == True:
                 n_success += 1
         if n_success > 0:
-            print "successfully updated tags on %d posts"
+            print "successfully updated tags on %d posts" % n_success
         else:
             print "*** failed to update some tags! quit now!"
             print "*** note that this might be caused by server side deletion of images"
