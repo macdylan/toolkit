@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # Fancy CBZ file format (1.0):
 # based upon .cbz file (zip package of comic pictures)
 #
@@ -43,6 +41,92 @@ import shutil
 import binascii
 import struct
 import datetime
+
+class cbz:
+
+    _VERSION = "fancycbz-1.0"
+    _CONTENT_MIN_SIZE_ = 4096
+    _CONTENT_FNAME = "content.json"
+    
+    def __init__(self, fpath=None):
+        print "This shall be done!"
+        self._meta = {}
+        self._meta["format_ver"] = cbz._VERSION
+        self._meta["artist"] = "#artist#"
+        self._meta["series"] = "#series#"
+        self._meta["right_to_left"] = "#right_to_left#"
+        self._meta["title"] = "#title#"
+        self._meta["kind"] = "#kind#"
+        self._meta["vol"] = "#vol#"
+        self._meta["tags"] = ["#tag1#", "#tag2#", "#tag3#"]
+        self._meta["comment"] = "#comment#"
+        self._meta["images"] = ["001.jpg", ["002.jpg", "003.jpg"], "004.jpg", {"k": 3}, 1, True, ["005.jpg", "006.jpg"], "097.jpg"]
+        self._meta["cover"] = ["001.jpg", "097.jpg"]
+        self._meta["x-FancyComic"] = {
+            "rating": 5,
+            "series_artist": "Inoue Takehiko",
+            "part_of_compilation": True,
+            "genre": "Sports",
+        }
+
+    def __str__(self):
+        json_txt = json.dumps(self._meta, sort_keys=True, indent=2)
+        return json_txt
+        
+
+    def open(self, fpath):
+        print "This shall be done!"
+        pass
+    
+    def close(self):
+        print "This shall be done!"
+        pass
+    
+    def add_image(self):
+        print "This shall be done!"
+        pass
+
+    def set_title(self, title):
+        self._meta["title"] = title
+        print "This shall be done!"
+        pass
+    
+    def set_artist(self, artist):
+        self._meta["artist"] = artist
+        print "This shall be done!"
+        pass
+    
+    def set_series(self, series):
+        self._meta["series"] = series
+        print "This shall be done!"
+        pass
+
+        """
+    def __setattr__(self, key, value):
+        print "set:", key, value
+        if key in ["artist", "title"]:
+            pass
+        else:
+            raise BaseException("key %s is missing" % key)
+    
+    def __getattr__(self, key):
+        print "get:", key
+        if key in ["artist", "title"]:
+            pass
+        else:
+            raise BaseException("key %s is missing" % key)
+"""
+
+    def get_artist(self):
+        return self._meta["artist"]
+    
+    def get_title(self):
+        return self._meta["title"]
+    
+    def get_series(self):
+        return self._meta["series"]
+    
+
 
 class CbzFile:
 
@@ -321,26 +405,24 @@ class CbzFile:
     self.dirty = True
 
 
-if __name__ == "__main__":
-    print "*** fancycbz.py is now a dummy testing script"
-    print "*** it is not intended for use!"
-    cbz = CbzFile()
-    cbz.open("/Users/santa/Downloads/dummy.cbz")
-    print cbz.get_info("author")
-    cbz.set_title("title")
-    cbz.set_author("Auqaplus")
-    cbz.set_comment("# NO COMMENT")
-    cbz.set_series("To Heart 2")
-    cbz.close()
-    for root, folders, files in os.walk("/Users/santa/Downloads/t"):
-        for fn in files:
-            if fn.endswith(".jpg") == False:
-                continue
-            fpath = os.path.join(root, fn)
-            cbz.open("/Users/santa/Downloads/dummy.cbz")
-            cbz.add_image(fpath)
-            print cbz.get_info("author")
-            cbz.set_cover("images/a.jpg")
-            print cbz.get_info("cover")
-            cbz.close()
+#if __name__ == "__main__":
+#  cbz = CbzFile()
+#  cbz.open("/Users/santa/Downloads/dummy.cbz")
+#  print cbz.get_info("author")
+#  cbz.set_title("title")
+#  cbz.set_author("Auqaplus")
+#  cbz.set_comment("# NO COMMENT")
+#  cbz.set_series("To Heart 2")
+#  cbz.close()
+#  for root, folders, files in os.walk("/Users/santa/Downloads/t"):
+#    for fn in files:
+#      if fn.endswith(".jpg") == False:
+#        continue
+#      fpath = os.path.join(root, fn)
+#      cbz.open("/Users/santa/Downloads/dummy.cbz")
+#      cbz.add_image(fpath)
+#      print cbz.get_info("author")
+#      cbz.set_cover("images/a.jpg")
+#      print cbz.get_info("cover")
+#      cbz.close()
 
