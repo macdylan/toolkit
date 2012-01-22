@@ -523,6 +523,7 @@ def util_mirror_danbooru_site_html(site_url):
     while True:
         try:
             query_url = site_url + ("/post?page=%d" % page_id)
+            time.sleep(1) # sleep 1 sec to prevent db locking?
             print "working on page %d (through html request)" % page_id
 
             # Go on to next page
@@ -615,6 +616,7 @@ def util_mirror_danbooru_site(site_url):
     while True:
         try:
             query_url = site_url + ("/post/index.json?page=%d" % page_id)
+            time.sleep(1) # sleep 1 sec to prevent db locking?
             print "working on page %d" % page_id
 
             # Go on to next page
@@ -682,7 +684,6 @@ def util_mirror_danbooru_site_ex(site_url, before_id = None):
     page_url = None
     while True:
         try:
-
             if page_url == None:
                 if before_id == None:
                     # by default, start from page 1000
@@ -691,6 +692,7 @@ def util_mirror_danbooru_site_ex(site_url, before_id = None):
                     page_url = site_url + "/post/index.html?before_id=%d" % before_id
             else:
                 print "[page] %s" % page_url
+            time.sleep(1) # sleep 1 sec to prevent db locking?
 
             page_src = urllib2.urlopen(page_url).read()
             idx = 0
@@ -1156,6 +1158,7 @@ def moe_mirror_tu178():
         try:
             query_url = "http://tu.178.com/?_per_page=1&_page_no=%d" % page_id
             print "working on page %d" % page_id
+            time.sleep(1) # sleep 1 sec to prevent db locking?
 
             # Go on to next page
             page_id += 1
