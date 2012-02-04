@@ -1283,7 +1283,7 @@ def hk_sys_backup():
     os.system("cp -rv \"/Users/santa/Library/Application Support/Savings\" /Users/santa/Dropbox/Backups/mac_backup")
 
     hk_backup_evernote()
-    hk_backup_addr_book();
+    hk_backup_addr_book()
 
     print "everything done!"
 
