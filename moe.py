@@ -119,9 +119,9 @@ def db_image_in_black_list_md5(md5):
     c.close()
     return ret
 
-def db_add_image(fpath, image_set, id_in_set, final_id_list = None):
+def db_add_image(fpath, image_set, id_in_set, final_id_list = None, keep_images = False):
     try:
-        db_add_image_real(fpath, image_set, id_in_set, final_id_list)
+        db_add_image_real(fpath, image_set, id_in_set, final_id_list, keep_images)
     except:
         print "[error] exception when adding image '%s'!" % fpath
         traceback.print_exc()
@@ -130,7 +130,7 @@ def db_add_image(fpath, image_set, id_in_set, final_id_list = None):
 
 # add an image into the database
 # if final_id_list is provided as an list, the added image's ('image_set', id_in_set) (or the duplicated image's) will be appended to the list
-def db_add_image_real(fpath, image_set, id_in_set, final_id_list = None):
+def db_add_image_real(fpath, image_set, id_in_set, final_id_list = None, keep_images = False):
     print "[db.add] %s" % fpath
     bucket_name = util_get_bucket_name(id_in_set)
     dest_folder = g_image_root + os.path.sep + image_set + os.path.sep + bucket_name
@@ -143,11 +143,24 @@ def db_add_image_real(fpath, image_set, id_in_set, final_id_list = None):
         if final_id_list != None:
             final_id_list += (image_found[1], image_found[2]),
         print "md5 duplicate: same as '%s %d'" % (image_found[1], image_found[2])
+        if keep_images:
+            pretty_fpath = os.path.join(os.path.split(fpath)[0], image_found[1] + " " + os.path.split(dest_file)[1])
+            if os.path.exists(pretty_fpath) == False:
+                print "keep image to: " + pretty_fpath
+                shutil.move(fpath, pretty_fpath)
         return False
     else:
         if final_id_list != None:
             final_id_list += (image_set, id_in_set),
     util_make_dirs(dest_folder)
+
+    if keep_images:
+        shutil.copy(fpath, dest_file)
+        pretty_fpath = os.path.join(os.path.split(fpath)[0], image_set + " "  + os.path.split(dest_file)[1])
+        if os.path.exists(pretty_fpath) == False:
+            print "keep image to: " + pretty_fpath
+            shutil.move(fpath, pretty_fpath)
+
     if os.path.exists(dest_file):
         print "[warning] the file '%s' exists" % dest_file
     else:
@@ -1455,8 +1468,13 @@ def moe_add_dir():
 
 
 def moe_add_dir_tree():
+    print "NOTE: use --keep-images in your command line to keep images"
     print "WARNING: adding images into moe db will REMOVE the source images!"
     print "WARNIGN: make sure you are just adding a copy of the source images!"
+    if "--keep-images" in sys.argv:
+        keep_images = True
+    else:
+        keep_images = False
     image_set = raw_input("image set: ")
     image_set = image_set.strip()
     image_dir = raw_input("dir path (will be moved into library):\n")
@@ -1482,7 +1500,7 @@ def moe_add_dir_tree():
             fpath = dir + os.path.sep + file
             if util_is_image(fpath) == False:
                 continue
-            db_add_image(fpath, image_set, walker_args[0], walker_args[1])
+            db_add_image(fpath, image_set, walker_args[0], walker_args[1], keep_images=keep_images)
             db_set_image_tags(image_set, walker_args[0], tag_list)
             walker_args[0] += 1
         db_commit()
