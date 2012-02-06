@@ -14,6 +14,9 @@ import codecs
 from subprocess import Popen, PIPE, STDOUT
 from utils import *
 from threading import Thread
+import encodings.zlib_codec; encodings.zlib_codec # E0601
+from cPickle import loads
+import os
 
 def jc_exec(cmd):
     print "[cmd] %s" % cmd
@@ -432,6 +435,45 @@ def jc_gbk2utf8(files):
             failed += fn,
     print "failed:", failed
 
+
+def jc_unpack_renpy_rpa(arc_fn):
+    print "unpacking " + arc_fn
+    f = open(arc_fn, "rb")
+    l = f.readline()
+    ver, indexoff, key = l.split()
+    print "rpa version:", ver
+    assert ver == "RPA-3.0"
+    indexoff = int(indexoff, 16)
+    key = int(key, 16)
+    print ver, indexoff, key
+
+    f.seek(indexoff)
+    s = f.read()
+    s = s.decode("zlib")
+    all_items = loads(s)
+
+    for item_n in all_items.keys():
+        full_n = os.path.join(os.path.splitext(arc_fn)[0], item_n)
+        parent_dir = os.path.split(full_n)[0]
+        if os.path.exists(parent_dir) == False:
+            os.makedirs(parent_dir)
+        offset = int(all_items[item_n][0][0]) ^ key
+        dlen = int(all_items[item_n][0][1]) ^ key
+        start = all_items[item_n][0][2]
+        print "extracting:", full_n
+        rest = None
+        if offset > 16:
+            f.seek(offset)
+            rest = f.read(dlen - 16)
+
+        g = open(full_n, "wb")
+        g.write(start)
+        if rest != None:
+            g.write(rest)
+        g.close()
+    f.close()
+
+
 def jc_print_help():
     print """justconvert.py: convertion tools for video, picture & text files
 usage: justconvert.py <command>
@@ -449,6 +491,7 @@ usage: justconvert.py <command>
     psp-movie-dir                 convert video in a folder to psp format
     psp-srt-from-ssa              convert .ssa subtitle into psp .srt format
     ssa-from-mkv                  extract .ssa subtitle from .mkv files
+    unpack-renpy-archive          unpack renpy rpa archive (currently only RPA-3.0)
 
 author: Santa Zhang (santa1987@gmail.com)"""
 
@@ -476,31 +519,31 @@ if __name__ == "__main__":
         jc_make_iphone_ringtone()
     elif sys.argv[1] == "ipod-movie":
         if len(sys.argv) < 4:
-            print "usage: justconvert ipod-movie <src_file> <dst_file>"
+            print "usage: justconvert.py ipod-movie <src_file> <dst_file>"
             print "<dst_file> should have .mp4 as extension"
             exit(0)
         jc_ipod_movie(sys.argv[2], sys.argv[3])
     elif sys.argv[1] == "ipod-movie-wide":
         if len(sys.argv) < 4:
-            print "usage: justconvert ipod-movie-wide <src_file> <dst_file>"
+            print "usage: justconvert.py ipod-movie-wide <src_file> <dst_file>"
             print "<dst_file> should have .mp4 as extension"
             exit(0)
         jc_ipod_movie_wide(sys.argv[2], sys.argv[3])
     elif sys.argv[1] == "psp-movie":
         if len(sys.argv) < 4:
-            print "usage: justconvert psp-movie <src_file> <dst_file>"
+            print "usage: justconvert.py psp-movie <src_file> <dst_file>"
             print "<dst_file> should have .mp4 as extension"
             exit(0)
         jc_psp_movie(sys.argv[2], sys.argv[3])
     elif sys.argv[1] == "psp-movie-dir":
         if len(sys.argv) < 4:
-            print "usage: justconvert psp-movie-dir <src_dir> <dst_dir>"
+            print "usage: justconvert.py psp-movie-dir <src_dir> <dst_dir>"
             print "all converted result in <dst_dir> will have .mp4 as extension"
             exit(0)
         jc_psp_movie_dir(sys.argv[2], sys.argv[3])
     elif sys.argv[1] == "psp-srt-from-ssa":
         if len(sys.argv) < 3:
-            print "usage: justconvert psp-srt-from-ssa <ssa_file> [srt_file]"
+            print "usage: justconvert.py psp-srt-from-ssa <ssa_file> [srt_file]"
             print "by default, the srt_file will have same main filename as the ssa_file"
             exit(0)
         ssa_file = sys.argv[2]
@@ -511,7 +554,7 @@ if __name__ == "__main__":
         jc_psp_srt_from_ssa(ssa_file, srt_file)
     elif sys.argv[1] == "ssa-from-mkv":
         if len(sys.argv) < 3:
-            print "usage: justconvert ssa-from-mkv <mkv_file> [ssa_file]"
+            print "usage: justconvert.py ssa-from-mkv <mkv_file> [ssa_file]"
             print "by default, the ssa_file will have same main filename as the mkv_file"
             exit(0)
         mkv_file = sys.argv[2]
@@ -520,6 +563,11 @@ if __name__ == "__main__":
         else:
             ssa_file = os.path.splitext(mkv_file)[0] + ".ssa"
         jc_ssa_from_mkv(mkv_file, ssa_file)
+    elif sys.argv[1] == "unpack-renpy-archive":
+        if len(sys.argv) < 3:
+            print "usage: justconvert.py unpack-renpy-archive <rpa_file>"
+            exit(0)
+        jc_unpack_renpy_rpa(sys.argv[2])
     else:
         print "command '%s' not understood, see 'justconvert.py help' for more info" % sys.argv[1]
 
