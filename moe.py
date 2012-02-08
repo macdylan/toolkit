@@ -1674,6 +1674,7 @@ def moe_backup_all():
     moe_backup_by_rating(1)
     print "Phase 4: backup unrated imags"
     moe_backup_by_rating(None)
+    print "Phase 5: cleanup backup"
     moe_backup_cleanup()
 
 def util_check_image_set_md5(image_root, md5_bin, set_name):
