@@ -1685,7 +1685,7 @@ def util_check_image_set_md5(image_root, md5_bin, set_name):
         fpath = os.path.join(set_folder, folder_name)
         if os.path.isdir(fpath):
             folder_start, folder_stop = folder_name.split("-")
-            print "[check-md5] %s %s-%s" % (set_name, folder_start, folder_stop)
+            print "[check-md5] %s %s-%s (%s)" % (set_name, folder_start, folder_stop, image_root)
             c = DB_CONN.cursor()
             query = "select md5, id_in_set, ext from images where set_name=\"%s\" and %s <= id_in_set and id_in_set <= %s" % (set_name, folder_start, folder_stop)
             c.execute(query)
@@ -1716,6 +1716,7 @@ def util_check_image_set_md5(image_root, md5_bin, set_name):
             print "%d passed, %d failed" % (n_pass, n_fail)
 
 def moe_check_md5():
+    backup_to = get_config("backup_to")
     print "usage: moe.py check-md5 [set_name]"
     image_root = g_image_root
     image_sets = [
@@ -1735,9 +1736,11 @@ def moe_check_md5():
         return
     if len(sys.argv) > 2:
         set_name = sys.argv[2]
+        util_check_image_set_md5(backup_to, md5_bin, set_name)
         util_check_image_set_md5(image_root, md5_bin, set_name)
     else:
         for set_name in image_sets:
+            util_check_image_set_md5(backup_to, md5_bin, set_name)
             util_check_image_set_md5(image_root, md5_bin, set_name)
 
 def moe_export():
