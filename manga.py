@@ -52,6 +52,7 @@ available commands:
     help                 display this help message
     list-library         list contents in library
     pack-all             packup all manga books
+    server               start SimpleHTTPServer for ComicGlass on iOS
     update               update specified managed manga books
     update-all           update all managed manga books
 
@@ -610,6 +611,11 @@ def mang_check_corrupt():
         print "*** PIL not installed! only checking for corrupt zip files!"
         util_check_corrupt_zip()
 
+def mang_serve():
+    port = get_config("http_svr_port")
+    manga_folder = get_config("manga_folder")
+    os.chdir(manga_folder)
+    os.system("python -m SimpleHTTPServer %s" % port)
 
 if __name__ == "__main__":
     if len(sys.argv) == 1 or sys.argv[1] == "help":
@@ -624,6 +630,8 @@ if __name__ == "__main__":
         mang_list_library()
     elif sys.argv[1] == "pack-all":
         mang_pack_all()
+    elif sys.argv[1] == "server":
+        mang_serve()
     elif sys.argv[1] == "update":
         mang_update()
     elif sys.argv[1] == "update-all":
