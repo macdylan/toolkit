@@ -1677,7 +1677,45 @@ def moe_backup_all():
     print "Phase 5: cleanup backup"
     moe_backup_cleanup()
 
+
+def util_replace_corrupt_images(img_fpath1, img_fpath2):
+    p = img_fpath1
+    p, sp = os.path.split(p)
+    id_in_set = os.path.splitext(sp)[0]
+    p, sp = os.path.split(p)
+    p, set_name = os.path.split(p)
+    c = DB_CONN.cursor()
+    query = "select md5 from images where set_name=\"%s\" and id_in_set = %s" % (set_name, id_in_set)
+    c.execute(query)
+    ret = c.fetchone()
+    c.close()
+    md5_expect = ret[0]
+    md5_img1 = ""
+    try:
+        md5_img1 = util_md5_of_file(img_fpath1)
+    except:
+        pass
+    md5_img2 = ""
+    try:
+        md5_img2 = util_md5_of_file(img_fpath2)
+    except:
+        pass
+    if md5_expect == md5_img1 and md5_expect == md5_img2:
+        print "no restore necessary!"
+    elif md5_expect == md5_img1 and md5_expect != md5_img2:
+        write_log("[restore] %s -> %s" % (img_fpath1, img_fpath2))
+        shutil.copyfile(img_fpath1, img_fpath2)
+    elif md5_expect != md5_img1 and md5_expect == md5_img2:
+        write_log("[restore] %s -> %s" % (img_fpath2, img_fpath1))
+        shutil.copyfile(img_fpath2, img_fpath1)
+    else:
+        write_log("[both corrupt] %s and %s" % (img_fpath2, img_fpath1))
+
+
+
 def util_check_image_set_md5(image_root, md5_bin, set_name):
+    backup_to = get_config("backup_to")
+
     print "checking md5 of image set: '%s'" % set_name
     n_pass = 0
     n_fail = 0
@@ -1711,6 +1749,18 @@ def util_check_image_set_md5(image_root, md5_bin, set_name):
                         elif line.startswith("fail"):
                             n_fail += 1
                             write_log("[error] md5sum failed: '%s'" % line)
+
+                            img_fpath = line[9:]
+                            p = img_fpath
+                            p, tail1 = os.path.split(p)
+                            p, tail2 = os.path.split(p)
+                            p, tail3 = os.path.split(p)
+
+                            img_fpath1 = os.path.join(backup_to, tail3, tail2, tail1)
+                            img_fpath2 = os.path.join(g_image_root, tail3, tail2, tail1)
+
+                            util_replace_corrupt_images(img_fpath1, img_fpath2)
+
                     pipe.close()
                 finally:
                     os.remove(md5_fn)
