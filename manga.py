@@ -433,6 +433,10 @@ def comic131_down_vol(vol_url, down_dir):
     page_url_prefix = vol_url[:vol_url.rfind("/")]
     error_log_fn = os.path.join(down_dir, "ERROR")
     for cnt in range(1, total_cnt + 1):
+        if os.path.exists(os.path.join(down_dir, "%03d.jpg" % cnt)) or os.path.exists(os.path.join(down_dir, "%03d.png" % cnt)):
+            mang_message("[skip] page %d" % cnt)
+            continue
+
         page_url = page_url_prefix + "/" + str(cnt) + ".html"
         page_src = urllib2.urlopen(page_url).read()
         idx = page_src.index('onclick="NextPage();" src=')
@@ -441,6 +445,7 @@ def comic131_down_vol(vol_url, down_dir):
         pic_url = page_src[idx:idx2]
         pic_fn = ("%03d" % cnt) + pic_url[pic_url.rfind('.'):]
         pic_fpath = os.path.join(down_dir, pic_fn)
+
         mang_message("[pic] %s => %s" % (pic_url, pic_fpath))
 
         pic_f = None
