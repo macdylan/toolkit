@@ -144,7 +144,7 @@ def db_add_image_real(fpath, image_set, id_in_set, final_id_list = None, keep_im
             final_id_list += (image_found[1], image_found[2]),
         print "md5 duplicate: same as '%s %d'" % (image_found[1], image_found[2])
         if keep_images:
-            pretty_fpath = os.path.join(os.path.split(fpath)[0], image_found[1] + " " + os.path.split(dest_file)[1])
+            pretty_fpath = os.path.join(os.path.split(fpath)[0], image_found[1] + " " + str(image_found[2]) + file_ext)
             if os.path.exists(pretty_fpath) == False:
                 print "keep image to: " + pretty_fpath
                 shutil.move(fpath, pretty_fpath)
