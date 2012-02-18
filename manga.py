@@ -52,6 +52,7 @@ available commands:
     help                 display this help message
     list-library         list contents in library
     pack-all             packup all manga books
+    server               start SimpleHTTPServer for ComicGlass on iOS
     update               update specified managed manga books
     update-all           update all managed manga books
 
@@ -336,6 +337,7 @@ def bengou_down_vol(vol_url, down_dir):
             counter += 1
     return all_ok
 
+
 def mang_download_bengou(index_url, **opt):
     page_src = urllib2.urlopen(index_url).read()
     index_root = index_url[:index_url.rfind("/")]
@@ -415,6 +417,144 @@ def mang_download_bengou(index_url, **opt):
         mang_ensure_manga_packed(comic_folder_path)
 
 
+
+
+def comic131_down_vol(vol_url, down_dir):
+    all_ok = True
+    print "[vol-url] %s" % vol_url
+    page_src = urllib2.urlopen(vol_url).read()
+    root_url = vol_url[:vol_url.rfind("/")]
+
+    # get total count
+    idx = page_src.index("var total")
+    idx2 = page_src.index(";", idx)
+    total_cnt = int(page_src[idx + 12 : idx2])
+
+    page_url_prefix = vol_url[:vol_url.rfind("/")]
+    error_log_fn = os.path.join(down_dir, "ERROR")
+    for cnt in range(1, total_cnt + 1):
+        if os.path.exists(os.path.join(down_dir, "%03d.jpg" % cnt)) or os.path.exists(os.path.join(down_dir, "%03d.png" % cnt)):
+            mang_message("[skip] page %d" % cnt)
+            continue
+
+        page_url = page_url_prefix + "/" + str(cnt) + ".html"
+        page_src = urllib2.urlopen(page_url).read()
+        idx = page_src.index('onclick="NextPage();" src=')
+        idx += 27
+        idx2 = page_src.index('"', idx)
+        pic_url = page_src[idx:idx2]
+        pic_fn = ("%03d" % cnt) + pic_url[pic_url.rfind('.'):]
+        pic_fpath = os.path.join(down_dir, pic_fn)
+
+        mang_message("[pic] %s => %s" % (pic_url, pic_fpath))
+
+        pic_f = None
+        try:
+            pic_data = urllib2.urlopen(pic_url).read()
+            pic_f = open(pic_fpath + ".tmp", "wb")
+            pic_f.write(pic_data)
+            pic_f.close()
+            shutil.move(pic_fpath + ".tmp", pic_fpath)
+        except:
+            all_ok = False
+            if pic_f != None:
+                pic_f.close()
+            if os.path.exists(pic_fpath + ".tmp"):
+                os.remove(pic_fpath + ".tmp")
+            print "[failure] %s" % pic_url
+
+            traceback.print_exc()
+            f = open(error_log_fn, "a")
+            f.write("failed to download page %d, url=%s\n" % (cnt, pic_url))
+            f.close()
+            time.sleep(1)
+
+    return all_ok
+
+
+def mang_download_comic131(index_url, **opt):
+    page_src = urllib2.urlopen(index_url).read()
+
+    # find manga name
+    idx = page_src.index('<p class="name"')
+    idx = page_src.index('<strong>', idx) + 8
+    idx2 = page_src.index('</strong>', idx)
+    comic_name = page_src[idx:idx2]
+    mang_message(comic_name)
+
+    comic_folder_path = MANGA_FOLDER + os.path.sep + comic_name + "(comic131)"
+    mang_message(comic_folder_path)
+
+    # find the volumes
+    idx = page_src.index('<ul class="list-directory"')
+    idx2 = page_src.index('</li></ul>', idx)
+    mhlist_src = page_src[idx:idx2]
+    manga_list = []
+    idx = 0
+    idx2 = 0
+    while True:
+        idx = mhlist_src.find('href="', idx2)
+        if idx < 0:
+            break
+        idx += 6
+        idx2 = mhlist_src.find('html"', idx) + 4
+        href = mhlist_src[idx:idx2]
+        idx = mhlist_src.find(">", idx2)
+        idx += 1
+        idx2 = mhlist_src.find("<", idx)
+        chap_name = mhlist_src[idx:idx2]
+        manga_list += (chap_name, href),
+
+    # download new chapters if necessary
+    if opt.has_key("reverse") and opt["reverse"] == True:
+        manga_list.reverse()
+
+    for vol_name, vol_url in manga_list:
+        mang_message(vol_name)
+        mang_message("[vol-page] %s" % vol_url)
+        chapter_folder_path = os.path.join(comic_folder_path, vol_name)
+        print chapter_folder_path
+        chapter_zip_fn = chapter_folder_path + ".zip"
+
+        if os.path.exists(chapter_zip_fn):
+            print "zip exists, pass chapter"
+            continue
+        else:
+            print "zip not exists!"
+
+        prepare_folder(chapter_folder_path)
+
+        error_log_fn = os.path.join(chapter_folder_path, "ERROR")
+        not_finished_fn = os.path.join(chapter_folder_path, "NOT_FINISHED")
+        if os.path.exists(error_log_fn) == False and os.path.exists(not_finished_fn) == False and folder_contains_images(chapter_folder_path):
+            print "chapter already downloaded, skip"
+            mang_ensure_manga_packed(comic_folder_path)
+            continue
+        else:
+            print "still have to download chapter"
+
+        # remove possibly existing error log file
+        if os.path.exists(error_log_fn):
+            os.remove(error_log_fn)
+
+        # create a place holder
+        open(not_finished_fn, "w").close()
+
+        all_ok = comic131_down_vol(vol_url, chapter_folder_path)
+        if all_ok == False:
+            open(error_log_fn, "w").close()
+
+        # remove the place holder
+        if os.path.exists(not_finished_fn):
+            os.remove(not_finished_fn)
+
+        # pack the folder if necessary
+        mang_ensure_manga_packed(comic_folder_path)
+
+
+
+
+
 def mang_download_print_help():
     print "download a manga book"
     print "usage: manga.py download <url>"
@@ -427,6 +567,8 @@ def mang_download_real(url, **opt):
         mang_download_manhua178(url, **opt)
     elif url.find("bengou.com") >= 0:
         mang_download_bengou(url, **opt)
+    elif url.find("comic.131.com") >= 0:
+        mang_download_comic131(url, **opt)
     else:
         print "sorry, the manga book site is not supported!"
 
@@ -610,6 +752,11 @@ def mang_check_corrupt():
         print "*** PIL not installed! only checking for corrupt zip files!"
         util_check_corrupt_zip()
 
+def mang_serve():
+    port = get_config("http_svr_port")
+    manga_folder = get_config("manga_folder")
+    os.chdir(manga_folder)
+    os.system("python -m SimpleHTTPServer %s" % port)
 
 if __name__ == "__main__":
     if len(sys.argv) == 1 or sys.argv[1] == "help":
@@ -624,6 +771,8 @@ if __name__ == "__main__":
         mang_list_library()
     elif sys.argv[1] == "pack-all":
         mang_pack_all()
+    elif sys.argv[1] == "server":
+        mang_serve()
     elif sys.argv[1] == "update":
         mang_update()
     elif sys.argv[1] == "update-all":
