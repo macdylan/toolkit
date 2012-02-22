@@ -1573,8 +1573,8 @@ def util_backup_images(images, backup_type):
             dst_file = os.path.join(dst_folder, main_fn)
             if os.path.exists(dst_file) == True:
                 if os.stat(src_file).st_size != os.stat(dst_file).st_size:
-                    write_log("file not consistent, different size: %s, %s" % (src_file, dst_file))
-                    raise Exception("file not consistent, different size: %s, %s" % (src_file, dst_file))
+                    write_log("[error] file not consistent, different size: %s, %s" % (src_file, dst_file))
+                    util_replace_corrupt_images(src_file, dst_file)
                 n_skip += 1
             else:
                 n_copy += 1
