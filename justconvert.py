@@ -177,6 +177,8 @@ class FfmpegJob:
 
 
 def jc_makedirs(path):
+    if path == "" or path == None:
+        return
     if os.path.exists(path) == False:
         print "[mkdir] %s" % path
         os.makedirs(path)
@@ -269,6 +271,18 @@ def jc_make_iphone_ringtone():
         for th in running:
             print "[info] %d of %d: %s" % (all_jobs.index(th.get_current_job()) + 1, len(all_jobs), th.get_current_job().get_output_file())
 
+def jc_ipad_movie(src_fn, dst_fn):
+    jc_makedirs(os.path.split(dst_fn)[0])
+    conv_params = jc_split_ffmpeg_preset(get_config("ipad_movie.preset"))
+    job = FfmpegJob()
+    job.set_params(conv_params)
+    job.set_input_files(src_fn)
+    job.set_output_file(dst_fn)
+    ffmpeg_bin = get_config("ffmpeg_bin")
+    full_cmd = "%s %s" % (ffmpeg_bin, job.get_commandline())
+    print "[cmd] %s" % full_cmd
+    os.system(full_cmd)
+
 def jc_ipod_movie(src_fn, dst_fn):
     jc_makedirs(os.path.split(dst_fn)[0])
     conv_params = jc_split_ffmpeg_preset(get_config("ipod_movie.preset"))
@@ -280,6 +294,7 @@ def jc_ipod_movie(src_fn, dst_fn):
     full_cmd = "%s %s" % (ffmpeg_bin, job.get_commandline())
     print "[cmd] %s" % full_cmd
     os.system(full_cmd)
+
 
 def jc_ipod_movie_wide(src_fn, dst_fn):
     jc_makedirs(os.path.split(dst_fn)[0])
@@ -443,6 +458,7 @@ usage: justconvert.py <command>
     gbk2utf8                      convert gbk text files to utf8 files
     help                          display this info
     iphone-ringtone               convert music files into m4r (iphone ringtone)
+    ipad-movie                    convert a video to ipad movie
     ipod-movie                    convert a video to ipod movie (2nd generation)
     ipod-movie-wide               convert a video to ipod movie (2nd generation, wide screen)
     psp-movie                     convert a video to psp format
@@ -474,6 +490,12 @@ if __name__ == "__main__":
         jc_gbk2utf8(sys.argv[2:])
     elif sys.argv[1] == "iphone-ringtone":
         jc_make_iphone_ringtone()
+    elif sys.argv[1] == "ipad-movie":
+        if len(sys.argv) < 4:
+            print "usage: justconvert ipad-movie <src_file> <dst_file>"
+            print "<dst_file> should have .mp4 as extension"
+            exit(0)
+        jc_ipad_movie(sys.argv[2], sys.argv[3])
     elif sys.argv[1] == "ipod-movie":
         if len(sys.argv) < 4:
             print "usage: justconvert ipod-movie <src_file> <dst_file>"
