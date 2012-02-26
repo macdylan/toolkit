@@ -144,7 +144,7 @@ def db_add_image_real(fpath, image_set, id_in_set, final_id_list = None, keep_im
             final_id_list += (image_found[1], image_found[2]),
         print "md5 duplicate: same as '%s %d'" % (image_found[1], image_found[2])
         if keep_images:
-            pretty_fpath = os.path.join(os.path.split(fpath)[0], image_found[1] + " " + os.path.split(dest_file)[1])
+            pretty_fpath = os.path.join(os.path.split(fpath)[0], image_found[1] + " " + str(image_found[2]) + file_ext)
             if os.path.exists(pretty_fpath) == False:
                 print "keep image to: " + pretty_fpath
                 shutil.move(fpath, pretty_fpath)
@@ -1573,8 +1573,8 @@ def util_backup_images(images, backup_type):
             dst_file = os.path.join(dst_folder, main_fn)
             if os.path.exists(dst_file) == True:
                 if os.stat(src_file).st_size != os.stat(dst_file).st_size:
-                    write_log("file not consistent, different size: %s, %s" % (src_file, dst_file))
-                    raise Exception("file not consistent, different size: %s, %s" % (src_file, dst_file))
+                    write_log("[error] file not consistent, different size: %s, %s" % (src_file, dst_file))
+                    util_replace_corrupt_images(src_file, dst_file)
                 n_skip += 1
             else:
                 n_copy += 1
@@ -1674,9 +1674,48 @@ def moe_backup_all():
     moe_backup_by_rating(1)
     print "Phase 4: backup unrated imags"
     moe_backup_by_rating(None)
+    print "Phase 5: cleanup backup"
     moe_backup_cleanup()
 
+
+def util_replace_corrupt_images(img_fpath1, img_fpath2):
+    p = img_fpath1
+    p, sp = os.path.split(p)
+    id_in_set = os.path.splitext(sp)[0]
+    p, sp = os.path.split(p)
+    p, set_name = os.path.split(p)
+    c = DB_CONN.cursor()
+    query = "select md5 from images where set_name=\"%s\" and id_in_set = %s" % (set_name, id_in_set)
+    c.execute(query)
+    ret = c.fetchone()
+    c.close()
+    md5_expect = ret[0]
+    md5_img1 = ""
+    try:
+        md5_img1 = util_md5_of_file(img_fpath1)
+    except:
+        pass
+    md5_img2 = ""
+    try:
+        md5_img2 = util_md5_of_file(img_fpath2)
+    except:
+        pass
+    if md5_expect == md5_img1 and md5_expect == md5_img2:
+        print "no restore necessary!"
+    elif md5_expect == md5_img1 and md5_expect != md5_img2:
+        write_log("[restore] %s -> %s" % (img_fpath1, img_fpath2))
+        shutil.copyfile(img_fpath1, img_fpath2)
+    elif md5_expect != md5_img1 and md5_expect == md5_img2:
+        write_log("[restore] %s -> %s" % (img_fpath2, img_fpath1))
+        shutil.copyfile(img_fpath2, img_fpath1)
+    else:
+        write_log("[both corrupt] %s and %s" % (img_fpath2, img_fpath1))
+
+
+
 def util_check_image_set_md5(image_root, md5_bin, set_name):
+    backup_to = get_config("backup_to")
+
     print "checking md5 of image set: '%s'" % set_name
     n_pass = 0
     n_fail = 0
@@ -1685,7 +1724,7 @@ def util_check_image_set_md5(image_root, md5_bin, set_name):
         fpath = os.path.join(set_folder, folder_name)
         if os.path.isdir(fpath):
             folder_start, folder_stop = folder_name.split("-")
-            print "[check-md5] %s %s-%s" % (set_name, folder_start, folder_stop)
+            print "[check-md5] %s %s-%s (%s)" % (set_name, folder_start, folder_stop, image_root)
             c = DB_CONN.cursor()
             query = "select md5, id_in_set, ext from images where set_name=\"%s\" and %s <= id_in_set and id_in_set <= %s" % (set_name, folder_start, folder_stop)
             c.execute(query)
@@ -1710,12 +1749,25 @@ def util_check_image_set_md5(image_root, md5_bin, set_name):
                         elif line.startswith("fail"):
                             n_fail += 1
                             write_log("[error] md5sum failed: '%s'" % line)
+
+                            img_fpath = line[9:]
+                            p = img_fpath
+                            p, tail1 = os.path.split(p)
+                            p, tail2 = os.path.split(p)
+                            p, tail3 = os.path.split(p)
+
+                            img_fpath1 = os.path.join(backup_to, tail3, tail2, tail1)
+                            img_fpath2 = os.path.join(g_image_root, tail3, tail2, tail1)
+
+                            util_replace_corrupt_images(img_fpath1, img_fpath2)
+
                     pipe.close()
                 finally:
                     os.remove(md5_fn)
             print "%d passed, %d failed" % (n_pass, n_fail)
 
 def moe_check_md5():
+    backup_to = get_config("backup_to")
     print "usage: moe.py check-md5 [set_name]"
     image_root = g_image_root
     image_sets = [
@@ -1735,9 +1787,11 @@ def moe_check_md5():
         return
     if len(sys.argv) > 2:
         set_name = sys.argv[2]
+        util_check_image_set_md5(backup_to, md5_bin, set_name)
         util_check_image_set_md5(image_root, md5_bin, set_name)
     else:
         for set_name in image_sets:
+            util_check_image_set_md5(backup_to, md5_bin, set_name)
             util_check_image_set_md5(image_root, md5_bin, set_name)
 
 def moe_export():
