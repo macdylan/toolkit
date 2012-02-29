@@ -1351,6 +1351,10 @@ def hk_zip():
                 raise Exception("Cannot handle: %s" % item)
 
 
+def hk_s3backup_iphoto():
+    hk_exec("s3cmd -v --delete-removed --check-md5 sync /Users/santa/Pictures/iPhoto\ Library/Masters/ s3://takaramono/iPhoto\ Library/Masters/")
+
+
 def hk_help():
     print """housekeeper.py: helper script to manage my important collections
 usage: housekeeper.py <command>
@@ -1382,6 +1386,7 @@ available commands:
     rm-all-gems                        remove all rubygems (currently Mac only)
     rm-empty-dir                       remove empty dir
     rsync-to-labpc                     use rsync to backup my craps onto LabPC
+    s3backup-iphoto                   use s3cmd to backup iphoto library to AWS
     size-ftp-ls-lr                     get the total size of an FTP site by its ls-lR file
     sync-rainlendar (deprecated)       sync iCal & rainlendar
     sys-backup                         system backup (currently Mac only)
@@ -1452,6 +1457,8 @@ if __name__ == "__main__":
         hk_rm_empty_dir()
     elif sys.argv[1] == "rsync-to-labpc":
         hk_rsync_to_labpc()
+    elif sys.argv[1] == "s3backup-iphoto":
+        hk_s3backup_iphoto()
     elif sys.argv[1] == "size-ftp-ls-lr":
         hk_size_ftp_ls_lr()
     elif sys.argv[1] == "sync-rainlendar":
