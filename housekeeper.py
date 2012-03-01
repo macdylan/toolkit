@@ -1354,6 +1354,81 @@ def hk_zip():
 def hk_s3backup_iphoto():
     hk_exec("s3cmd -v --delete-removed --check-md5 sync /Users/santa/Pictures/iPhoto\ Library/Masters/ s3://takaramono/iPhoto\ Library/Masters/")
 
+def hk_tunet_login():
+    username = get_config("tunet_user")
+    passwd_md5 = get_config("tunet_passwd_md5")
+    p = os.popen("curl -s -d 'username=%s' -d 'password=%s' -d 'type=1' -d 'n=100' http://net.tsinghua.edu.cn/cgi-bin/do_login" % (username, passwd_md5))
+    output = p.read()
+    p.close()
+    bytes_in = int(output.split(',')[2])
+    print "usage:", pretty_fsize(bytes_in, k=1000)
+
+
+def hk_tunet_logout():
+    p = os.popen("curl -s 'http://net.tsinghua.edu.cn/cgi-bin/do_logout'")
+    output = p.read()
+    p.close()
+    if output == "logout_ok":
+        print "logged out"
+    elif output == "not_online_error":
+        print "you are not logged in"
+        exit(1)
+    else:
+        print "error: %s" % output
+        exit(1)
+
+def hk_tunet_status():
+    username = get_config("tunet_user")
+    passwd_md5 = get_config("tunet_passwd_md5")
+    p = os.popen("curl -i -s -k -d 'action=login&user_login_name=%s&user_password=%s' 'https://usereg.tsinghua.edu.cn/do.php' | grep PHPSESSID" % (username, passwd_md5))
+    output = p.read()
+    sess_id = output[22:54]
+    p.close()
+
+    stat_info = {}
+
+    def update_stat(k, v):
+        if stat_info.has_key(k) == False:
+            stat_info[k] = v
+
+    p = os.popen("curl -s -b PHPSESSID=%s -k 'https://usereg.tsinghua.edu.cn/online_user_ipv4.php'" % sess_id)
+    output = p.read()
+    fields = {23:"user id", 24:"current ip", 25:"current in", 26:"current out", 30:"balance", 35:"login time"}
+    field_counter = 0
+    for line in output.split("\n"):
+        line = line.strip()
+        if "maintd" in line:
+            if field_counter in fields.keys():
+                is_online = True
+                value = line[19:-5]
+                update_stat(fields[field_counter], value)
+            field_counter += 1
+    p.close()
+
+    p = os.popen("curl -s -b PHPSESSID=%s -k 'https://usereg.tsinghua.edu.cn/user_info.php'" % sess_id)
+    output = p.read()
+    p.close()
+    lines = output.split("\n")
+    update_stat("user id", lines[168].strip()[28:-11])
+    balance = lines[236].strip()
+    idx = balance.index("(")
+    balance = balance[:idx]
+    update_stat("balance", balance)
+
+    p = os.popen("curl -s -b PHPSESSID=%s -k 'https://usereg.tsinghua.edu.cn/user_detail_statistics.php'" % sess_id)
+    output = p.read()
+    p.close()
+    lines = output.split("\n")
+    update_stat("total in", lines[60].strip()[19:-5])
+    update_stat("total out", lines[61].strip()[19:-5])
+    update_stat("current cost", lines[65].strip()[19:-5])
+
+    for k in ["user id", "current ip", "login time", "current in", "current out", "total in", "total out", "balance", "current cost"]:
+        if stat_info.has_key(k):
+            print "%s:\t%s" % (k, stat_info[k])
+
+    os.system("curl -s -b PHPSESSID=%s -d 'action=logout' -k 'https://usereg.tsinghua.edu.cn/do.php' -o /dev/null" % sess_id)
+
 
 def hk_help():
     print """housekeeper.py: helper script to manage my important collections
@@ -1386,12 +1461,15 @@ available commands:
     rm-all-gems                        remove all rubygems (currently Mac only)
     rm-empty-dir                       remove empty dir
     rsync-to-labpc                     use rsync to backup my craps onto LabPC
-    s3backup-iphoto                   use s3cmd to backup iphoto library to AWS
+    s3backup-iphoto                    use s3cmd to backup iphoto library to AWS
     size-ftp-ls-lr                     get the total size of an FTP site by its ls-lR file
     sync-rainlendar (deprecated)       sync iCal & rainlendar
     sys-backup                         system backup (currently Mac only)
     sys-maint                          system maintenance (currently Mac only)
     timemachine-image                  create new Time Machine image
+    tunet-login                        login into Tsinghua University network
+    tunet-logout                       logout from Tsinghua University network
+    tunet-status                       show Tsinghua University network status
     update-chrome                      update chrome browser (Windows only)
     upgrade-dropbox-pic                update dropbox photos folder, prefer highres pictures
     write-crc32                        write crc32 data in every directory, overwrite old crc32 files
@@ -1469,6 +1547,12 @@ if __name__ == "__main__":
         hk_sys_maint()
     elif sys.argv[1] == "timemachine-image":
         hk_timemachine_image()
+    elif sys.argv[1] == "tunet-login":
+        hk_tunet_login()
+    elif sys.argv[1] == "tunet-logout":
+        hk_tunet_logout()
+    elif sys.argv[1] == "tunet-status":
+        hk_tunet_status()
     elif sys.argv[1] == "update-chrome":
         hk_update_chrome()
     elif sys.argv[1] == "upgrade-dropbox-pic":

@@ -15,19 +15,20 @@ import traceback
 import re
 from zipfile import ZipFile, ZIP_DEFLATED
 
-def pretty_fsize(fsize):
+def pretty_fsize(fsize, k=1024.):
     unit = "B"
-    if fsize > 1024:
-        fsize = fsize / 1024.
+    k *= 1.0
+    if fsize > k:
+        fsize = 1.0 * fsize / k
         unit = "KB"
-    if fsize > 1024:
-        fsize = fsize / 1024.
+    if fsize > k:
+        fsize = 1.0 * fsize / k
         unit = "MB"
-    if fsize > 1024:
-        fsize = fsize / 1024.
+    if fsize > k:
+        fsize = 1.0 * fsize / k
         unit = "GB"
-    if fsize > 1024:
-        fsize = fsize / 1024.
+    if fsize > k:
+        fsize = 1.0 * fsize / k
         unit = "TB"
     return "%.2f%s" % (fsize, unit)
 
@@ -156,65 +157,74 @@ def get_config(key, default_value=None):
     module_name = os.path.basename(sys.argv[0])
     if "." in module_name:
         module_name = os.path.splitext(module_name)[0]
-    conf_fn = os.path.join(os.path.split(__file__)[0], "toolkit.conf")
+
     value = None
+    for conf_main_fn in ["toolkit.conf", "toolkit.private.conf"]:
+        conf_fn = os.path.join(os.path.split(__file__)[0], conf_main_fn)
+        if os.path.exists(conf_fn) == False:
+            continue
 
-    if key.startswith(module_name + "."):
-        full_key = key
-    else:
-        full_key = module_name + "." + key
+        if key.startswith(module_name + "."):
+            full_key = key
+        else:
+            full_key = module_name + "." + key
 
-    f = None
-    try:
-        f = open(conf_fn)
-        for line in f.readlines():
-            line = line.strip()
-            if line.startswith(";") or line.startswith("#") or line == "":
-                continue
+        f = None
+        try:
+            f = open(conf_fn)
+            for line in f.readlines():
+                line = line.strip()
+                if line.startswith(";") or line.startswith("#") or line == "":
+                    continue
 
-            idx = line.find("=")
-            if idx < 0:
-                continue
-            if line[:idx] == full_key + ".windows" and os_is_windows():
-                value = line[(idx + 1):]
+                idx = line.find("=")
+                if idx < 0:
+                    continue
+                if line[:idx] == full_key + ".windows" and os_is_windows():
+                    value = line[(idx + 1):]
+                    break
+                elif line[:idx] == full_key + ".mac" and os_is_mac():
+                    value = line[(idx + 1):]
+                    break
+                elif line[:idx] == full_key + ".linux" and os_is_linux():
+                    value = line[(idx + 1):]
+                    break
+                elif line[:idx] == full_key + ".posix" and os.name == "posix":
+                    value = line[(idx + 1):]
+                    break
+                elif line[:idx] == full_key:
+                    value = line[(idx + 1):]
+                    break
+                elif line[:idx] == key + ".windows" and os_is_windows():
+                    value = line[(idx + 1):]
+                    break
+                elif line[:idx] == key + ".mac" and os_is_mac():
+                    value = line[(idx + 1):]
+                    break
+                elif line[:idx] == key + ".linux" and os_is_linux():
+                    value = line[(idx + 1):]
+                    break
+                elif line[:idx] == key + ".posix" and os.name == "posix":
+                    value = line[(idx + 1):]
+                    break
+                elif line[:idx] == key:
+                    value = line[(idx + 1):]
+                    break
+        finally:
+            if f != None:
+                f.close()
+            if value != None:
                 break
-            elif line[:idx] == full_key + ".mac" and os_is_mac():
-                value = line[(idx + 1):]
-                break
-            elif line[:idx] == full_key + ".linux" and os_is_linux():
-                value = line[(idx + 1):]
-                break
-            elif line[:idx] == full_key + ".posix" and os.name == "posix":
-                value = line[(idx + 1):]
-                break
-            elif line[:idx] == full_key:
-                value = line[(idx + 1):]
-                break
-            elif line[:idx] == key + ".windows" and os_is_windows():
-                value = line[(idx + 1):]
-                break
-            elif line[:idx] == key + ".mac" and os_is_mac():
-                value = line[(idx + 1):]
-                break
-            elif line[:idx] == key + ".linux" and os_is_linux():
-                value = line[(idx + 1):]
-                break
-            elif line[:idx] == key + ".posix" and os.name == "posix":
-                value = line[(idx + 1):]
-                break
-            elif line[:idx] == key:
-                value = line[(idx + 1):]
-                break
-    finally:
-        if f != None:
-            f.close()
 
     if default_value != None and value == None:
         value = default_value
     if value == None:
         raise Exception("Config '%s' not found!" % key)
     else:
-        print "[config] %s=%s" % (key, value)
+        if "passwd" in key:
+            print "[config] %s=**** (private info hidden)" % key
+        else:
+            print "[config] %s=%s" % (key, value)
         return value
 
 def is_hex(text):

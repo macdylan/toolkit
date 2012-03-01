@@ -4,7 +4,7 @@
 # Based BOOSTER 1.01 CSO Compressor
 #
 # GNU General Public Licence (GPL)
-# 
+#
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
 # Foundation; either version 2 of the License, or (at your option) any later
@@ -75,7 +75,7 @@ def open_input_output(fname_in, fname_out):
 	except IOError:
 		print("Can't open %s" % (fname_in))
 		sys.exit(-1)
-	
+
 	try:
 		fout = open(fname_out, "wb")
 	except IOError:
@@ -181,7 +181,7 @@ def set_align(fout, write_pos, align):
 		write_pos += align_len
 
 	return write_pos
-	
+
 def compress_cso(fname_in, fname_out, level):
 	fin, fout = open_input_output(fname_in, fname_out)
 	fin.seek(0, os.SEEK_END)
@@ -283,7 +283,7 @@ def compress_cso(fname_in, fname_out, level):
 		fout.write(idx)
 
 	print("ciso compress completed , total size = %8d bytes , rate %d%%" % (write_pos,(write_pos*100/total_bytes)))
-	
+
 	fin.close()
 	fout.close()
 
@@ -344,7 +344,7 @@ def load_sector_table(sector_table_fn, total_block, default_level = 9):
 					raise ValueError("Invalid line founded: %s" % (line))
 				if level < 1 or level > 9:
 					raise ValueError("Invalid line founded: %s" % (line))
-				sectors[sector] = level 
+				sectors[sector] = level
 			else:
 				b = a[0].split("-")
 				try:
@@ -353,7 +353,7 @@ def load_sector_table(sector_table_fn, total_block, default_level = 9):
 					raise ValueError("Invalid line founded: %s" % (line))
 				i = start
 				while i < end:
-					sectors[i] = level 
+					sectors[i] = level
 					i += 1
 
 	return sectors
