@@ -1311,6 +1311,7 @@ def hk_rsync_to_labpc():
         hk_exec("cp /Volumes/Takaramono$/backup/music/itunes_genuine_report.csv /Users/santa/Music")
         hk_exec("rsync -avx --delete /Users/santa/Music/ /Volumes/Takaramono$/backup/music/")
         hk_exec("rsync -avx --delete /Users/santa/Movies/ /Volumes/Takaramono$/backup/video/")
+        hk_exec("rsync -avx --delete '/Users/santa/Pictures/iPhoto Library/Masters/' /Volumes/Takaramono$/backup/iphoto_master/")
         hk_exec("rsync -avx --delete /Users/santa/Manga/ /Volumes/Takaramono$/manga/")
     else:
         print "Backup folder /Volumes/Takaramono$ not mounted!"
@@ -1360,8 +1361,11 @@ def hk_tunet_login():
     p = os.popen("curl -s -d 'username=%s' -d 'password=%s' -d 'type=1' -d 'n=100' http://net.tsinghua.edu.cn/cgi-bin/do_login" % (username, passwd_md5))
     output = p.read()
     p.close()
-    bytes_in = int(output.split(',')[2])
-    print "usage:", pretty_fsize(bytes_in, k=1000)
+    try:
+        bytes_in = int(output.split(',')[2])
+        print "usage:", pretty_fsize(bytes_in, k=1000)
+    except:
+        print "error occurred, please retry login after a few seconds"
 
 
 def hk_tunet_logout():
