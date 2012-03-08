@@ -16,4 +16,4 @@ log/
 *.exe
 *.4tab-fix
 toolkit.private.conf
-
+.AppleDouble/

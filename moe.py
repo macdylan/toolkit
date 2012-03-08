@@ -476,6 +476,9 @@ def util_mirror_danbooru_site_down_image(info_list, image_set_base, image_set_hi
                     os.remove(download_fpath)
             db_set_image_tags(image_set_base, id_in_set, info[u"tags"].split())
             db_commit()
+            if "--skip-highres" in sys.argv:
+                print "[skip] --skip-highres specified, not downloading highres images"
+                continue
             if info.has_key(u"file_size"):
                 highres_file_size = info[u"file_size"]
             else:
@@ -498,6 +501,11 @@ def util_mirror_danbooru_site_down_image(info_list, image_set_base, image_set_hi
             time.sleep(1)
 
 def util_mirror_danbooru_site_html(site_url):
+    if "--skip-highres" not in sys.argv:
+        print "*** --skip-highres not specified in command line!"
+        print "*** if you are sure you need highres images, press ENTER to continue"
+        print "*** otherwise, Ctrl-C to quit"
+        raw_input()
     SOCKET_TIMEOUT = 30
     socket.setdefaulttimeout(SOCKET_TIMEOUT)
     tmp_folder = g_tmp_folder
@@ -592,6 +600,11 @@ def util_mirror_danbooru_site_html(site_url):
             time.sleep(1)
 
 def util_mirror_danbooru_site(site_url):
+    if "--skip-highres" not in sys.argv:
+        print "*** --skip-highres not specified in command line!"
+        print "*** if you are sure you need highres images, press ENTER to continue"
+        print "*** otherwise, Ctrl-C to quit"
+        raw_input()
     SOCKET_TIMEOUT = 30
     socket.setdefaulttimeout(SOCKET_TIMEOUT)
     tmp_folder = g_tmp_folder
@@ -672,6 +685,11 @@ def util_mirror_danbooru_site(site_url):
 
 # mirror danbooru main site, which only has html access for page >= 1000
 def util_mirror_danbooru_site_ex(site_url, before_id = None):
+    if "--skip-highres" not in sys.argv:
+        print "*** --skip-highres not specified in command line!"
+        print "*** if you are sure you need highres images, press ENTER to continue"
+        print "*** otherwise, Ctrl-C to quit"
+        raw_input()
     SOCKET_TIMEOUT = 30
     socket.setdefaulttimeout(SOCKET_TIMEOUT)
     tmp_folder = g_tmp_folder
