@@ -421,6 +421,7 @@ def util_download_danbooru_image(image_set, id_in_set, image_url, image_size = 0
     image_ext = image_url[image_url.rfind("."):]
     dest_image = images_root + os.path.sep + image_set + os.path.sep + util_get_bucket_name(id_in_set) + os.path.sep + str(id_in_set) + image_ext
     if os.path.exists(dest_image):
+        # add the image again, ensure it is inside database, prevent ophans
         db_add_image(dest_image, image_set, id_in_set)
         print "[skip] '%s %d' already downloaded" % (image_set, id_in_set)
         return False
