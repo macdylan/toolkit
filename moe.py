@@ -421,6 +421,7 @@ def util_download_danbooru_image(image_set, id_in_set, image_url, image_size = 0
     image_ext = image_url[image_url.rfind("."):]
     dest_image = images_root + os.path.sep + image_set + os.path.sep + util_get_bucket_name(id_in_set) + os.path.sep + str(id_in_set) + image_ext
     if os.path.exists(dest_image):
+        # add the image again, ensure it is inside database, prevent ophans
         db_add_image(dest_image, image_set, id_in_set)
         print "[skip] '%s %d' already downloaded" % (image_set, id_in_set)
         return False
@@ -1732,6 +1733,10 @@ def util_replace_corrupt_images(img_fpath1, img_fpath2):
 
 
 def util_check_image_set_md5(image_root, md5_bin, set_name):
+    if os.path.exists(image_root) == False:
+        print "[error] folder does not exist: %s" % image_root
+        return
+
     backup_to = get_config("backup_to")
 
     print "checking md5 of image set: '%s'" % set_name
@@ -1741,7 +1746,11 @@ def util_check_image_set_md5(image_root, md5_bin, set_name):
     for folder_name in os.listdir(set_folder):
         fpath = os.path.join(set_folder, folder_name)
         if os.path.isdir(fpath):
-            folder_start, folder_stop = folder_name.split("-")
+            try:
+                folder_start, folder_stop = folder_name.split("-")
+            except:
+                traceback.print_exc()
+                continue
             print "[check-md5] %s %s-%s (%s)" % (set_name, folder_start, folder_stop, image_root)
             c = DB_CONN.cursor()
             query = "select md5, id_in_set, ext from images where set_name=\"%s\" and %s <= id_in_set and id_in_set <= %s" % (set_name, folder_start, folder_stop)
