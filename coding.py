@@ -11,7 +11,7 @@ import time
 import traceback
 
 # matched by "lowercase(), then endswith()"
-g_code_files = [".c", ".cc", ".rb", ".py", ".sh", "Rakefile", ".mm", ".html", ".htm", ".tex"]
+g_code_files = [".c", ".cc", ".rb", ".py", ".sh", "Rakefile", ".rake", ".mm", ".html", ".htm", ".tex"]
 
 # if filter == [], then all files are matched
 def check_filter_match(fname, filter = []):
