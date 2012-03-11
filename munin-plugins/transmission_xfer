@@ -31,8 +31,10 @@ case $1 in
     echo 'graph_category misc'
     echo 'down.label downloaded'
     echo 'down.type GAUGE'
+    echo 'down.draw AREA'
     echo 'up.label uploaded'
     echo 'up.type GAUGE'
+    echo 'up.draw AREA'
     exit 0
     ;;
 esac
