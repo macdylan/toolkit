@@ -33,11 +33,10 @@ case $1 in
     echo 'down.type GAUGE'
     echo 'up.label uploaded'
     echo 'up.type GAUGE'
-    echo 'up.negative down'
     exit 0
     ;;
 esac
 
-grep downloaded $STATS_FILE | gawk '{split($2, a, /,/); print "down.value " a[1]}'
+grep downloaded $STATS_FILE | gawk '{split($2, a, /,/); print "down.value -" a[1]}'
 grep uploaded $STATS_FILE | gawk '{split($2, a, /,/); print "up.value " a[1]}'
 
