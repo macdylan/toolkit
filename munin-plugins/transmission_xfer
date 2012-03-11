@@ -12,7 +12,7 @@
 
 . $MUNIN_LIBDIR/plugins/plugin.sh
 
-STATS_FILE=/home/santa/.config/transmission/stats.json
+STATS_FILE=/home/santa/.config/transmission/stats_shadow_copy.json
 
 case $1 in
     autoconf)

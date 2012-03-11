@@ -1,0 +1,77 @@
+#!/usr/bin/env python
+#%# family=auto
+#%# capabilities=autoconf
+
+import sys
+import os
+
+if "autoconf" in sys.argv:
+    print "yes"
+    exit(0)
+elif "config" in sys.argv:
+    print """
+graph_title TUNET xfer
+graph_order monthly_in current_in total_in
+graph_category misc
+graph_args --base 1024 -l 0
+graph_vlabel Transfer in bytes
+monthly_in.label Monthly xfer in
+monthly_in.draw AREA
+current_in.label Current xfer in
+current_in.draw STACK
+total_in.draw LINE1
+total_in.label Total xfer in
+total_in.warning 32212254720
+total_in.critical 53687091200
+total_cost.draw LINE1
+total_cost.label Total cost
+"""
+    exit(0)
+
+current_in = 0
+monthly_in = 0
+
+p = os.popen("/home/santa/toolkit/housekeeper.py tunet-status")
+for line in p.readlines():
+    line = line.strip()
+    line = line.lower()
+    if "current in" in line:
+        val = line.split()[-1]
+        if "g" in val:
+            current_in = float(val[0:-1]) * 1024 * 1024 * 1024
+        elif "m" in val:
+            current_in = float(val[0:-1]) * 1024 * 1024
+        elif "k" in val:
+            current_in = float(val[0:-1]) * 1024
+        else:
+            current_in = int(val[0:-1])
+    if "month in" in line:
+        val = line.split()[-1]
+        if "g" in val:
+            monthly_in = float(val[0:-1]) * 1024 * 1024 * 1024
+        elif "m" in val:
+            monthly_in = float(val[0:-1]) * 1024 * 1024
+        elif "k" in val:
+            monthly_in = float(val[0:-1]) * 1024
+        else:
+            monthly_in = int(val[0:-1])
+p.close()
+
+print "monthly_in.value %d" % monthly_in
+print "current_in.value %d" % current_in
+total_in = monthly_in + current_in
+print "total_in.value %d" % total_in
+total_in_gb = total_in / 1024.0 / 1024.0 / 1024.0
+if total_in_gb < 20:
+    total_cost = 0
+elif total_in_gb < 30:
+    total_cost = total_in_gb - 20
+elif total_in_gb < 40:
+    total_cost = (total_in_gb - 30) * 2 + 10
+elif total_in_gb < 50:
+    total_cost = (total_in_gb - 40) * 3 + 30
+else:
+    total_cost = (total_in_gb - 50) * 5 + 60
+total_cost = total_cost * 1024 * 1024 * 1024
+print "total_cost.value %f" % total_cost
+
