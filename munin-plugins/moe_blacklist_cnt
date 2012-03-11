@@ -1,0 +1,32 @@
+#!/usr/bin/env python
+#%# family=auto
+#%# capabilities=autoconf
+
+import sys
+import os
+
+if "autoconf" in sys.argv:
+    print "yes"
+    exit(0)
+elif "config" in sys.argv:
+    print """
+graph_title moe.py blacklist size
+graph_order blacklist
+graph_category misc
+graph_args --base 1000 -l 0
+graph_vlabel images
+blacklist.label blacklist
+blacklist.draw LINE1
+"""
+    exit(0)
+
+
+import sqlite3
+
+DB_CONN = sqlite3.connect("/home/santa/moe_pictures/moe.sqlite3", 5)
+c = DB_CONN.cursor()
+
+c.execute("select count(*) from black_list_md5")
+print "blacklist.value", c.fetchone()[0]
+c.close()
+
