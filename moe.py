@@ -1550,7 +1550,10 @@ def moe_backup_db():
 
     db_dump_file = os.path.join(backup_to, "%s.dump.%s.sql" % (db_main_fn, tm_str))
     print "dumping '%s' -> '%s'" % (db_file, db_dump_file)
-    sqlite_bin = os.path.join(os.path.split(__file__)[0], "libexec", "sqlite3.exe")
+    if os_is_windows():
+        sqlite_bin = os.path.join(os.path.split(__file__)[0], "libexec", "sqlite3.exe")
+    else:
+        sqlite_bin = "sqlite3"
     cmd = "%s \"%s\" .dump  > \"%s\"" % (sqlite_bin, db_file, db_dump_file)
     os.system(cmd)
 
