@@ -1,8 +1,8 @@
 Use the following command to debug:
 
-    # munin-run <plugin_name>
-    # munin-run <plugin_name> autoconf
-    # munin-run <plugin_name> config
+    # sudo munin-run <plugin_name>
+    # sudo munin-run <plugin_name> autoconf
+    # sudo munin-run <plugin_name> config
 
-Note: you have to make soft links to /etc/munin/plugins
+Note: you have to create soft links in /etc/munin/plugins
 

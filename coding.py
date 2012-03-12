@@ -8,9 +8,10 @@
 import sys
 import os
 import time
+import traceback
 
 # matched by "lowercase(), then endswith()"
-g_code_files = [".c", ".cc", ".rb", ".py", "Rakefile", ".mm", ".html", ".htm", ".tex"]
+g_code_files = [".c", ".cc", ".rb", ".py", ".sh", "Rakefile", ".rake", ".mm", ".html", ".htm", ".tex"]
 
 # if filter == [], then all files are matched
 def check_filter_match(fname, filter = []):
@@ -23,10 +24,13 @@ def check_filter_match(fname, filter = []):
 # iterate an action on all matched files
 def do_on_each_file(start_path, func_action, filter = []):
     if os.path.isdir(start_path):
-        for fn in os.listdir(start_path):
-            if fn == "." or fn == "..":
-                continue
-            do_on_each_file(os.path.join(start_path, fn), func_action, filter)
+        try:
+            for fn in os.listdir(start_path):
+                if fn == "." or fn == "..":
+                    continue
+                do_on_each_file(os.path.join(start_path, fn), func_action, filter)
+        except:
+            traceback.print_exc()
     else:
         # single file
         if check_filter_match(start_path, filter):

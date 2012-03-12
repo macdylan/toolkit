@@ -10,5 +10,6 @@ moe.py              Subscribes and manages my picture collections.
 utils.py            General utilities for other scripts.
 
 libexec/            Folder containing helper programs.
+munin-plugins/      My personal munin plugins.
 simpic-linux/       Tools to find duplicated pictures, only runs under linux.
 
