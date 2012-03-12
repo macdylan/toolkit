@@ -37,7 +37,10 @@ c = DB_CONN.cursor()
 total = 0
 for rate in range(0, 4):
     c.execute("select sum(file_size) from images where rating=%d" % rate)
-    cnt = int(c.fetchone()[0])
+    try:
+        cnt = int(c.fetchone()[0])
+    except:
+        cnt = 0
     print "rate%s.value" % rate, cnt
     total += cnt
 
