@@ -353,7 +353,10 @@ def mang_download_bengou(index_url, **opt):
 
     # find the volumes
     idx = page_src.index("mhlist")
-    idx2 = page_src.index("</div>", idx)
+    #idx2 = page_src.index("</div>", idx)
+    # This page has sub-div in the li tags:
+    #   http://www.bengou.com/080819/hzw0008081910/index.html
+    idx2 = page_src.index('<br class="clearall"', idx)
     mhlist_src = page_src[idx:idx2]
 
 
